@@ -20,9 +20,10 @@
         <span></span>
       </button>
       <ul class="nav-links">
-        <li><a href="#hero">首页</a></li>
-        <li><a href="#features">功能</a></li>
-        <li><a href="#about">关于</a></li>
+        <li><a href="#copywriting">文案生成</a></li>
+        <li><a href="#image-generation">图片生成</a></li>
+        <li><a href="#features">功能介绍</a></li>
+        <li><a href="#contact">联系我们</a></li>
       </ul>
       <a class="nav-cta" href="#contact">免费体验</a>
     </nav>
@@ -63,54 +64,15 @@
         <h2>AI 文案生成展示</h2>
         <p>输入产品特点与目标受众，快速获得广告标题、社媒贴文、产品描述和邮件内容。</p>
       </div>
-      <div class="copy-generator" aria-label="AI 文案生成器">
-        <form class="generator-form">
-          <label>
-            产品名称
-            <input type="text" id="product-name" name="productName" placeholder="例如：CloudAI" required>
-          </label>
-          <label>
-            产品类型
-            <input type="text" id="product-type" name="productType" placeholder="例如：智能办公工具" required>
-          </label>
-          <label>
-            平台选择
-            <select id="platform" name="platform">
-              <option value="taobao">淘宝</option>
-              <option value="pinduoduo">拼多多</option>
-              <option value="shopee">Shopee</option>
-              <option value="amazon">Amazon</option>
-            </select>
-          </label>
-          <label>
-            文案风格
-            <select id="copy-style" name="copyStyle">
-              <option value="professional">专业</option>
-              <option value="marketing">营销</option>
-              <option value="concise">简洁</option>
-              <option value="creative">创意</option>
-            </select>
-          </label>
-          <button class="button primary" type="submit">生成文案</button>
-        </form>
-
-        <article class="generated-card" aria-live="polite">
-          <div class="generated-content">
-            <span>生成结果</span>
-            <h3 id="generated-title">生成标题将在这里显示</h3>
-            <div class="result-group">
-              <strong>商品卖点</strong>
-              <ul id="generated-points">
-                <li>填写产品信息后，点击“生成文案”即可查看模拟 AI 商品卖点。</li>
-              </ul>
-            </div>
-            <div class="result-group">
-              <strong>商品介绍</strong>
-              <p id="generated-description">生成的商品介绍会保持当前选择的平台与文案风格。</p>
-            </div>
-          </div>
-          <button class="copy-button" type="button" disabled>一键复制</button>
-        </article>
+      <div class="demo-card">
+        <div class="prompt-box">
+          <span>提示词</span>
+          <p>为一款云端 AI 创作工具生成一段官网宣传语，语气专业且富有未来感。</p>
+        </div>
+        <div class="result-box">
+          <span>生成结果</span>
+          <p>CloudAI 让每一次创意从数据中获得灵感，以智能生成能力加速品牌表达、内容生产与团队协作。</p>
+        </div>
       </div>
     </section>
 
@@ -136,8 +98,7 @@
     <section id="features" class="section features">
       <div class="section-heading">
         <p class="eyebrow">Features</p>
-        <h2>产品功能介绍</h2>
-        <p>CloudAI 聚焦基础 AI 创作框架，让团队用简单页面快速理解核心能力。</p>
+        <h2>为现代创作流程而设计</h2>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
@@ -158,19 +119,11 @@
       </div>
     </section>
 
-    <section id="about" class="section about">
-      <div class="about-card">
-        <p class="eyebrow">About CloudAI</p>
-        <h2>一个面向创作者与团队的 AI 工具平台基础版</h2>
-        <p>CloudAI 以轻量、清晰、现代的官网框架展示 AI 文案与 AI 图片生成能力。当前版本只使用 HTML、CSS 和 JavaScript 构建，不包含后端服务或 API 接入，适合作为产品展示页的起点。</p>
-      </div>
-    </section>
-
     <section id="contact" class="section contact">
       <div class="contact-card">
         <p class="eyebrow">Contact</p>
-        <h2>联系方式</h2>
-        <p>准备开始使用 CloudAI？留下联系方式，获取基础版产品介绍与演示安排。</p>
+        <h2>准备开始使用 CloudAI？</h2>
+        <p>留下联系方式，获取基础版产品介绍与演示安排。</p>
         <form class="contact-form">
           <input type="text" name="name" placeholder="您的姓名" aria-label="您的姓名">
           <input type="email" name="email" placeholder="邮箱地址" aria-label="邮箱地址">
