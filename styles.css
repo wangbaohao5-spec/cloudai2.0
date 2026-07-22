@@ -203,10 +203,7 @@ h3 {
 
 .hero-panel,
 .demo-card,
-.copy-generator,
-.generated-card,
 .feature-card,
-.about-card,
 .contact-card {
   border: 1px solid var(--card-border);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));

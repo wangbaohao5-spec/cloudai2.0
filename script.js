@@ -42,21 +42,6 @@ if (navToggle && navLinks) {
   });
 }
 
-if (generatorForm && generatedTitle && generatedDescription) {
-  generatorForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    const formData = new FormData(generatorForm);
-    const name = formData.get('productName').trim();
-    const type = formData.get('productType').trim();
-    const platform = formData.get('platform');
-    const result = buildProductCopy({ name, type, platform });
-
-    generatedTitle.textContent = result.title;
-    generatedDescription.textContent = result.description;
-  });
-}
-
 if (contactForm) {
   contactForm.addEventListener('submit', (event) => {
     event.preventDefault();
