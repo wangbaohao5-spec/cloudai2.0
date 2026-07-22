@@ -1,0 +1,151 @@
+const navToggle = document.querySelector('.nav-toggle');
+const navLinks = document.querySelector('.nav-links');
+const contactForm = document.querySelector('.contact-form');
+const generatorForm = document.querySelector('.generator-form');
+const generatedTitle = document.querySelector('#generated-title');
+const generatedPoints = document.querySelector('#generated-points');
+const generatedDescription = document.querySelector('#generated-description');
+const copyButton = document.querySelector('.copy-button');
+
+const platformNames = {
+  taobao: '淘宝',
+  pinduoduo: '拼多多',
+  shopee: 'Shopee',
+  amazon: 'Amazon',
+};
+
+const platformTone = {
+  taobao: '适合详情页、直播间和活动推荐，突出品质感与实用价值',
+  pinduoduo: '适合拼团和限时活动，强调高性价比与日常刚需',
+  shopee: '适合跨境店铺展示，表达轻快直接并突出核心卖点',
+  amazon: '适合海外用户浏览，语气清晰专业并强调可信体验',
+};
+
+const styleProfiles = {
+  professional: {
+    label: '专业',
+    titlePrefix: '专业优选',
+    pitch: '以清晰可信的表达呈现商品价值',
+  },
+  marketing: {
+    label: '营销',
+    titlePrefix: '热卖爆款',
+    pitch: '强化吸引力和购买理由，帮助用户快速产生兴趣',
+  },
+  concise: {
+    label: '简洁',
+    titlePrefix: '省心之选',
+    pitch: '用简短直接的语言突出重点，降低用户理解成本',
+  },
+  creative: {
+    label: '创意',
+    titlePrefix: '灵感好物',
+    pitch: '用更有画面感的表达讲好商品故事',
+  },
+};
+
+const buildProductCopy = ({ name, type, platform, style }) => {
+  const platformName = platformNames[platform] || '电商平台';
+  const tone = platformTone[platform] || '适合多平台商品展示，突出商品核心价值';
+  const profile = styleProfiles[style] || styleProfiles.professional;
+  const title = `${profile.titlePrefix}｜${name} ${platformName}${profile.label}款${type}`;
+  const points = [
+    `${name} 聚焦${type}需求，帮助用户快速理解商品用途。`,
+    `${platformName} 场景适配：${tone}。`,
+    `${profile.label}风格文案：${profile.pitch}。`,
+  ];
+  const description = `${name} 是一款面向${type}用户打造的商品，适合在 ${platformName} 平台进行展示和推广。它围绕用户关注的效率、体验和可靠性进行表达，并结合${profile.label}风格增强文案吸引力。这段模拟 AI 商品文案可用于商品上架、促销活动或详情页介绍的基础内容。`;
+
+  return { title, points, description };
+};
+
+const renderPoints = (points) => {
+  generatedPoints.replaceChildren(...points.map((point) => {
+    const item = document.createElement('li');
+    item.textContent = point;
+    return item;
+  }));
+};
+
+const getGeneratedText = () => {
+  const points = Array.from(generatedPoints.querySelectorAll('li'))
+    .map((item) => `- ${item.textContent}`)
+    .join('\n');
+
+  return `商品标题：\n${generatedTitle.textContent}\n\n核心卖点：\n${points}\n\n商品描述：\n${generatedDescription.textContent}`;
+};
+
+const copyText = async (text) => {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.setAttribute('readonly', '');
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textArea);
+};
+
+if (navToggle && navLinks) {
+  navToggle.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
+
+if (generatorForm && generatedTitle && generatedPoints && generatedDescription && copyButton) {
+  generatorForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(generatorForm);
+    const name = formData.get('productName').trim();
+    const type = formData.get('productType').trim();
+    const platform = formData.get('platform');
+    const style = formData.get('copyStyle');
+    const result = buildProductCopy({ name, type, platform, style });
+
+    generatedTitle.textContent = result.title;
+    renderPoints(result.points);
+    generatedDescription.textContent = result.description;
+    copyButton.disabled = false;
+    copyButton.textContent = '一键复制';
+  });
+
+  copyButton.addEventListener('click', async () => {
+    if (copyButton.disabled) {
+      return;
+    }
+
+    try {
+      await copyText(getGeneratedText());
+      copyButton.textContent = '复制成功';
+    } catch (error) {
+      copyButton.textContent = '复制失败';
+    }
+
+    setTimeout(() => {
+      copyButton.textContent = '一键复制';
+    }, 1600);
+  });
+}
+
+if (contactForm) {
+  contactForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    alert('感谢关注 CloudAI，我们会尽快与您联系！');
+    contactForm.reset();
+  });
+}
