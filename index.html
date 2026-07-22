@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CloudAI 是面向团队与创作者的现代 AI 工具平台，提供文案生成、图片生成与智能工作流能力。">
+  <title>CloudAI - 现代 AI 工具平台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar" aria-label="主导航">
+      <a class="logo" href="#hero" aria-label="CloudAI 首页">
+        <span class="logo-mark">C</span>
+        <span>CloudAI</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="打开导航菜单" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="#hero">首页</a></li>
+        <li><a href="#features">功能</a></li>
+        <li><a href="#about">关于</a></li>
+      </ul>
+      <a class="nav-cta" href="#contact">免费体验</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="hero" class="hero section">
+      <div class="hero-content">
+        <p class="eyebrow">面向下一代团队的 AI 创作云</p>
+        <h1>用 CloudAI 更快完成文案、视觉与创意工作</h1>
+        <p class="hero-description">CloudAI 将智能文案生成、AI 图片创作和高效协作整合到一个简洁平台，帮助团队从灵感到交付都快人一步。</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#copywriting">查看能力</a>
+          <a class="button secondary" href="#contact">预约演示</a>
+        </div>
+      </div>
+      <div class="hero-panel" aria-label="CloudAI 工作台预览">
+        <div class="panel-header">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="panel-card highlighted">
+          <p>AI 正在生成营销标题...</p>
+          <strong>“让创意在云端自动生长”</strong>
+        </div>
+        <div class="panel-grid">
+          <div>文案评分<br><strong>98%</strong></div>
+          <div>图片草稿<br><strong>24 张</strong></div>
+          <div>节省时间<br><strong>6.5h</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="copywriting" class="section showcase copywriting">
+      <div class="section-heading">
+        <p class="eyebrow">AI Copywriting</p>
+        <h2>AI 商品文案生成器</h2>
+        <p>输入产品名称、产品类型和销售平台，快速生成模拟商品标题和描述。</p>
+      </div>
+      <div class="copy-generator" aria-label="AI 文案生成器">
+        <form class="generator-form">
+          <label>
+            产品名称
+            <input type="text" id="product-name" name="productName" placeholder="例如：CloudAI" required>
+          </label>
+          <label>
+            产品类型
+            <input type="text" id="product-type" name="productType" placeholder="例如：智能办公工具" required>
+          </label>
+          <label>
+            平台选择
+            <select id="platform" name="platform">
+              <option value="taobao">淘宝</option>
+              <option value="pinduoduo">拼多多</option>
+              <option value="shopee">Shopee</option>
+              <option value="amazon">Amazon</option>
+            </select>
+          </label>
+          <button class="button primary" type="submit">生成商品文案</button>
+        </form>
+
+        <article class="generated-card" aria-live="polite">
+          <div class="generated-content">
+            <span>生成结果</span>
+            <div class="result-group">
+              <strong>商品标题</strong>
+              <h3 id="generated-title">商品标题将在这里显示</h3>
+            </div>
+            <div class="result-group">
+              <strong>商品描述</strong>
+              <p id="generated-description">填写产品信息后，点击“生成商品文案”即可查看模拟商品描述。</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="image-generation" class="section showcase image-generation">
+      <div class="section-heading">
+        <p class="eyebrow">AI Image Studio</p>
+        <h2>AI 图片生成展示</h2>
+        <p>用自然语言描述画面风格与场景，快速生成适合官网、广告和社交媒体的视觉素材。</p>
+      </div>
+      <div class="image-gallery" aria-label="AI 图片生成示例">
+        <article class="image-card gradient-one">
+          <span>未来城市</span>
+        </article>
+        <article class="image-card gradient-two">
+          <span>智能助手</span>
+        </article>
+        <article class="image-card gradient-three">
+          <span>品牌海报</span>
+        </article>
+      </div>
+    </section>
+
+    <section id="features" class="section features">
+      <div class="section-heading">
+        <p class="eyebrow">Features</p>
+        <h2>产品功能介绍</h2>
+        <p>CloudAI 聚焦基础 AI 创作框架，让团队用简单页面快速理解核心能力。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon">✨</div>
+          <h3>智能创意生成</h3>
+          <p>覆盖标题、长文、图片创意等基础内容生产场景。</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>快速工作流</h3>
+          <p>从输入需求到输出草稿，只需几步即可完成基础创作。</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>安全云端体验</h3>
+          <p>简洁可靠的云端界面，适合团队探索 AI 工具落地。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="about" class="section about">
+      <div class="about-card">
+        <p class="eyebrow">About CloudAI</p>
+        <h2>一个面向创作者与团队的 AI 工具平台基础版</h2>
+        <p>CloudAI 以轻量、清晰、现代的官网框架展示 AI 文案与 AI 图片生成能力。当前版本只使用 HTML、CSS 和 JavaScript 构建，不包含后端服务或 API 接入，适合作为产品展示页的起点。</p>
+      </div>
+    </section>
+
+    <section id="contact" class="section contact">
+      <div class="contact-card">
+        <p class="eyebrow">Contact</p>
+        <h2>联系方式</h2>
+        <p>准备开始使用 CloudAI？留下联系方式，获取基础版产品介绍与演示安排。</p>
+        <form class="contact-form">
+          <input type="text" name="name" placeholder="您的姓名" aria-label="您的姓名">
+          <input type="email" name="email" placeholder="邮箱地址" aria-label="邮箱地址">
+          <button class="button primary" type="submit">提交咨询</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 CloudAI. All rights reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
