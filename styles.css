@@ -166,7 +166,6 @@ h3 {
 .hero-description,
 .section-heading p,
 .feature-card p,
-.about-card p,
 .contact-card > p,
 .site-footer {
   color: var(--muted);
@@ -204,7 +203,6 @@ h3 {
 .hero-panel,
 .demo-card,
 .feature-card,
-.about-card,
 .contact-card {
   border: 1px solid var(--card-border);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
@@ -366,18 +364,9 @@ h3 {
   font-size: 2rem;
 }
 
-.about-card,
 .contact-card {
   border-radius: 32px;
   padding: 44px;
-}
-
-.about-card {
-  max-width: 920px;
-  margin: 0 auto;
-}
-
-.contact-card {
   text-align: center;
 }
 
