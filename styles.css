@@ -203,7 +203,10 @@ h3 {
 
 .hero-panel,
 .demo-card,
+.copy-generator,
+.generated-card,
 .feature-card,
+.about-card,
 .contact-card {
   border: 1px solid var(--card-border);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
@@ -369,9 +372,30 @@ h3 {
   color: var(--accent);
 }
 
+.result-group ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
 
 .result-group p {
   margin-bottom: 0;
+}
+
+.copy-button {
+  align-self: flex-start;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 11px 18px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.copy-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 
