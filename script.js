@@ -14,44 +14,12 @@ const imageResultCaption = document.querySelector('#image-result-caption');
 const imageModal = document.querySelector('.image-modal');
 const modalImage = document.querySelector('.modal-image');
 const modalClose = document.querySelector('.modal-close');
-const chatForm = document.querySelector('.chat-form');
-const chatInput = document.querySelector('#chat-input');
-const chatMessages = document.querySelector('.chat-messages');
-const clearChatButton = document.querySelector('.clear-chat-button');
 
 const imagePlaceholders = [
   'assets/images/ai-placeholder-1.svg',
   'assets/images/ai-placeholder-2.svg',
   'assets/images/ai-placeholder-3.svg',
   'assets/images/ai-placeholder-4.svg',
-];
-
-const defaultChatMessage = '你好，我是 CloudAI 电商助手。你可以问我商品标题、营销卖点、图片 Prompt 或活动方案。';
-
-const aiReplies = [
-  '我建议先明确目标用户，再把卖点转化为用户能立刻感知的利益点。',
-  '可以从“痛点 + 解决方案 + 使用场景 + 行动引导”四个部分组织内容。',
-  '如果是电商场景，标题建议控制在简洁、具体、有差异化的表达范围内。',
-  '这个方向适合搭配高对比度主视觉，并突出产品带来的效率提升。',
-];
-
-const keywordReplies = [
-  {
-    keywords: ['标题', '文案', '卖点', '商品'],
-    reply: '文案可以先写 3 个核心卖点：解决什么问题、为什么可信、现在购买有什么理由。需要我可以继续帮你模拟一个商品标题。',
-  },
-  {
-    keywords: ['图片', '海报', 'prompt', 'Prompt'],
-    reply: '图片 Prompt 建议包含主体、场景、风格、光线和用途，例如：“智能办公工具，未来科技桌面，蓝紫渐变，高级电商海报”。',
-  },
-  {
-    keywords: ['活动', '促销', '转化', '营销'],
-    reply: '活动方案可以使用“限时权益 + 场景价值 + 明确 CTA”的结构，让用户更快理解为什么现在行动。',
-  },
-  {
-    keywords: ['api', 'API', 'OpenAI', '接口'],
-    reply: '当前模块是纯前端模拟，不会调用 API。后续接入 OpenAI 时建议通过后端代理保护 API Key。',
-  },
 ];
 
 const platformNames = {
@@ -298,56 +266,6 @@ if (imageModal && modalClose && modalImage) {
     if (event.key === 'Escape' && !imageModal.hidden) {
       closeImageModal();
     }
-  });
-}
-
-if (chatForm && chatInput && chatMessages && clearChatButton) {
-  chatForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    const submitButton = chatForm.querySelector('button[type="submit"]');
-
-    if (submitButton.disabled) {
-      return;
-    }
-
-    const message = chatInput.value.trim();
-
-    if (!message) {
-      return;
-    }
-
-    const thinkingMessage = createChatMessage('ai', '', true);
-
-    chatMessages.append(createChatMessage('user', message), thinkingMessage);
-    chatInput.value = '';
-    chatInput.style.height = '';
-    submitButton.disabled = true;
-    scrollChatToBottom();
-
-    setTimeout(() => {
-      thinkingMessage.replaceWith(createChatMessage('ai', getAiReply(message)));
-      submitButton.disabled = false;
-      chatInput.focus();
-      scrollChatToBottom();
-    }, 1200);
-  });
-
-  chatInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      chatForm.requestSubmit();
-    }
-  });
-
-  chatInput.addEventListener('input', () => {
-    chatInput.style.height = 'auto';
-    chatInput.style.height = `${chatInput.scrollHeight}px`;
-  });
-
-  clearChatButton.addEventListener('click', () => {
-    resetChat();
-    chatInput.focus();
   });
 }
 
