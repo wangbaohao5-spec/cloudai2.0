@@ -107,6 +107,57 @@ const copyText = async (text) => {
   document.body.removeChild(textArea);
 };
 
+const getAiReply = (message) => {
+  const matchedReply = keywordReplies.find(({ keywords }) => (
+    keywords.some((keyword) => message.includes(keyword))
+  ));
+
+  if (matchedReply) {
+    return matchedReply.reply;
+  }
+
+  return aiReplies[Math.floor(Math.random() * aiReplies.length)];
+};
+
+const scrollChatToBottom = () => {
+  if (!chatMessages) {
+    return;
+  }
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+
+const createChatMessage = (sender, message, isThinking = false) => {
+  const messageItem = document.createElement('article');
+  messageItem.className = `chat-message ${sender}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'chat-avatar';
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.textContent = sender === 'user' ? '你' : 'AI';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+
+  if (isThinking) {
+    bubble.innerHTML = 'AI 正在思考… <span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+  } else {
+    bubble.textContent = message;
+  }
+
+  messageItem.append(avatar, bubble);
+  return messageItem;
+};
+
+const resetChat = () => {
+  if (!chatMessages) {
+    return;
+  }
+
+  chatMessages.replaceChildren(createChatMessage('ai', defaultChatMessage));
+  scrollChatToBottom();
+};
+
 if (navToggle && navLinks) {
   navToggle.addEventListener('click', () => {
     const isOpen = navLinks.classList.toggle('open');

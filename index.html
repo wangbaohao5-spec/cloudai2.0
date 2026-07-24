@@ -22,6 +22,7 @@
       <ul class="nav-links">
         <li><a href="#copywriting">文案生成</a></li>
         <li><a href="#image-generation">图片生成</a></li>
+        <li><a href="#ai-chat">AI 聊天</a></li>
         <li><a href="#features">功能介绍</a></li>
         <li><a href="#contact">联系我们</a></li>
       </ul>
@@ -143,6 +144,36 @@
             <span id="image-result-caption">输入 Prompt 后点击“生成图片”，这里将显示模拟结果。</span>
           </button>
         </article>
+      </div>
+    </section>
+
+    <section id="ai-chat" class="section showcase ai-chat">
+      <div class="section-heading">
+        <p class="eyebrow">AI Chat Assistant</p>
+        <h2>AI 电商助手聊天体验</h2>
+        <p>输入运营、文案或图片创意相关问题，体验纯前端模拟的 CloudAI 智能回复。</p>
+      </div>
+      <div class="chat-shell" aria-label="AI 聊天体验模块">
+        <div class="chat-header">
+          <div>
+            <span class="chat-status" aria-hidden="true"></span>
+            <strong>CloudAI Assistant</strong>
+          </div>
+          <button class="clear-chat-button" type="button">清空聊天</button>
+        </div>
+        <div class="chat-messages" aria-live="polite">
+          <article class="chat-message ai">
+            <div class="chat-avatar" aria-hidden="true">AI</div>
+            <div class="chat-bubble">
+              你好，我是 CloudAI 电商助手。你可以问我商品标题、营销卖点、图片 Prompt 或活动方案。
+            </div>
+          </article>
+        </div>
+        <form class="chat-form">
+          <label class="sr-only" for="chat-input">输入聊天消息</label>
+          <textarea id="chat-input" name="chatMessage" rows="1" placeholder="输入消息，按 Enter 发送，Shift + Enter 换行" required></textarea>
+          <button class="button primary" type="submit">发送</button>
+        </form>
       </div>
     </section>
 

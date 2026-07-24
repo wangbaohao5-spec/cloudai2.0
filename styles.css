@@ -201,6 +201,15 @@ h3 {
   background: var(--card);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .hero-panel,
 .demo-card,
 .copy-generator,
@@ -693,8 +702,19 @@ h3 {
     flex-direction: column;
   }
 
+  .chat-header,
+  .chat-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chat-message {
+    max-width: 100%;
+  }
+
   .contact-form input,
-  .contact-form button {
+  .contact-form button,
+  .chat-form button {
     width: 100%;
   }
 }
