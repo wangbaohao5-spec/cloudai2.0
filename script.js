@@ -93,9 +93,8 @@ const persistHistoryRecords = (records) => {
 
 const getHistoryText = (record) => {
   if (record.type === 'copy') {
-    const legacyPoints = (record.result.points || []).map((point) => `- ${point}`).join('\n');
-    const copy = record.result.copy || `${record.result.title || ''}\n${legacyPoints}\n${record.result.description || ''}`.trim();
-    return `类型：文案生成\n生成时间：${record.createdAt}\n产品名称：${record.productName}\n产品类型：${record.productType}\n平台：${record.platform}\n文案风格：${record.copyStyle}\n\n生成结果：\n${copy}`;
+    const points = (record.result.points || []).map((point) => `- ${point}`).join('\n');
+    return `类型：文案生成\n生成时间：${record.createdAt}\n产品名称：${record.productName}\n产品类型：${record.productType}\n平台：${record.platform}\n文案风格：${record.copyStyle}\n\n生成结果：\n商品标题：${record.result.title}\n核心卖点：\n${points}\n商品描述：${record.result.description}`;
   }
 
   return `类型：图片生成\n生成时间：${record.createdAt}\nPrompt：${record.prompt}\n图片风格：${record.imageStyle}`;
@@ -200,31 +199,19 @@ const closeHistoryPanel = () => {
   }
 };
 
-const generateCopy = async ({ productName, productType, platform, copyStyle }) => {
-  const response = await fetch('/api/generate-copy', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      productName,
-      productType,
-      platform,
-      copyStyle,
-    }),
-  });
+const buildProductCopy = ({ name, type, platform, style }) => {
+  const platformName = platformNames[platform] || '电商平台';
+  const tone = platformTone[platform] || '适合多平台商品展示，突出商品核心价值';
+  const profile = styleProfiles[style] || styleProfiles.professional;
+  const title = `${profile.titlePrefix}｜${name} ${platformName}${profile.label}款${type}`;
+  const points = [
+    `${name} 聚焦${type}需求，帮助用户快速理解商品用途。`,
+    `${platformName} 场景适配：${tone}。`,
+    `${profile.label}风格文案：${profile.pitch}。`,
+  ];
+  const description = `${name} 是一款面向${type}用户打造的商品，适合在 ${platformName} 平台进行展示和推广。它围绕用户关注的效率、体验和可靠性进行表达，并结合${profile.label}风格增强文案吸引力。这段模拟 AI 商品文案可用于商品上架、促销活动或详情页介绍的基础内容。`;
 
-  if (!response.ok) {
-    throw new Error('文案生成失败，请稍后重试。');
-  }
-
-  const data = await response.json();
-
-  if (!data.copy) {
-    throw new Error('接口未返回有效文案。');
-  }
-
-  return data.copy;
+  return { title, points, description };
 };
 
 const renderPoints = (points) => {
