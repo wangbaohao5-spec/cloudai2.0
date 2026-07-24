@@ -6,6 +6,7 @@ const generatedTitle = document.querySelector('#generated-title');
 const generatedPoints = document.querySelector('#generated-points');
 const generatedDescription = document.querySelector('#generated-description');
 const copyButton = document.querySelector('.copy-button');
+const copyLoading = document.querySelector('.copy-loading');
 const imageGeneratorForm = document.querySelector('.image-generator-form');
 const imageLoading = document.querySelector('.image-loading');
 const generatedImagePreview = document.querySelector('.generated-image-preview');
@@ -221,13 +222,7 @@ const renderPoints = (points) => {
   }));
 };
 
-const getGeneratedText = () => {
-  const points = Array.from(generatedPoints.querySelectorAll('li'))
-    .map((item) => `- ${item.textContent}`)
-    .join('\n');
-
-  return `商品标题：\n${generatedTitle.textContent}\n\n核心卖点：\n${points}\n\n商品描述：\n${generatedDescription.textContent}`;
-};
+const getGeneratedText = () => generatedDescription.textContent;
 
 const copyText = async (text) => {
   if (navigator.clipboard && window.isSecureContext) {
@@ -311,33 +306,59 @@ if (navToggle && navLinks) {
   });
 }
 
-if (generatorForm && generatedTitle && generatedPoints && generatedDescription && copyButton) {
-  generatorForm.addEventListener('submit', (event) => {
+if (generatorForm && generatedTitle && generatedPoints && generatedDescription && copyButton && copyLoading) {
+  generatorForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const formData = new FormData(generatorForm);
-    const name = formData.get('productName').trim();
-    const type = formData.get('productType').trim();
+    const productName = formData.get('productName').trim();
+    const productType = formData.get('productType').trim();
     const platform = formData.get('platform');
-    const style = formData.get('copyStyle');
-    const result = buildProductCopy({ name, type, platform, style });
-    const profile = styleProfiles[style] || styleProfiles.professional;
+    const copyStyle = formData.get('copyStyle');
+    const profile = styleProfiles[copyStyle] || styleProfiles.professional;
+    const submitButton = generatorForm.querySelector('button[type="submit"]');
 
-    generatedTitle.textContent = result.title;
-    renderPoints(result.points);
-    generatedDescription.textContent = result.description;
-    copyButton.disabled = false;
+    generatedTitle.textContent = '正在生成...';
+    renderPoints(['请稍候，CloudAI 正在通过后端 API 生成文案。']);
+    generatedDescription.textContent = '';
+    copyButton.disabled = true;
     copyButton.textContent = '一键复制';
+    copyLoading.hidden = false;
+    submitButton.disabled = true;
+    submitButton.textContent = '生成中...';
 
-    saveHistoryRecord({
-      type: 'copy',
-      title: result.title,
-      productName: name,
-      productType: type,
-      platform: platformNames[platform] || platform,
-      copyStyle: profile.label,
-      result,
-    });
+    try {
+      const copy = await generateCopy({
+        productName,
+        productType,
+        platform,
+        copyStyle,
+      });
+
+      generatedTitle.textContent = 'AI 文案生成结果';
+      renderPoints(['后端 API 已成功返回文案。']);
+      generatedDescription.textContent = copy;
+      copyButton.disabled = false;
+
+      saveHistoryRecord({
+        type: 'copy',
+        title: 'AI 文案生成结果',
+        productName,
+        productType,
+        platform: platformNames[platform] || platform,
+        copyStyle: profile.label,
+        result: { copy },
+      });
+    } catch (error) {
+      generatedTitle.textContent = '生成失败';
+      renderPoints(['请检查后端服务是否可用，或稍后再试。']);
+      generatedDescription.textContent = error.message || '文案生成失败，请稍后重试。';
+      copyButton.disabled = true;
+    } finally {
+      copyLoading.hidden = true;
+      submitButton.disabled = false;
+      submitButton.textContent = '生成商品文案';
+    }
   });
 
   copyButton.addEventListener('click', async () => {

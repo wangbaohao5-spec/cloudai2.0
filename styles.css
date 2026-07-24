@@ -370,6 +370,7 @@ h3 {
 }
 
 .generated-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -518,6 +519,7 @@ h3 {
   backdrop-filter: blur(14px);
 }
 
+.copy-loading,
 .image-loading {
   position: absolute;
   inset: 18px;
@@ -529,6 +531,11 @@ h3 {
   border-radius: 22px;
   background: rgba(7, 17, 31, 0.78);
   backdrop-filter: blur(16px);
+}
+
+.copy-loading[hidden],
+.image-loading[hidden] {
+  display: none;
 }
 
 .loader {
