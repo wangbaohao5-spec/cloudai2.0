@@ -223,7 +223,29 @@ const renderPoints = (points) => {
 };
 
 const getGeneratedText = () => generatedDescription.textContent;
+async function generateCopy(data) {
 
+  const response = await fetch(
+    "https://lively-haze-9682cloudai-api.wangbaohao5.workers.dev/",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(data)
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("AI 服务暂时不可用");
+  }
+
+  const result = await response.json();
+
+  return result.copy;
+}
 const copyText = async (text) => {
   if (navigator.clipboard && window.isSecureContext) {
     await navigator.clipboard.writeText(text);
