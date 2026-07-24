@@ -182,12 +182,23 @@ if (generatorForm && generatedTitle && generatedPoints && generatedDescription &
     const platform = formData.get('platform');
     const style = formData.get('copyStyle');
     const result = buildProductCopy({ name, type, platform, style });
+    const profile = styleProfiles[style] || styleProfiles.professional;
 
     generatedTitle.textContent = result.title;
     renderPoints(result.points);
     generatedDescription.textContent = result.description;
     copyButton.disabled = false;
     copyButton.textContent = '一键复制';
+
+    saveHistoryRecord({
+      type: 'copy',
+      title: result.title,
+      productName: name,
+      productType: type,
+      platform: platformNames[platform] || platform,
+      copyStyle: profile.label,
+      result,
+    });
   });
 
   copyButton.addEventListener('click', async () => {
