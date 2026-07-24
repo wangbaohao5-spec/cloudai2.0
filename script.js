@@ -6,6 +6,7 @@ const generatedTitle = document.querySelector('#generated-title');
 const generatedPoints = document.querySelector('#generated-points');
 const generatedDescription = document.querySelector('#generated-description');
 const copyButton = document.querySelector('.copy-button');
+const copyLoading = document.querySelector('.copy-loading');
 const imageGeneratorForm = document.querySelector('.image-generator-form');
 const imageLoading = document.querySelector('.image-loading');
 const generatedImagePreview = document.querySelector('.generated-image-preview');
@@ -14,6 +15,14 @@ const imageResultCaption = document.querySelector('#image-result-caption');
 const imageModal = document.querySelector('.image-modal');
 const modalImage = document.querySelector('.modal-image');
 const modalClose = document.querySelector('.modal-close');
+const historyButton = document.querySelector('.nav-history-button');
+const historyPanel = document.querySelector('.history-panel');
+const historyClose = document.querySelector('.history-close');
+const historyList = document.querySelector('.history-list');
+const historyCount = document.querySelector('.history-count');
+const historyClear = document.querySelector('.history-clear');
+
+const HISTORY_STORAGE_KEY = 'cloudaiHistoryRecords';
 
 const imagePlaceholders = [
   'assets/images/ai-placeholder-1.svg',
@@ -59,19 +68,163 @@ const styleProfiles = {
   },
 };
 
-const buildProductCopy = ({ name, type, platform, style }) => {
-  const platformName = platformNames[platform] || '电商平台';
-  const tone = platformTone[platform] || '适合多平台商品展示，突出商品核心价值';
-  const profile = styleProfiles[style] || styleProfiles.professional;
-  const title = `${profile.titlePrefix}｜${name} ${platformName}${profile.label}款${type}`;
-  const points = [
-    `${name} 聚焦${type}需求，帮助用户快速理解商品用途。`,
-    `${platformName} 场景适配：${tone}。`,
-    `${profile.label}风格文案：${profile.pitch}。`,
-  ];
-  const description = `${name} 是一款面向${type}用户打造的商品，适合在 ${platformName} 平台进行展示和推广。它围绕用户关注的效率、体验和可靠性进行表达，并结合${profile.label}风格增强文案吸引力。这段模拟 AI 商品文案可用于商品上架、促销活动或详情页介绍的基础内容。`;
 
-  return { title, points, description };
+const formatHistoryTime = (date = new Date()) => (
+  date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+);
+
+const loadHistoryRecords = () => {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const persistHistoryRecords = (records) => {
+  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(records));
+};
+
+const getHistoryText = (record) => {
+  if (record.type === 'copy') {
+    const legacyPoints = (record.result.points || []).map((point) => `- ${point}`).join('\n');
+    const copy = record.result.copy || `${record.result.title || ''}\n${legacyPoints}\n${record.result.description || ''}`.trim();
+    return `类型：文案生成\n生成时间：${record.createdAt}\n产品名称：${record.productName}\n产品类型：${record.productType}\n平台：${record.platform}\n文案风格：${record.copyStyle}\n\n生成结果：\n${copy}`;
+  }
+
+  return `类型：图片生成\n生成时间：${record.createdAt}\nPrompt：${record.prompt}\n图片风格：${record.imageStyle}`;
+};
+
+const escapeHTML = (value) => String(value).replace(/[&<>'"]/g, (char) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  "'": '&#39;',
+  '"': '&quot;',
+}[char]));
+
+const renderHistoryRecords = () => {
+  if (!historyList || !historyCount) {
+    return;
+  }
+
+  const records = loadHistoryRecords();
+  historyCount.textContent = `共 ${records.length} 条记录`;
+
+  if (!records.length) {
+    historyList.innerHTML = '<p class="history-empty">暂无历史记录。生成文案或图片后会自动保存到这里。</p>';
+    return;
+  }
+
+  historyList.replaceChildren(...records.map((record) => {
+    const item = document.createElement('article');
+    item.className = 'history-item';
+
+    const badge = record.type === 'copy' ? '文案' : '图片';
+    const title = record.type === 'copy' ? record.productName : record.prompt;
+    const meta = record.type === 'copy'
+      ? `${record.productType}｜${record.platform}｜${record.copyStyle}`
+      : `${record.imageStyle}｜Prompt`;
+
+    item.innerHTML = `
+      <div class="history-item-main">
+        <span class="history-badge">${badge}</span>
+        <h3>${escapeHTML(title)}</h3>
+        <p>${escapeHTML(meta)}</p>
+        <time>${escapeHTML(record.createdAt)}</time>
+      </div>
+      <div class="history-actions">
+        <button type="button" data-action="view">查看</button>
+        <button type="button" data-action="copy">复制</button>
+        <button type="button" data-action="delete">删除</button>
+      </div>
+      <pre class="history-detail" hidden></pre>
+    `;
+
+    const detail = item.querySelector('.history-detail');
+    detail.textContent = getHistoryText(record);
+
+    item.querySelector('[data-action="view"]').addEventListener('click', (event) => {
+      detail.hidden = !detail.hidden;
+      event.currentTarget.textContent = detail.hidden ? '查看' : '收起';
+    });
+
+    item.querySelector('[data-action="copy"]').addEventListener('click', async (event) => {
+      try {
+        await copyText(getHistoryText(record));
+        event.currentTarget.textContent = '已复制';
+        setTimeout(() => { event.currentTarget.textContent = '复制'; }, 1400);
+      } catch (error) {
+        event.currentTarget.textContent = '失败';
+      }
+    });
+
+    item.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      persistHistoryRecords(loadHistoryRecords().filter(({ id }) => id !== record.id));
+      renderHistoryRecords();
+    });
+
+    return item;
+  }));
+};
+
+const saveHistoryRecord = (record) => {
+  const records = loadHistoryRecords();
+  records.unshift({
+    ...record,
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    createdAt: formatHistoryTime(),
+  });
+  persistHistoryRecords(records);
+  renderHistoryRecords();
+};
+
+const openHistoryPanel = () => {
+  if (!historyPanel) {
+    return;
+  }
+
+  renderHistoryRecords();
+  historyPanel.hidden = false;
+};
+
+const closeHistoryPanel = () => {
+  if (historyPanel) {
+    historyPanel.hidden = true;
+  }
+};
+
+const generateCopy = async ({ productName, productType, platform, copyStyle }) => {
+  const response = await fetch('/api/generate-copy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      productName,
+      productType,
+      platform,
+      copyStyle,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('文案生成失败，请稍后重试。');
+  }
+
+  const data = await response.json();
+
+  if (!data.copy) {
+    throw new Error('接口未返回有效文案。');
+  }
+
+  return data.copy;
 };
 
 const renderPoints = (points) => {
@@ -82,13 +235,7 @@ const renderPoints = (points) => {
   }));
 };
 
-const getGeneratedText = () => {
-  const points = Array.from(generatedPoints.querySelectorAll('li'))
-    .map((item) => `- ${item.textContent}`)
-    .join('\n');
-
-  return `商品标题：\n${generatedTitle.textContent}\n\n核心卖点：\n${points}\n\n商品描述：\n${generatedDescription.textContent}`;
-};
+const getGeneratedText = () => generatedDescription.textContent;
 
 const copyText = async (text) => {
   if (navigator.clipboard && window.isSecureContext) {
@@ -172,33 +319,59 @@ if (navToggle && navLinks) {
   });
 }
 
-if (generatorForm && generatedTitle && generatedPoints && generatedDescription && copyButton) {
-  generatorForm.addEventListener('submit', (event) => {
+if (generatorForm && generatedTitle && generatedPoints && generatedDescription && copyButton && copyLoading) {
+  generatorForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const formData = new FormData(generatorForm);
-    const name = formData.get('productName').trim();
-    const type = formData.get('productType').trim();
+    const productName = formData.get('productName').trim();
+    const productType = formData.get('productType').trim();
     const platform = formData.get('platform');
-    const style = formData.get('copyStyle');
-    const result = buildProductCopy({ name, type, platform, style });
-    const profile = styleProfiles[style] || styleProfiles.professional;
+    const copyStyle = formData.get('copyStyle');
+    const profile = styleProfiles[copyStyle] || styleProfiles.professional;
+    const submitButton = generatorForm.querySelector('button[type="submit"]');
 
-    generatedTitle.textContent = result.title;
-    renderPoints(result.points);
-    generatedDescription.textContent = result.description;
-    copyButton.disabled = false;
+    generatedTitle.textContent = '正在生成...';
+    renderPoints(['请稍候，CloudAI 正在通过后端 API 生成文案。']);
+    generatedDescription.textContent = '';
+    copyButton.disabled = true;
     copyButton.textContent = '一键复制';
+    copyLoading.hidden = false;
+    submitButton.disabled = true;
+    submitButton.textContent = '生成中...';
 
-    saveHistoryRecord({
-      type: 'copy',
-      title: result.title,
-      productName: name,
-      productType: type,
-      platform: platformNames[platform] || platform,
-      copyStyle: profile.label,
-      result,
-    });
+    try {
+      const copy = await generateCopy({
+        productName,
+        productType,
+        platform,
+        copyStyle,
+      });
+
+      generatedTitle.textContent = 'AI 文案生成结果';
+      renderPoints(['后端 API 已成功返回文案。']);
+      generatedDescription.textContent = copy;
+      copyButton.disabled = false;
+
+      saveHistoryRecord({
+        type: 'copy',
+        title: 'AI 文案生成结果',
+        productName,
+        productType,
+        platform: platformNames[platform] || platform,
+        copyStyle: profile.label,
+        result: { copy },
+      });
+    } catch (error) {
+      generatedTitle.textContent = '生成失败';
+      renderPoints(['请检查后端服务是否可用，或稍后再试。']);
+      generatedDescription.textContent = error.message || '文案生成失败，请稍后重试。';
+      copyButton.disabled = true;
+    } finally {
+      copyLoading.hidden = true;
+      submitButton.disabled = false;
+      submitButton.textContent = '生成商品文案';
+    }
   });
 
   copyButton.addEventListener('click', async () => {
@@ -247,6 +420,12 @@ if (imageGeneratorForm && imageLoading && generatedImagePreview && generatedImag
       imageLoading.hidden = true;
       submitButton.disabled = false;
       submitButton.textContent = '重新生成图片';
+
+      saveHistoryRecord({
+        type: 'image',
+        prompt,
+        imageStyle: style,
+      });
     }, 2000);
   });
 
@@ -258,6 +437,25 @@ if (imageGeneratorForm && imageLoading && generatedImagePreview && generatedImag
     modalImage.src = generatedImage.src;
     modalImage.alt = generatedImage.alt;
     imageModal.hidden = false;
+  });
+}
+
+if (historyButton && historyPanel && historyClose && historyClear) {
+  historyButton.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+    openHistoryPanel();
+  });
+
+  historyClose.addEventListener('click', closeHistoryPanel);
+  historyPanel.addEventListener('click', (event) => {
+    if (event.target === historyPanel) {
+      closeHistoryPanel();
+    }
+  });
+  historyClear.addEventListener('click', () => {
+    persistHistoryRecords([]);
+    renderHistoryRecords();
   });
 }
 
@@ -276,6 +474,9 @@ if (imageModal && modalClose && modalImage) {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !imageModal.hidden) {
       closeImageModal();
+    }
+    if (event.key === 'Escape' && historyPanel && !historyPanel.hidden) {
+      closeHistoryPanel();
     }
   });
 }
