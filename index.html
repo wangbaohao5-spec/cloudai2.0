@@ -22,6 +22,7 @@
       <ul class="nav-links">
         <li><a href="#copywriting">文案生成</a></li>
         <li><a href="#image-generation">图片生成</a></li>
+        <li><a href="#ai-chat">AI 聊天</a></li>
         <li><a href="#features">功能介绍</a></li>
         <li><a href="#contact">联系我们</a></li>
       </ul>
@@ -112,19 +113,67 @@
     <section id="image-generation" class="section showcase image-generation">
       <div class="section-heading">
         <p class="eyebrow">AI Image Studio</p>
-        <h2>AI 图片生成展示</h2>
-        <p>用自然语言描述画面风格与场景，快速生成适合官网、广告和社交媒体的视觉素材。</p>
+        <h2>AI 图片生成体验</h2>
+        <p>用自然语言描述画面风格与场景，选择图片风格后生成本地模拟视觉素材。</p>
       </div>
-      <div class="image-gallery" aria-label="AI 图片生成示例">
-        <article class="image-card gradient-one">
-          <span>未来城市</span>
+      <div class="image-studio" aria-label="AI 图片生成体验模块">
+        <form class="image-generator-form">
+          <label>
+            图片描述 Prompt
+            <textarea id="image-prompt" name="imagePrompt" rows="5" placeholder="例如：一张科技感电商海报，展示智能办公工具，蓝紫渐变背景" required></textarea>
+          </label>
+          <label>
+            图片风格
+            <select id="image-style" name="imageStyle">
+              <option value="写实">写实</option>
+              <option value="动漫">动漫</option>
+              <option value="3D">3D</option>
+              <option value="科技">科技</option>
+            </select>
+          </label>
+          <button class="button primary" type="submit">生成图片</button>
+        </form>
+
+        <article class="image-result-card" aria-live="polite">
+          <div class="image-loading" hidden>
+            <span class="loader" aria-hidden="true"></span>
+            <strong>CloudAI 正在生成图片...</strong>
+          </div>
+          <button class="generated-image-preview" type="button" aria-label="点击放大预览生成图片" disabled>
+            <img id="generated-image" src="assets/images/ai-placeholder-1.svg" alt="AI 图片生成占位图">
+            <span id="image-result-caption">输入 Prompt 后点击“生成图片”，这里将显示模拟结果。</span>
+          </button>
         </article>
-        <article class="image-card gradient-two">
-          <span>智能助手</span>
-        </article>
-        <article class="image-card gradient-three">
-          <span>品牌海报</span>
-        </article>
+      </div>
+    </section>
+
+    <section id="ai-chat" class="section showcase ai-chat">
+      <div class="section-heading">
+        <p class="eyebrow">AI Chat Assistant</p>
+        <h2>AI 电商助手聊天体验</h2>
+        <p>输入运营、文案或图片创意相关问题，体验纯前端模拟的 CloudAI 智能回复。</p>
+      </div>
+      <div class="chat-shell" aria-label="AI 聊天体验模块">
+        <div class="chat-header">
+          <div>
+            <span class="chat-status" aria-hidden="true"></span>
+            <strong>CloudAI Assistant</strong>
+          </div>
+          <button class="clear-chat-button" type="button">清空聊天</button>
+        </div>
+        <div class="chat-messages" aria-live="polite">
+          <article class="chat-message ai">
+            <div class="chat-avatar" aria-hidden="true">AI</div>
+            <div class="chat-bubble">
+              你好，我是 CloudAI 电商助手。你可以问我商品标题、营销卖点、图片 Prompt 或活动方案。
+            </div>
+          </article>
+        </div>
+        <form class="chat-form">
+          <label class="sr-only" for="chat-input">输入聊天消息</label>
+          <textarea id="chat-input" name="chatMessage" rows="1" placeholder="输入消息，按 Enter 发送，Shift + Enter 换行" required></textarea>
+          <button class="button primary" type="submit">发送</button>
+        </form>
       </div>
     </section>
 
@@ -178,6 +227,11 @@
   <footer class="site-footer">
     <p>© 2026 CloudAI. All rights reserved.</p>
   </footer>
+
+  <div class="image-modal" role="dialog" aria-modal="true" aria-label="AI 图片放大预览" hidden>
+    <button class="modal-close" type="button" aria-label="关闭图片预览">×</button>
+    <img class="modal-image" src="" alt="AI 图片放大预览">
+  </div>
 
   <script src="script.js"></script>
 </body>
