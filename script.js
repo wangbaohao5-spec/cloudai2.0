@@ -6,6 +6,21 @@ const generatedTitle = document.querySelector('#generated-title');
 const generatedPoints = document.querySelector('#generated-points');
 const generatedDescription = document.querySelector('#generated-description');
 const copyButton = document.querySelector('.copy-button');
+const imageGeneratorForm = document.querySelector('.image-generator-form');
+const imageLoading = document.querySelector('.image-loading');
+const generatedImagePreview = document.querySelector('.generated-image-preview');
+const generatedImage = document.querySelector('#generated-image');
+const imageResultCaption = document.querySelector('#image-result-caption');
+const imageModal = document.querySelector('.image-modal');
+const modalImage = document.querySelector('.modal-image');
+const modalClose = document.querySelector('.modal-close');
+
+const imagePlaceholders = [
+  'assets/images/ai-placeholder-1.svg',
+  'assets/images/ai-placeholder-2.svg',
+  'assets/images/ai-placeholder-3.svg',
+  'assets/images/ai-placeholder-4.svg',
+];
 
 const platformNames = {
   taobao: '淘宝',
@@ -139,6 +154,67 @@ if (generatorForm && generatedTitle && generatedPoints && generatedDescription &
     setTimeout(() => {
       copyButton.textContent = '一键复制';
     }, 1600);
+  });
+}
+
+if (imageGeneratorForm && imageLoading && generatedImagePreview && generatedImage && imageResultCaption) {
+  imageGeneratorForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(imageGeneratorForm);
+    const prompt = formData.get('imagePrompt').trim();
+    const style = formData.get('imageStyle');
+    const submitButton = imageGeneratorForm.querySelector('button[type="submit"]');
+
+    if (!prompt) {
+      return;
+    }
+
+    imageLoading.hidden = false;
+    generatedImagePreview.disabled = true;
+    submitButton.disabled = true;
+    submitButton.textContent = '生成中...';
+
+    setTimeout(() => {
+      const randomImage = imagePlaceholders[Math.floor(Math.random() * imagePlaceholders.length)];
+
+      generatedImage.src = randomImage;
+      generatedImage.alt = `${style}风格 AI 图片：${prompt}`;
+      imageResultCaption.textContent = `${style}风格｜${prompt}`;
+      generatedImagePreview.disabled = false;
+      imageLoading.hidden = true;
+      submitButton.disabled = false;
+      submitButton.textContent = '重新生成图片';
+    }, 2000);
+  });
+
+  generatedImagePreview.addEventListener('click', () => {
+    if (generatedImagePreview.disabled || !imageModal || !modalImage) {
+      return;
+    }
+
+    modalImage.src = generatedImage.src;
+    modalImage.alt = generatedImage.alt;
+    imageModal.hidden = false;
+  });
+}
+
+if (imageModal && modalClose && modalImage) {
+  const closeImageModal = () => {
+    imageModal.hidden = true;
+    modalImage.src = '';
+  };
+
+  modalClose.addEventListener('click', closeImageModal);
+  imageModal.addEventListener('click', (event) => {
+    if (event.target === imageModal) {
+      closeImageModal();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !imageModal.hidden) {
+      closeImageModal();
+    }
   });
 }
 
