@@ -83,8 +83,18 @@ a {
   color: var(--muted);
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-history-button:hover {
   color: var(--text);
+}
+
+.nav-history-button {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
 }
 
 .nav-cta,
