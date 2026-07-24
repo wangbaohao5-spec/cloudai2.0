@@ -25,6 +25,7 @@
         <li><a href="#ai-chat">AI 聊天</a></li>
         <li><a href="#features">功能介绍</a></li>
         <li><a href="#contact">联系我们</a></li>
+        <li><button class="nav-history-button" type="button">History</button></li>
       </ul>
       <a class="nav-cta" href="#contact">免费体验</a>
     </nav>
@@ -236,6 +237,23 @@
   <footer class="site-footer">
     <p>© 2026 CloudAI. All rights reserved.</p>
   </footer>
+
+  <aside class="history-panel" role="dialog" aria-modal="true" aria-labelledby="history-title" hidden>
+    <div class="history-dialog">
+      <div class="history-header">
+        <div>
+          <p class="eyebrow">History</p>
+          <h2 id="history-title">历史记录</h2>
+        </div>
+        <button class="history-close" type="button" aria-label="关闭历史记录">×</button>
+      </div>
+      <div class="history-toolbar">
+        <p class="history-count">共 0 条记录</p>
+        <button class="history-clear" type="button">清空全部历史</button>
+      </div>
+      <div class="history-list" aria-live="polite"></div>
+    </div>
+  </aside>
 
   <div class="image-modal" role="dialog" aria-modal="true" aria-label="AI 图片放大预览" hidden>
     <button class="modal-close" type="button" aria-label="关闭图片预览">×</button>
