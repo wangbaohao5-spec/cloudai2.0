@@ -243,7 +243,7 @@ async function generateCopy(data) {
   }
 
   const result = await response.json();
-
+console.log(result);
   return result.copy;
 }
 const copyText = async (text) => {
