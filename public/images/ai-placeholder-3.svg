@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#421b66"/><stop offset="1" stop-color="#ff5c97"/></linearGradient></defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <polygon points="400,70 690,530 110,530" fill="#ffdb7c" opacity=".82"/>
+  <polygon points="400,150 580,490 220,490" fill="#07111f" opacity=".75"/>
+  <text x="250" y="565" fill="#f8fbff" font-family="Arial" font-size="34" font-weight="700">AI Poster Mockup</text>
+</svg>

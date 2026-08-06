@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  historyRecords HistoryRecord[]
+  usageRecords   UsageRecord[]
+  assets         Asset[]
+}
+
+model HistoryRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  assetId   String?
+  type      String
+  title     String
+  input     Json
+  output    Json
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset Asset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([userId, type])
+  @@index([assetId])
+}
+
+model UsageRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  model     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, type])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  url       String
+  name      String
+  createdAt DateTime @default(now())
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  historyRecords HistoryRecord[]
+
+  @@index([userId, createdAt])
+  @@index([userId, type])
+}
