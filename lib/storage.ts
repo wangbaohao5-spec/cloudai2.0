@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getRequiredEnv, getSupabaseUrl } from "@/lib/server-env";
 
 export type AssetFileType = "image" | "video" | "upload";
 
@@ -14,12 +15,8 @@ const ASSET_BUCKET = "cloudai-assets";
 const SIGNED_URL_EXPIRES_IN = 60 * 60;
 
 function getSupabaseStorageClient() {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Supabase Storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
-  }
+  const supabaseUrl = getSupabaseUrl();
+  const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {

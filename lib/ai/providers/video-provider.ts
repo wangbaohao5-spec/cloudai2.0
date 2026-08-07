@@ -1,8 +1,9 @@
 import type { VideoGenerationResult } from "@/lib/ai/types";
+import { getOptionalEnv, getRequiredEnv } from "@/lib/server-env";
 
 const DASHSCOPE_VIDEO_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis";
 const DASHSCOPE_TASK_API_URL = "https://dashscope.aliyuncs.com/api/v1/tasks";
-const DASHSCOPE_VIDEO_MODEL = process.env.DASHSCOPE_VIDEO_MODEL || "wan2.6-t2v";
+const DASHSCOPE_VIDEO_MODEL = getOptionalEnv("DASHSCOPE_VIDEO_MODEL") || "wan2.6-t2v";
 const POLL_INTERVAL_MS = 15000;
 const MAX_POLL_ATTEMPTS = 12;
 const MOCK_VIDEO_URL = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
@@ -90,11 +91,7 @@ function createMockFallbackVideo(): VideoGenerationResult {
 }
 
 async function generateDashScopeVideo(prompt: string): Promise<VideoGenerationResult> {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-
-  if (!apiKey) {
-    return createMockFallbackVideo();
-  }
+  const apiKey = getRequiredEnv("DASHSCOPE_API_KEY");
 
   const createTaskData = await requestDashScope<DashScopeCreateTaskResponse>(DASHSCOPE_VIDEO_API_URL, {
     method: "POST",

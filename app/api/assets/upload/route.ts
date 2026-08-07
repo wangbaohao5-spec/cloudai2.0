@@ -1,4 +1,5 @@
 import { createAsset } from "@/lib/assets";
+import { jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import type { AssetFileType } from "@/lib/storage";
 import { uploadFile } from "@/lib/storage";
@@ -11,39 +12,43 @@ function isAssetType(type: string): type is AssetFileType {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
+  try {
+    const user = await getCurrentUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const formData = await request.formData();
+    const file = formData.get("file");
+    const typeValue = String(formData.get("type") || "upload");
+    const type = isAssetType(typeValue) ? typeValue : "upload";
+
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "File is required." }, { status: 400 });
+    }
+
+    const uploadedFile = await uploadFile({
+      userId: user.id,
+      type,
+      name: file.name,
+      content: await file.arrayBuffer(),
+      contentType: file.type || undefined,
+    });
+    const asset = await createAsset({
+      userId: user.id,
+      type,
+      name: file.name,
+      url: uploadedFile.path,
+    });
+
+    return NextResponse.json({
+      assetId: asset.id,
+      type: asset.type,
+      name: asset.name,
+      url: uploadedFile.signedUrl,
+    });
+  } catch (error) {
+    return jsonError(error, "Asset upload failed.");
   }
-
-  const formData = await request.formData();
-  const file = formData.get("file");
-  const typeValue = String(formData.get("type") || "upload");
-  const type = isAssetType(typeValue) ? typeValue : "upload";
-
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "File is required." }, { status: 400 });
-  }
-
-  const uploadedFile = await uploadFile({
-    userId: user.id,
-    type,
-    name: file.name,
-    content: await file.arrayBuffer(),
-    contentType: file.type || undefined,
-  });
-  const asset = await createAsset({
-    userId: user.id,
-    type,
-    name: file.name,
-    url: uploadedFile.path,
-  });
-
-  return NextResponse.json({
-    assetId: asset.id,
-    type: asset.type,
-    name: asset.name,
-    url: uploadedFile.signedUrl,
-  });
 }

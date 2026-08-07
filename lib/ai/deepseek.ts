@@ -1,4 +1,5 @@
 import type { AIMessage, AIProvider, GenerateAIResponseOptions } from "@/lib/ai/provider";
+import { getRequiredEnv } from "@/lib/server-env";
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 const DEEPSEEK_MODEL = "deepseek-v4-pro";
@@ -16,11 +17,7 @@ type DeepSeekResponse = {
 
 export const deepseekProvider: AIProvider = {
   async generateAIResponse(messages: AIMessage[], options: GenerateAIResponseOptions = {}) {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("DEEPSEEK_API_KEY is not configured.");
-    }
+    const apiKey = getRequiredEnv("DEEPSEEK_API_KEY");
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",

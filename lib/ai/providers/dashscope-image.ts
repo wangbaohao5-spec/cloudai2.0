@@ -1,3 +1,5 @@
+import { getRequiredEnv } from "@/lib/server-env";
+
 const DASHSCOPE_IMAGE_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis";
 const DASHSCOPE_TASK_API_URL = "https://dashscope.aliyuncs.com/api/v1/tasks";
 const DASHSCOPE_IMAGE_MODEL = "wanx2.1-t2i-turbo";
@@ -43,11 +45,7 @@ async function requestDashScope<T>(url: string, init: RequestInit) {
 }
 
 export async function generateDashScopeImage(prompt: string) {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("DASHSCOPE_API_KEY is not configured.");
-  }
+  const apiKey = getRequiredEnv("DASHSCOPE_API_KEY");
 
   const createTaskData = await requestDashScope<DashScopeCreateTaskResponse>(DASHSCOPE_IMAGE_API_URL, {
     method: "POST",
