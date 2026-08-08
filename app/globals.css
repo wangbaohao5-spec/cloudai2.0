@@ -1222,7 +1222,8 @@ h3 {
 
 .product-workflow-panel,
 .product-analysis-result,
-.product-copywriting-panel {
+.product-copywriting-panel,
+.product-scene-image-panel {
   border-radius: 28px;
   padding: 28px;
 }
@@ -1330,6 +1331,137 @@ h3 {
 
 .product-copywriting-result > button {
   justify-self: start;
+}
+
+.product-scene-image-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 24px;
+}
+
+.product-scene-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.product-scene-options label {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 16px;
+  color: var(--muted);
+  background: rgba(7, 17, 31, 0.32);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.product-scene-options label:hover,
+.product-scene-options label.active {
+  border-color: rgba(40, 216, 255, 0.58);
+  background: linear-gradient(135deg, rgba(40, 216, 255, 0.15), rgba(124, 92, 255, 0.22));
+  transform: translateY(-1px);
+}
+
+.product-scene-options input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.product-scene-options strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.product-scene-options span {
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.product-scene-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.product-scene-controls label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.product-scene-controls select {
+  width: 100%;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.product-scene-controls option {
+  color: #07111f;
+}
+
+.product-scene-image-result {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  padding: 16px;
+  background: rgba(7, 17, 31, 0.32);
+}
+
+.product-scene-image-preview {
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.product-scene-image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+}
+
+.product-scene-image-result dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.product-scene-image-result dl div {
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.product-scene-image-result dt {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.product-scene-image-result dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
 }
 
 .product-analysis-grid {
@@ -2217,7 +2349,10 @@ h3 {
   }
 
   .product-workflow-shell,
-  .product-analysis-grid {
+  .product-analysis-grid,
+  .product-scene-options,
+  .product-scene-controls,
+  .product-scene-image-result dl {
     grid-template-columns: 1fr;
   }
 
