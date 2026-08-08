@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
 import type { ImageGenerationFormData } from "@/lib/types";
-import { recordUsage } from "@/lib/usage";
+import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -31,6 +31,13 @@ export async function POST(request: Request) {
       purpose: body.purpose,
       style: body.style,
     });
+
+    await enforceUsageLimitAndRecord({
+      userId: user.id,
+      type: "image",
+      model: "wanx2.1-t2i-turbo",
+    });
+
     const generatedImage = await generateImage(prompt);
     const storedAssetResult = await settleTask(
       saveRemoteAsset({
@@ -50,26 +57,17 @@ export async function POST(request: Request) {
       taskId: generatedImage.taskId,
       prompt,
     };
-    const [historyResult, usageResult] = await Promise.all([
-      settleTask(
-        saveHistory({
-          userId: user.id,
-          assetId: storedAsset?.asset.id || null,
-          type: "image",
-          title: product,
-          input: body,
-          output,
-        }),
-      ),
-      settleTask(
-        recordUsage({
-          userId: user.id,
-          type: "image",
-          model: "wanx2.1-t2i-turbo",
-        }),
-      ),
-    ]);
-    const warnings = [storedAssetResult.error, historyResult.error, usageResult.error].filter(Boolean);
+    const historyResult = await settleTask(
+      saveHistory({
+        userId: user.id,
+        assetId: storedAsset?.asset.id || null,
+        type: "image",
+        title: product,
+        input: body,
+        output,
+      }),
+    );
+    const warnings = [storedAssetResult.error, historyResult.error].filter(Boolean);
 
     return NextResponse.json({
       prompt,

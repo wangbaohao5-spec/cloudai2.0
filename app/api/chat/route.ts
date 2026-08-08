@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
 import type { ChatMessage } from "@/lib/types";
-import { recordUsage } from "@/lib/usage";
+import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -27,27 +27,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Messages are required." }, { status: 400 });
     }
 
+    await enforceUsageLimitAndRecord({
+      userId: user.id,
+      type: "chat",
+      model: "deepseek-v4-pro",
+    });
+
     const reply = await generateChatReply(messages);
     const lastUserMessage = [...messages].reverse().find((message) => message.role === "user")?.content || "AI 电商助手聊天";
-    const [historyResult, usageResult] = await Promise.all([
-      settleTask(
-        saveHistory({
-          userId: user.id,
-          type: "chat",
-          title: lastUserMessage.length > 32 ? `${lastUserMessage.slice(0, 32)}...` : lastUserMessage,
-          input: { messages },
-          output: { reply },
-        }),
-      ),
-      settleTask(
-        recordUsage({
-          userId: user.id,
-          type: "chat",
-          model: "deepseek-v4-pro",
-        }),
-      ),
-    ]);
-    const warnings = [historyResult.error, usageResult.error].filter(Boolean);
+    const historyResult = await settleTask(
+      saveHistory({
+        userId: user.id,
+        type: "chat",
+        title: lastUserMessage.length > 32 ? `${lastUserMessage.slice(0, 32)}...` : lastUserMessage,
+        input: { messages },
+        output: { reply },
+      }),
+    );
+    const warnings = [historyResult.error].filter(Boolean);
 
     return NextResponse.json({
       reply,
