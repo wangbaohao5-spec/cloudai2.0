@@ -1,8 +1,15 @@
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { RecentTasks } from "@/components/dashboard/recent-tasks";
 import { UsageStats } from "@/components/dashboard/usage-stats";
+import type { UsageStats as UsageStatsData } from "@/lib/usage";
+import type { HistoryRecord } from "@/lib/types";
 
-export function DashboardOverview() {
+type DashboardOverviewProps = {
+  recentHistory: HistoryRecord[];
+  usageStats: UsageStatsData;
+};
+
+export function DashboardOverview({ recentHistory, usageStats }: DashboardOverviewProps) {
   return (
     <main className="dashboard-content">
       <section className="dashboard-overview">
@@ -12,9 +19,9 @@ export function DashboardOverview() {
           <p>你的 AI 电商创作助手</p>
         </div>
 
-        <UsageStats />
+        <UsageStats stats={usageStats} />
         <QuickActions />
-        <RecentTasks />
+        <RecentTasks records={recentHistory} />
       </section>
     </main>
   );

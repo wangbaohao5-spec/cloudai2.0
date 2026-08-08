@@ -1619,6 +1619,11 @@ h3 {
   background: rgba(7, 17, 31, 0.42);
 }
 
+.history-media-preview.compact {
+  min-height: 140px;
+  align-items: center;
+}
+
 .history-copywriting-preview {
   display: grid;
   gap: 16px;
@@ -1627,6 +1632,102 @@ h3 {
   border-radius: 18px;
   padding: 16px;
   background: rgba(7, 17, 31, 0.32);
+}
+
+.history-readable-detail {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(7, 17, 31, 0.32);
+}
+
+.history-readable-detail section {
+  display: grid;
+  gap: 8px;
+}
+
+.history-readable-detail strong {
+  color: var(--accent);
+}
+
+.history-readable-detail p {
+  margin: 0;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.history-readable-detail ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.history-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.history-detail-grid section {
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.history-detail-actions,
+.history-media-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.history-detail-actions button,
+.history-media-meta span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.88rem;
+}
+
+.history-chat-log {
+  display: grid;
+  gap: 12px;
+}
+
+.history-chat-message {
+  display: grid;
+  max-width: min(100%, 720px);
+  gap: 6px;
+}
+
+.history-chat-message.user {
+  justify-self: end;
+}
+
+.history-chat-message span {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.history-chat-message p {
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.history-chat-message.user p {
+  color: #06101d;
+  background: linear-gradient(135deg, var(--accent), var(--primary-light));
 }
 
 .history-copywriting-preview section {
@@ -1667,6 +1768,11 @@ h3 {
   border-radius: 14px;
   object-fit: contain;
   background: #000;
+}
+
+.history-media-preview.compact img,
+.history-media-preview.compact video {
+  max-height: 220px;
 }
 
 .history-media-lightbox {
@@ -2072,6 +2178,10 @@ h3 {
   .history-list-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .history-detail-grid {
+    grid-template-columns: 1fr;
   }
 
   .chat-shell {

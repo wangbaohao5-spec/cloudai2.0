@@ -1,6 +1,6 @@
-import type { UsageCenterData } from "@/lib/usage";
 import { RecentUsageList } from "@/components/usage/recent-usage-list";
 import { UsageSummaryGrid } from "@/components/usage/usage-summary-grid";
+import type { UsageCenterData } from "@/lib/usage";
 
 type UsageCenterProps = {
   data: UsageCenterData;

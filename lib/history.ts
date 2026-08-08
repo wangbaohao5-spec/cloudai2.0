@@ -57,6 +57,20 @@ export async function getHistory(userId: string): Promise<HistoryRecord[]> {
   return records.map(toHistoryRecord);
 }
 
+export async function getRecentHistory(userId: string, take = 8): Promise<HistoryRecord[]> {
+  const records = await db.historyRecord.findMany({
+    where: {
+      userId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take,
+  });
+
+  return records.map(toHistoryRecord);
+}
+
 export async function deleteHistory(userId: string, id: string) {
   await db.historyRecord.deleteMany({
     where: {

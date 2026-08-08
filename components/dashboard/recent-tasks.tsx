@@ -1,9 +1,13 @@
 "use client";
 
 import type { HistoryRecord } from "@/lib/types";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type RecentTaskFilter = "all" | "copywriting" | "image" | "video" | "chat" | "product-analysis";
+
+type RecentTasksProps = {
+  records: HistoryRecord[];
+};
 
 const taskFilters: Array<{ label: string; value: RecentTaskFilter }> = [
   { label: "全部", value: "all" },
@@ -52,35 +56,8 @@ function formatRelativeTime(createdAt: string) {
   return new Date(createdAt).toLocaleDateString("zh-CN");
 }
 
-export function RecentTasks() {
+export function RecentTasks({ records }: RecentTasksProps) {
   const [activeFilter, setActiveFilter] = useState<RecentTaskFilter>("all");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [records, setRecords] = useState<HistoryRecord[]>([]);
-
-  useEffect(() => {
-    async function loadRecentTasks() {
-      try {
-        const response = await fetch("/api/history", {
-          cache: "no-store",
-        });
-
-        if (!response.ok) {
-          throw new Error("最近历史读取失败");
-        }
-
-        const data = (await response.json()) as { records: HistoryRecord[] };
-        setRecords(data.records.slice(0, 8));
-      } catch (caughtError) {
-        setError(caughtError instanceof Error ? caughtError.message : "最近历史读取失败");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadRecentTasks();
-  }, []);
-
   const filteredRecords = useMemo(() => {
     if (activeFilter === "all") {
       return records;
@@ -107,13 +84,7 @@ export function RecentTasks() {
         ))}
       </div>
 
-      {error ? <p className="copywriting-error">{error}</p> : null}
-
-      {isLoading ? (
-        <div className="history-empty-state">
-          <p>正在加载最近记录...</p>
-        </div>
-      ) : filteredRecords.length ? (
+      {filteredRecords.length ? (
         <div className="recent-task-list">
           {filteredRecords.map((record) => (
             <article className="recent-task-item" key={record.id}>
