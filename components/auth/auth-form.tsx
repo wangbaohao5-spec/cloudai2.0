@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getSafeCallbackUrl } from "@/lib/auth-redirect";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -15,6 +16,7 @@ export function AuthForm({ callbackUrl, mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const isRegister = mode === "register";
+  const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,14 +32,14 @@ export function AuthForm({ callbackUrl, mode }: AuthFormProps) {
         email,
         password,
         redirect: false,
-        redirectTo: callbackUrl,
+        redirectTo: safeCallbackUrl,
       });
 
       if (result?.error) {
         throw new Error(isRegister ? "注册失败，请使用有效邮箱和至少 6 位密码。" : "登录失败，请检查邮箱和密码。");
       }
 
-      router.push(result?.url || callbackUrl);
+      router.push(safeCallbackUrl);
       router.refresh();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "认证失败，请稍后再试。");

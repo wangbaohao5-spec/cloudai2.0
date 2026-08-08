@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { AuthForm } from "@/components/auth/auth-form";
+import { getSafeCallbackUrl } from "@/lib/auth-redirect";
 import { redirect } from "next/navigation";
 
 type RegisterPageProps = {
@@ -11,9 +12,10 @@ type RegisterPageProps = {
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const session = await auth();
   const { callbackUrl } = await searchParams;
+  const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
 
   if (session?.user) {
-    redirect(callbackUrl || "/dashboard");
+    redirect(safeCallbackUrl);
   }
 
   return (
@@ -22,7 +24,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         <p className="eyebrow">Create Account</p>
         <h1>注册 CloudAI</h1>
         <p>第一阶段先创建本地会话，后续可接入真实用户数据库。</p>
-        <AuthForm callbackUrl={callbackUrl || "/dashboard"} mode="register" />
+        <AuthForm callbackUrl={safeCallbackUrl} mode="register" />
       </section>
     </main>
   );

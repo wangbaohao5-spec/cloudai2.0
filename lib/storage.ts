@@ -13,6 +13,19 @@ type UploadFileInput = {
 
 const ASSET_BUCKET = "cloudai-assets";
 const SIGNED_URL_EXPIRES_IN = 60 * 60;
+const MB = 1024 * 1024;
+
+export const ASSET_UPLOAD_LIMITS = {
+  image: 10 * MB,
+  video: 100 * MB,
+  upload: 10 * MB,
+} satisfies Record<AssetFileType, number>;
+
+const ALLOWED_CONTENT_TYPES = {
+  image: ["image/png", "image/jpeg", "image/webp"],
+  video: ["video/mp4", "video/webm", "video/quicktime"],
+  upload: ["image/png", "image/jpeg", "image/webp"],
+} satisfies Record<AssetFileType, string[]>;
 
 function getSupabaseStorageClient() {
   const supabaseUrl = getSupabaseUrl();
@@ -33,6 +46,43 @@ function sanitizeFileName(name: string) {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 96) || "asset";
+}
+
+function getContentSize(content: UploadFileInput["content"]) {
+  if (content instanceof ArrayBuffer) {
+    return content.byteLength;
+  }
+
+  if (content instanceof Blob) {
+    return content.size;
+  }
+
+  return content.byteLength;
+}
+
+export function validateAssetFile({
+  type,
+  contentType,
+  size,
+}: {
+  type: AssetFileType;
+  contentType?: string | null;
+  size: number;
+}) {
+  const normalizedContentType = contentType?.split(";")[0]?.trim().toLowerCase();
+  const allowedTypes = ALLOWED_CONTENT_TYPES[type];
+
+  if (size <= 0) {
+    throw new Error("File is empty.");
+  }
+
+  if (!normalizedContentType || !allowedTypes.includes(normalizedContentType)) {
+    throw new Error(`Unsupported file type. Allowed types: ${allowedTypes.join(", ")}.`);
+  }
+
+  if (size > ASSET_UPLOAD_LIMITS[type]) {
+    throw new Error(`File is too large. Maximum size is ${Math.floor(ASSET_UPLOAD_LIMITS[type] / MB)}MB.`);
+  }
 }
 
 export async function ensureAssetBucket() {
@@ -60,6 +110,12 @@ export async function ensureAssetBucket() {
 }
 
 export async function uploadFile({ userId, type, name, content, contentType }: UploadFileInput) {
+  validateAssetFile({
+    type,
+    contentType,
+    size: getContentSize(content),
+  });
+
   await ensureAssetBucket();
 
   const supabase = getSupabaseStorageClient();

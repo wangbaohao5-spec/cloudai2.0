@@ -1,6 +1,6 @@
 import { createAsset } from "@/lib/assets";
 import type { AssetFileType } from "@/lib/storage";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile, validateAssetFile } from "@/lib/storage";
 
 type SaveRemoteAssetInput = {
   userId: string;
@@ -37,6 +37,16 @@ export async function saveRemoteAsset({ userId, type, sourceUrl, name }: SaveRem
   }
 
   const contentType = response.headers.get("content-type") || (type === "video" ? "video/mp4" : "image/png");
+  const contentLength = Number(response.headers.get("content-length") || 0);
+
+  if (contentLength > 0) {
+    validateAssetFile({
+      type,
+      contentType,
+      size: contentLength,
+    });
+  }
+
   const extension = extensionFromContentType(contentType, type);
   const fileName = `${name}.${extension}`;
   const content = await response.arrayBuffer();

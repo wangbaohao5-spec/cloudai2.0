@@ -1,8 +1,8 @@
 import { createAsset } from "@/lib/assets";
-import { jsonError } from "@/lib/api-errors";
+import { getErrorMessage, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import type { AssetFileType } from "@/lib/storage";
-import { uploadFile } from "@/lib/storage";
+import { uploadFile, validateAssetFile } from "@/lib/storage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -26,6 +26,16 @@ export async function POST(request: Request) {
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "File is required." }, { status: 400 });
+    }
+
+    try {
+      validateAssetFile({
+        type,
+        contentType: file.type,
+        size: file.size,
+      });
+    } catch (error) {
+      return NextResponse.json({ error: getErrorMessage(error, "Invalid file.") }, { status: 400 });
     }
 
     const uploadedFile = await uploadFile({
