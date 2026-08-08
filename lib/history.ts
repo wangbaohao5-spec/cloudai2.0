@@ -71,6 +71,17 @@ export async function getRecentHistory(userId: string, take = 8): Promise<Histor
   return records.map(toHistoryRecord);
 }
 
+export async function getHistoryRecordForUser(userId: string, id: string): Promise<HistoryRecord | null> {
+  const record = await db.historyRecord.findFirst({
+    where: {
+      id,
+      userId,
+    },
+  });
+
+  return record ? toHistoryRecord(record) : null;
+}
+
 export async function deleteHistory(userId: string, id: string) {
   await db.historyRecord.deleteMany({
     where: {

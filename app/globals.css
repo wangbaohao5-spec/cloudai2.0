@@ -1214,6 +1214,12 @@ h3 {
   gap: 24px;
 }
 
+.product-workflow-results {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
 .product-workflow-panel,
 .product-analysis-result {
   border-radius: 28px;
@@ -1275,6 +1281,54 @@ h3 {
   color: var(--muted);
   font-size: 0.9rem;
   word-break: break-word;
+}
+
+.product-copywriting-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 24px;
+}
+
+.product-copywriting-form h3 {
+  margin-bottom: 0;
+  font-size: 1.4rem;
+}
+
+.product-copywriting-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.product-copywriting-form select {
+  width: 100%;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.product-copywriting-form option {
+  color: #07111f;
+}
+
+.product-copywriting-result {
+  display: grid;
+  gap: 14px;
+}
+
+.product-copywriting-result .copywriting-result {
+  min-height: auto;
+}
+
+.product-copywriting-result > button {
+  justify-self: start;
 }
 
 .product-analysis-grid {

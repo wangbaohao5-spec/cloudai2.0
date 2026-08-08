@@ -13,6 +13,7 @@ export type ProductImageAnalysis = {
 
 export type ProductAnalysisResponse = {
   assetId: string;
+  historyId?: string;
   title: string;
   analysis: ProductImageAnalysis;
   warnings?: string[];

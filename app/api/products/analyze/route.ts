@@ -65,6 +65,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       assetId: asset.id,
+      historyId: historyResult.data?.id,
       title,
       analysis,
       warnings: warnings.length ? warnings : undefined,
