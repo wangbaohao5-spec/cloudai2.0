@@ -1,6 +1,7 @@
 "use client";
 
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
+import type { ProductImageAnalysis } from "@/lib/product-types";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -19,10 +20,11 @@ const historyTypeLabels: Record<HistoryRecord["type"], string> = {
   image: "图片",
   "image-enhance": "图片优化",
   video: "视频",
+  "product-analysis": "商品分析",
 };
 
 function canPreviewAsset(record: HistoryRecord) {
-  return Boolean(record.assetId && (record.type === "image" || record.type === "video"));
+  return Boolean(record.assetId && (record.type === "image" || record.type === "video" || record.type === "product-analysis"));
 }
 
 function isCopywritingResult(output: unknown): output is CopywritingResult {
@@ -33,6 +35,16 @@ function isCopywritingResult(output: unknown): output is CopywritingResult {
   const value = output as Partial<CopywritingResult>;
 
   return typeof value.title === "string" || Array.isArray(value.points) || typeof value.description === "string" || typeof value.shortVideoScript === "string";
+}
+
+function isProductImageAnalysis(output: unknown): output is ProductImageAnalysis {
+  if (!output || typeof output !== "object") {
+    return false;
+  }
+
+  const value = output as Partial<ProductImageAnalysis>;
+
+  return typeof value.category === "string" || Array.isArray(value.sellingPoints) || Array.isArray(value.productNameSuggestions);
 }
 
 function buildCopywritingText(result: CopywritingResult) {
@@ -46,14 +58,33 @@ function buildCopywritingText(result: CopywritingResult) {
     .join("\n\n");
 }
 
+function buildProductAnalysisText(result: ProductImageAnalysis) {
+  return [
+    `商品类别：\n${result.category || ""}`,
+    `商品名称建议：\n${(result.productNameSuggestions || []).map((item) => `- ${item}`).join("\n")}`,
+    `商品特点：\n${(result.features || []).map((item) => `- ${item}`).join("\n")}`,
+    `电商卖点：\n${(result.sellingPoints || []).map((item) => `- ${item}`).join("\n")}`,
+    `目标用户：\n${result.targetAudience || ""}`,
+    `使用场景：\n${(result.scenes || []).map((item) => `- ${item}`).join("\n")}`,
+    `风险提示：\n${(result.risks || []).map((item) => `- ${item}`).join("\n")}`,
+  ]
+    .filter((section) => section.trim())
+    .join("\n\n");
+}
+
 export function HistoryItem({ record, onDelete }: HistoryItemProps) {
   const [assetUrl, setAssetUrl] = useState("");
   const [assetError, setAssetError] = useState("");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const copywritingResult = isCopywritingResult(record.output) ? record.output : null;
+  const productAnalysis = isProductImageAnalysis(record.output) ? record.output : null;
   const recordText = useMemo(() => {
     if (copywritingResult) {
       return buildCopywritingText(copywritingResult);
+    }
+
+    if (productAnalysis) {
+      return buildProductAnalysisText(productAnalysis);
     }
 
     return JSON.stringify(
@@ -64,7 +95,7 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
       null,
       2,
     );
-  }, [copywritingResult, record.input, record.output]);
+  }, [copywritingResult, productAnalysis, record.input, record.output]);
 
   useEffect(() => {
     let isMounted = true;
@@ -148,9 +179,30 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
         </div>
       ) : null}
 
+      {productAnalysis ? (
+        <div className="history-copywriting-preview">
+          <section>
+            <strong>商品类别：</strong>
+            <p>{productAnalysis.category}</p>
+          </section>
+          <section>
+            <strong>电商卖点：</strong>
+            <ul>
+              {productAnalysis.sellingPoints.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <strong>目标用户：</strong>
+            <p>{productAnalysis.targetAudience}</p>
+          </section>
+        </div>
+      ) : null}
+
       {canPreviewAsset(record) ? (
         <div className="history-media-preview">
-          {assetUrl && record.type === "image" ? (
+          {assetUrl && (record.type === "image" || record.type === "product-analysis") ? (
             <button type="button" onClick={() => setIsPreviewOpen(true)} aria-label="放大查看图片">
               <Image alt={record.title} height={640} src={assetUrl} unoptimized width={960} />
             </button>
@@ -167,7 +219,7 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
         </div>
       ) : null}
 
-      {copywritingResult ? null : (
+      {copywritingResult || productAnalysis ? null : (
         <details className="history-detail-block">
           <summary>查看详情</summary>
           <pre>{recordText}</pre>
@@ -176,7 +228,7 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
 
       <div className="history-actions">
         <button type="button" onClick={handleCopy}>
-          {copywritingResult ? "复制文案" : "复制内容"}
+          {copywritingResult ? "复制文案" : productAnalysis ? "复制分析" : "复制内容"}
         </button>
         <button type="button" onClick={() => onDelete(record.id)}>
           删除记录

@@ -37,7 +37,7 @@ export type ImageGenerationResult = {
 export type HistoryRecord = {
   id: string;
   assetId?: string | null;
-  type: "copywriting" | "chat" | "image" | "image-enhance" | "video";
+  type: "copywriting" | "chat" | "image" | "image-enhance" | "video" | "product-analysis";
   title: string;
   input: unknown;
   output: unknown;

@@ -1,11 +1,11 @@
-export type UsageType = "chat" | "copywriting" | "image" | "image-enhance" | "video";
+export type UsageType = "chat" | "copywriting" | "image" | "image-enhance" | "video" | "product-analysis";
 
 export type UsageLimitRule = {
   windowSeconds: number;
   max: number;
 };
 
-export const USAGE_TYPES = ["chat", "copywriting", "image", "image-enhance", "video"] as const;
+export const USAGE_TYPES = ["chat", "copywriting", "image", "image-enhance", "video", "product-analysis"] as const;
 
 export const USAGE_TYPE_LABELS = {
   chat: "AI Chat",
@@ -13,6 +13,7 @@ export const USAGE_TYPE_LABELS = {
   image: "AI 图片",
   "image-enhance": "图片优化",
   video: "AI 视频",
+  "product-analysis": "商品分析",
 } satisfies Record<UsageType, string>;
 
 export const USAGE_LIMITS = {
@@ -38,6 +39,11 @@ export const USAGE_LIMITS = {
   video: [
     { windowSeconds: 60, max: 1 },
     { windowSeconds: 24 * 60 * 60, max: 10 },
+  ],
+  "product-analysis": [
+    { windowSeconds: 30, max: 2 },
+    { windowSeconds: 60, max: 5 },
+    { windowSeconds: 24 * 60 * 60, max: 50 },
   ],
 } satisfies Record<UsageType, UsageLimitRule[]>;
 

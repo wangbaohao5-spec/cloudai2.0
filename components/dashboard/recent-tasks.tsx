@@ -3,7 +3,7 @@
 import type { HistoryRecord } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 
-type RecentTaskFilter = "all" | "copywriting" | "image" | "video" | "chat";
+type RecentTaskFilter = "all" | "copywriting" | "image" | "video" | "chat" | "product-analysis";
 
 const taskFilters: Array<{ label: string; value: RecentTaskFilter }> = [
   { label: "全部", value: "all" },
@@ -11,6 +11,7 @@ const taskFilters: Array<{ label: string; value: RecentTaskFilter }> = [
   { label: "图片", value: "image" },
   { label: "视频", value: "video" },
   { label: "聊天", value: "chat" },
+  { label: "商品分析", value: "product-analysis" },
 ];
 
 const taskTypeLabels: Record<HistoryRecord["type"], string> = {
@@ -19,6 +20,7 @@ const taskTypeLabels: Record<HistoryRecord["type"], string> = {
   image: "图片",
   "image-enhance": "图片",
   video: "视频",
+  "product-analysis": "商品分析",
 };
 
 function getTaskCategory(type: HistoryRecord["type"]): RecentTaskFilter {
@@ -126,7 +128,7 @@ export function RecentTasks() {
         </div>
       ) : (
         <div className="history-empty-state">
-          <p>{records.length ? "当前分类下暂无记录。" : "暂无生成历史。完成一次 AI 生成后，这里会显示最新记录。"}</p>
+          <p>{records.length ? "当前分类下暂无记录。" : "暂无生成历史。完成一次 AI 生成或商品分析后，这里会显示最新记录。"}</p>
         </div>
       )}
     </section>

@@ -13,6 +13,7 @@ const historyFilters: Array<{ label: string; value: HistoryFilter }> = [
   { label: "图片", value: "image" },
   { label: "图片优化", value: "image-enhance" },
   { label: "视频", value: "video" },
+  { label: "商品分析", value: "product-analysis" },
 ];
 
 export function HistoryList() {
@@ -75,7 +76,7 @@ export function HistoryList() {
         <div>
           <p className="eyebrow">History Center</p>
           <h2>历史中心</h2>
-          <p>统一查看文案、聊天、图片、图片优化和视频任务记录。媒体文件会通过云端资产生成临时访问链接。</p>
+          <p>统一查看文案、聊天、图片、图片优化、视频和商品分析记录。媒体文件会通过云端资产生成临时访问链接。</p>
         </div>
         <button className="history-clear-button" disabled={!records.length || isLoading} type="button" onClick={() => void handleClear()}>
           清空记录
@@ -104,7 +105,7 @@ export function HistoryList() {
         </div>
       ) : (
         <div className="history-empty-state">
-          <p>{records.length ? "当前筛选下暂无记录。" : "暂无历史记录。生成商品文案、AI 图片、优化商品图、AI 视频或完成聊天后，会自动保存到这里。"}</p>
+          <p>{records.length ? "当前筛选下暂无记录。" : "暂无历史记录。完成 AI 生成或商品分析后，会自动保存到这里。"}</p>
         </div>
       )}
     </section>

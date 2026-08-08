@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const dashboardNavItems = [
   { href: "/dashboard", label: "概览" },
+  { href: "/dashboard/products", label: "商品工作流" },
   { href: "/dashboard/copywriting", label: "商品文案" },
   { href: "/dashboard/image", label: "AI 图片生成" },
   { href: "/dashboard/image-enhance", label: "商品图优化" },

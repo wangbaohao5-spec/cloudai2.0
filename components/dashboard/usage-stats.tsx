@@ -13,6 +13,7 @@ const emptyStats: UsageStatsData = {
     image: 0,
     "image-enhance": 0,
     video: 0,
+    "product-analysis": 0,
   },
 };
 
@@ -22,6 +23,7 @@ const usageTypeLabels = [
   { label: "图片", value: "image" },
   { label: "图片优化", value: "image-enhance" },
   { label: "视频", value: "video" },
+  { label: "商品分析", value: "product-analysis" },
 ] as const;
 
 export function UsageStats() {
@@ -41,8 +43,13 @@ export function UsageStats() {
 
         const data = (await response.json()) as UsageStatsData;
         setStats({
+          ...emptyStats,
           ...data,
           total: data.total ?? data.today,
+          byType: {
+            ...emptyStats.byType,
+            ...data.byType,
+          },
         });
       } catch (caughtError) {
         setError(caughtError instanceof Error ? caughtError.message : "使用统计读取失败");
