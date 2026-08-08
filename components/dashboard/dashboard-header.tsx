@@ -6,19 +6,28 @@ type DashboardHeaderProps = {
   userName: string;
 };
 
+const mobileNavItems = [
+  { href: "/dashboard", label: "概览" },
+  { href: "/dashboard/copywriting", label: "商品文案" },
+  { href: "/dashboard/image", label: "AI 图片生成" },
+  { href: "/dashboard/image-enhance", label: "商品图优化" },
+  { href: "/dashboard/video", label: "AI 视频生成" },
+  { href: "/dashboard/chat", label: "AI 电商助手" },
+  { href: "/dashboard/history", label: "历史记录" },
+  { href: "/dashboard/usage", label: "用量中心" },
+];
+
 export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
   return (
     <header className="dashboard-header">
       <details className="dashboard-mobile-nav">
         <summary>菜单</summary>
         <nav>
-          <Link href="/dashboard">概览</Link>
-          <Link href="/dashboard/copywriting">商品文案</Link>
-          <Link href="/dashboard/image">AI 图片生成</Link>
-          <Link href="/dashboard/image-enhance">商品图优化</Link>
-          <Link href="/dashboard/video">AI 视频生成</Link>
-          <Link href="/dashboard/chat">AI 电商助手</Link>
-          <Link href="/dashboard/history">历史记录</Link>
+          {mobileNavItems.map((item) => (
+            <Link href={item.href} key={item.href}>
+              {item.label}
+            </Link>
+          ))}
         </nav>
       </details>
       <div>

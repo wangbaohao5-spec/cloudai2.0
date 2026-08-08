@@ -8,6 +8,7 @@ const dashboardNavItems = [
   { href: "/dashboard/video", label: "AI 视频生成" },
   { href: "/dashboard/chat", label: "AI 电商助手" },
   { href: "/dashboard/history", label: "历史记录" },
+  { href: "/dashboard/usage", label: "用量中心" },
 ];
 
 export function AppSidebar() {

@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import { ApiError } from "@/lib/api-errors";
+import { getDailyUsageLimit, USAGE_LIMITS, USAGE_TYPE_LABELS, USAGE_TYPES, type UsageType } from "@/lib/usage-limits";
 
 export type UsageRecord = {
   id: string;
-  type: "chat" | "copywriting" | "image" | "image-enhance" | "video";
+  type: UsageType;
   model: string;
   createdAt: string;
 };
@@ -21,36 +22,19 @@ export type UsageRecordInput = {
   model: string;
 };
 
-type UsageLimitRule = {
-  windowSeconds: number;
-  max: number;
+export type UsageCenterSummary = {
+  type: UsageType;
+  label: string;
+  today: number;
+  dailyLimit: number;
+  remainingToday: number;
 };
 
-const USAGE_LIMITS = {
-  chat: [
-    { windowSeconds: 10, max: 3 },
-    { windowSeconds: 60, max: 12 },
-    { windowSeconds: 24 * 60 * 60, max: 120 },
-  ],
-  copywriting: [
-    { windowSeconds: 10, max: 2 },
-    { windowSeconds: 60, max: 8 },
-    { windowSeconds: 24 * 60 * 60, max: 100 },
-  ],
-  image: [
-    { windowSeconds: 30, max: 2 },
-    { windowSeconds: 60, max: 3 },
-    { windowSeconds: 24 * 60 * 60, max: 30 },
-  ],
-  "image-enhance": [
-    { windowSeconds: 60, max: 10 },
-    { windowSeconds: 24 * 60 * 60, max: 100 },
-  ],
-  video: [
-    { windowSeconds: 60, max: 1 },
-    { windowSeconds: 24 * 60 * 60, max: 10 },
-  ],
-} satisfies Record<UsageRecord["type"], UsageLimitRule[]>;
+export type UsageCenterData = {
+  generatedAt: string;
+  summaries: UsageCenterSummary[];
+  recentRecords: UsageRecord[];
+};
 
 function getRateLimitMessage(type: UsageRecord["type"], retryAfterSeconds: number, windowSeconds: number) {
   if (windowSeconds >= 24 * 60 * 60) {
@@ -169,12 +153,64 @@ export async function getUsageStats(userId: string): Promise<UsageStats> {
     today,
     month,
     total,
-    byType: {
-      chat: byTypeRows.find((row) => row.type === "chat")?._count.type || 0,
-      copywriting: byTypeRows.find((row) => row.type === "copywriting")?._count.type || 0,
-      image: byTypeRows.find((row) => row.type === "image")?._count.type || 0,
-      "image-enhance": byTypeRows.find((row) => row.type === "image-enhance")?._count.type || 0,
-      video: byTypeRows.find((row) => row.type === "video")?._count.type || 0,
-    },
+    byType: Object.fromEntries(
+      USAGE_TYPES.map((type) => [type, byTypeRows.find((row) => row.type === type)?._count.type || 0]),
+    ) as UsageStats["byType"],
+  };
+}
+
+export async function getUsageCenterData(userId: string): Promise<UsageCenterData> {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const [todayRows, recentRows] = await Promise.all([
+    db.usageRecord.groupBy({
+      by: ["type"],
+      where: {
+        userId,
+        createdAt: {
+          gte: startOfToday,
+        },
+      },
+      _count: {
+        type: true,
+      },
+    }),
+    db.usageRecord.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 20,
+      select: {
+        id: true,
+        type: true,
+        model: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    generatedAt: now.toISOString(),
+    summaries: USAGE_TYPES.map((type) => {
+      const today = todayRows.find((row) => row.type === type)?._count.type || 0;
+      const dailyLimit = getDailyUsageLimit(type);
+
+      return {
+        type,
+        label: USAGE_TYPE_LABELS[type],
+        today,
+        dailyLimit,
+        remainingToday: Math.max(dailyLimit - today, 0),
+      };
+    }),
+    recentRecords: recentRows.map((record) => ({
+      id: record.id,
+      type: record.type as UsageType,
+      model: record.model,
+      createdAt: record.createdAt.toISOString(),
+    })),
   };
 }
