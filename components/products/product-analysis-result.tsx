@@ -1,4 +1,7 @@
+"use client";
+
 import type { ProductImageAnalysis } from "@/lib/product-types";
+import { useState } from "react";
 
 type ProductAnalysisResultProps = {
   analysis: ProductImageAnalysis | null;
@@ -12,14 +15,18 @@ function DetailList({ items }: { items: string[] }) {
 
   return (
     <ul>
-      {items.map((item) => (
-        <li key={item}>{item}</li>
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`}>{item}</li>
       ))}
     </ul>
   );
 }
 
 export function ProductAnalysisResult({ analysis, title }: ProductAnalysisResultProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const primaryName = analysis?.productNameSuggestions[0] || "暂无明确建议";
+  const summaryPoints = analysis?.sellingPoints.slice(0, 3) || [];
+
   return (
     <div className="product-analysis-result glass-card">
       <p className="eyebrow">Analysis Result</p>
@@ -30,43 +37,69 @@ export function ProductAnalysisResult({ analysis, title }: ProductAnalysisResult
           <p>上传商品图片并点击分析后，这里会展示商品类别、名称建议、卖点、目标用户和使用场景。</p>
         </div>
       ) : (
-        <div className="product-analysis-grid">
-          <section>
-            <strong>商品类别</strong>
-            <p>{analysis.category}</p>
-          </section>
-          <section>
-            <strong>商品名称建议</strong>
-            <DetailList items={analysis.productNameSuggestions} />
-          </section>
-          <section>
-            <strong>商品特点</strong>
-            <DetailList items={analysis.features} />
-          </section>
-          <section>
-            <strong>电商卖点</strong>
-            <DetailList items={analysis.sellingPoints} />
-          </section>
-          <section>
-            <strong>目标用户</strong>
-            <p>{analysis.targetAudience}</p>
-          </section>
-          <section>
-            <strong>使用场景</strong>
-            <DetailList items={analysis.scenes} />
-          </section>
-          <section>
-            <strong>视觉风格</strong>
-            <p>{analysis.visualStyle}</p>
-          </section>
-          <section>
-            <strong>颜色 / 材质</strong>
-            <p>{[analysis.color, analysis.material].filter(Boolean).join(" / ") || "图片中无法明确确认"}</p>
-          </section>
-          <section className="product-analysis-wide">
-            <strong>风险提示</strong>
-            <DetailList items={analysis.risks} />
-          </section>
+        <div className="product-analysis-summary">
+          <div className="product-analysis-summary-grid">
+            <section>
+              <strong>商品类别</strong>
+              <p>{analysis.category}</p>
+            </section>
+            <section>
+              <strong>商品名称建议</strong>
+              <p>{primaryName}</p>
+            </section>
+            <section>
+              <strong>目标用户</strong>
+              <p>{analysis.targetAudience}</p>
+            </section>
+            <section>
+              <strong>前 3 条核心卖点</strong>
+              <DetailList items={summaryPoints} />
+            </section>
+          </div>
+
+          <div className="product-next-actions">
+            <div>
+              <span>下一步</span>
+              <strong>继续把分析结果变成可用素材</strong>
+            </div>
+            <div>
+              <a href="#product-copywriting-panel">生成商品文案</a>
+              <a href="#product-scene-image-panel">生成营销场景图</a>
+            </div>
+          </div>
+
+          <button className="product-analysis-toggle" type="button" onClick={() => setIsExpanded((current) => !current)}>
+            {isExpanded ? "收起完整分析" : "查看完整分析"}
+          </button>
+
+          {isExpanded ? (
+            <div className="product-analysis-grid">
+              <section>
+                <strong>商品名称建议</strong>
+                <DetailList items={analysis.productNameSuggestions} />
+              </section>
+              <section>
+                <strong>商品特点</strong>
+                <DetailList items={analysis.features} />
+              </section>
+              <section>
+                <strong>使用场景</strong>
+                <DetailList items={analysis.scenes} />
+              </section>
+              <section>
+                <strong>视觉风格</strong>
+                <p>{analysis.visualStyle}</p>
+              </section>
+              <section>
+                <strong>材质 / 颜色</strong>
+                <p>{[analysis.material, analysis.color].filter(Boolean).join(" / ") || "图片中无法明确确认"}</p>
+              </section>
+              <section className="product-analysis-wide">
+                <strong>风险提示</strong>
+                <DetailList items={analysis.risks} />
+              </section>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

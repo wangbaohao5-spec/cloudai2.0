@@ -12,12 +12,36 @@ type UploadedAsset = {
   url: string;
 };
 
+type WorkflowStepStatus = "done" | "current" | "locked";
+
+function getWorkflowStepStatus(step: "upload" | "analysis" | "copywriting" | "scene", hasAsset: boolean, isAnalyzing: boolean, hasResult: boolean): WorkflowStepStatus {
+  if (step === "upload") {
+    return hasAsset ? "done" : "current";
+  }
+
+  if (step === "analysis") {
+    if (hasResult) {
+      return "done";
+    }
+
+    return hasAsset || isAnalyzing ? "current" : "locked";
+  }
+
+  return hasResult ? "current" : "locked";
+}
+
 export function ProductWorkflowShell() {
   const [error, setError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [result, setResult] = useState<ProductAnalysisResponse | null>(null);
+  const workflowSteps = [
+    { id: "upload" as const, label: "上传商品图" },
+    { id: "analysis" as const, label: "AI分析" },
+    { id: "copywriting" as const, label: "商品文案" },
+    { id: "scene" as const, label: "场景图" },
+  ];
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -97,6 +121,18 @@ export function ProductWorkflowShell() {
           <p className="image-generation-intro">
             上传商品图片，CloudAI 会识别商品类别、特点、卖点、目标用户和使用场景。分析完成后，右侧会继续引导你生成商品文案。
           </p>
+
+          <div className="product-workflow-steps" aria-label="商品工作流进度">
+            {workflowSteps.map((step) => {
+              const status = getWorkflowStepStatus(step.id, Boolean(uploadedAsset), isAnalyzing, Boolean(result));
+
+              return (
+                <span className={status} key={step.id}>
+                  {step.label}
+                </span>
+              );
+            })}
+          </div>
 
           <div className="product-upload-box">
             <label>

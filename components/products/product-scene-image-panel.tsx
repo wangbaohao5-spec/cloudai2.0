@@ -98,20 +98,20 @@ export function ProductSceneImagePanel({ analysisResult }: ProductSceneImagePane
 
   if (!analysisResult) {
     return (
-      <section className="product-scene-image-panel glass-card">
+      <section className="product-scene-image-panel glass-card" id="product-scene-image-panel">
         <p className="eyebrow">Visual Workflow</p>
-        <h2>商品营销场景图</h2>
-        <p className="image-generation-intro">完成商品图片分析后，这里会根据分析结果生成适合电商投放的营销场景图。</p>
+        <h2>AI 商品营销场景图</h2>
+        <p className="image-generation-intro">完成商品图片分析后，可以选择营销场景、平台和视觉风格，生成适合投放或上架的场景图。</p>
       </section>
     );
   }
 
   return (
-    <section className="product-scene-image-panel glass-card">
+    <section className="product-scene-image-panel glass-card" id="product-scene-image-panel">
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Visual Workflow</p>
-          <h2>商品营销场景图</h2>
+          <h2>AI 商品营销场景图</h2>
           <p className="image-generation-intro">基于当前商品分析结果生成营销场景图，不依赖原图复刻。</p>
         </div>
         <span>已连接分析结果</span>

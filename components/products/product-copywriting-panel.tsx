@@ -97,20 +97,20 @@ export function ProductCopywritingPanel({ analysisResult }: ProductCopywritingPa
 
   if (!analysisResult) {
     return (
-      <section className="product-copywriting-panel glass-card">
+      <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
         <p className="eyebrow">Next Step</p>
-        <h2>商品文案生成</h2>
-        <p className="image-generation-intro">完成商品图片分析后，这里会出现基于分析结果生成电商营销文案的下一步操作。</p>
+        <h2>AI 商品营销文案</h2>
+        <p className="image-generation-intro">先完成商品图片分析，CloudAI 会把识别到的类别、卖点和目标用户转成可发布的电商文案。</p>
       </section>
     );
   }
 
   return (
-    <section className="product-copywriting-panel glass-card">
+    <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Next Step</p>
-          <h2>商品文案生成</h2>
+          <h2>AI 商品营销文案</h2>
           <p className="image-generation-intro">基于当前商品分析结果生成电商营销文案。</p>
         </div>
         <span>已连接分析结果</span>
