@@ -3,6 +3,9 @@ import Image from "next/image";
 export type ImageEditViewResult = {
   imageUrl: string;
   assetId: string;
+  goalTitle: string;
+  prompt: string;
+  model: string;
 };
 
 type ImageEditResultProps = {
@@ -19,13 +22,23 @@ export function ImageEditResult({ result }: ImageEditResultProps) {
       </div>
       <div className="image-enhance-result-group">
         <strong>任务状态</strong>
-        <p>{result ? "success" : "等待编辑"}</p>
+        <p>{result ? "优化完成" : "等待优化"}</p>
       </div>
       {result ? (
-        <div className="image-enhance-result-group">
-          <strong>生成 Asset ID</strong>
-          <p>{result.assetId}</p>
-        </div>
+        <>
+          <div className="image-enhance-result-group">
+            <strong>优化目标</strong>
+            <p>{result.goalTitle}</p>
+          </div>
+          <div className="image-enhance-result-group">
+            <strong>使用 Prompt</strong>
+            <p>{result.prompt}</p>
+          </div>
+          <div className="image-edit-result-meta">
+            <span>模型来源：{result.model}</span>
+            <span>Asset ID：{result.assetId}</span>
+          </div>
+        </>
       ) : null}
     </section>
   );

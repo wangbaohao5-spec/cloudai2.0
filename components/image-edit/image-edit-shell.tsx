@@ -2,6 +2,7 @@
 
 import { ImageEditForm, type ImageEditFormData } from "@/components/image-edit/image-edit-form";
 import { ImageEditResult, type ImageEditViewResult } from "@/components/image-edit/image-edit-result";
+import { getProductImageEditGoal } from "@/lib/product-image-edit-options";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,14 +20,17 @@ export function ImageEditShell() {
 
   async function handleSubmit(data: ImageEditFormData) {
     if (!data.assetId) {
-      setError("请输入或上传一张图片 Asset。");
+      setError("请先上传一张商品图片。");
       return;
     }
 
     if (!data.prompt) {
-      setError("请输入图片编辑 Prompt。");
+      setError("请输入商品图片优化 Prompt。");
       return;
     }
+
+    const model = "gpt-image-2";
+    const goal = getProductImageEditGoal(data.goalId);
 
     setError("");
     setIsLoading(true);
@@ -37,7 +41,11 @@ export function ImageEditShell() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          assetId: data.assetId,
+          prompt: data.prompt,
+          model,
+        }),
       });
 
       if (!response.ok) {
@@ -45,7 +53,13 @@ export function ImageEditShell() {
         throw new Error(errorData?.error || "图片编辑请求失败，请稍后再试。");
       }
 
-      setResult((await response.json()) as ImageEditViewResult);
+      const editResult = (await response.json()) as Pick<ImageEditViewResult, "imageUrl" | "assetId">;
+      setResult({
+        ...editResult,
+        goalTitle: goal.title,
+        prompt: data.prompt,
+        model,
+      });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "图片编辑失败，请稍后再试。");
     } finally {
@@ -59,14 +73,14 @@ export function ImageEditShell() {
         <Link href="/dashboard/image">AI 图片生成</Link>
         <Link href="/dashboard/image-enhance">商品图优化</Link>
         <Link className="active" href="/dashboard/image-edit">
-          图片编辑实验
+          商品图片优化
         </Link>
       </div>
       <section className="image-edit-shell">
         <div className="image-edit-panel glass-card">
-          <p className="eyebrow">Image Edit Lab</p>
-          <h2>GPT-image-2 图片编辑实验</h2>
-          <p className="image-generation-intro">上传图片或输入已有 Asset ID，通过 Run API 测试 GPT-image-2 edit 链路。</p>
+          <p className="eyebrow">Product Image Edit</p>
+          <h2>商品图片优化</h2>
+          <p className="image-generation-intro">上传商品图，选择优化目标，CloudAI 会生成可编辑 Prompt 并调用 GPT-image-2 优化图片。</p>
           <ImageEditForm
             disabled={isLoading}
             error={error}

@@ -6,6 +6,10 @@ const DASHSCOPE_IMAGE_MODEL = "wanx2.1-t2i-turbo";
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 45;
 
+type DashScopeImageOptions = {
+  model?: string;
+};
+
 type DashScopeCreateTaskResponse = {
   output?: {
     task_id?: string;
@@ -44,8 +48,9 @@ async function requestDashScope<T>(url: string, init: RequestInit) {
   return data;
 }
 
-export async function generateDashScopeImage(prompt: string) {
+export async function generateDashScopeImage(prompt: string, options: DashScopeImageOptions = {}) {
   const apiKey = getRequiredEnv("DASHSCOPE_API_KEY");
+  const model = options.model || DASHSCOPE_IMAGE_MODEL;
 
   const createTaskData = await requestDashScope<DashScopeCreateTaskResponse>(DASHSCOPE_IMAGE_API_URL, {
     method: "POST",
@@ -55,7 +60,7 @@ export async function generateDashScopeImage(prompt: string) {
       "X-DashScope-Async": "enable",
     },
     body: JSON.stringify({
-      model: DASHSCOPE_IMAGE_MODEL,
+      model,
       input: {
         prompt,
       },

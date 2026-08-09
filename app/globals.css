@@ -1284,6 +1284,76 @@ h3 {
   word-break: break-word;
 }
 
+.image-edit-goal-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.image-edit-goal-selector label {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-height: 148px;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 16px;
+  color: var(--muted);
+  background: rgba(7, 17, 31, 0.34);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.image-edit-goal-selector label:hover,
+.image-edit-goal-selector label.active {
+  border-color: rgba(40, 216, 255, 0.58);
+  background: linear-gradient(135deg, rgba(40, 216, 255, 0.14), rgba(124, 92, 255, 0.22));
+  transform: translateY(-1px);
+}
+
+.image-edit-goal-selector input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.image-edit-goal-selector span {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.image-edit-goal-selector strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.image-edit-goal-selector p {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.image-edit-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.image-edit-result-meta span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.86rem;
+  word-break: break-word;
+}
+
 .product-workflow-shell {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -2563,6 +2633,10 @@ h3 {
   }
 
   .image-edit-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .image-edit-goal-selector {
     grid-template-columns: 1fr;
   }
 

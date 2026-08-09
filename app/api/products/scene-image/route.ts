@@ -1,4 +1,5 @@
 import { generateImage } from "@/lib/ai/image-provider";
+import { resolveRoutedImageModel } from "@/lib/ai/image-router";
 import { buildProductScenePrompt } from "@/lib/ai/product-scene-prompt-builder";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveRemoteAsset } from "@/lib/asset-ingest";
@@ -65,14 +66,18 @@ export async function POST(request: Request) {
       platform,
       style,
     });
+    const imageRoute = resolveRoutedImageModel("product-scene-image");
 
     await enforceUsageLimitAndRecord({
       userId: user.id,
-      type: "image",
-      model: "wanx2.1-t2i-turbo:product-scene",
+      type: imageRoute.usageType,
+      model: imageRoute.model,
     });
 
-    const generatedImage = await generateImage(prompt);
+    const generatedImage = await generateImage({
+      task: "product-scene-image",
+      prompt,
+    });
     const title = getProductTitle(analysisRecord.output, scene);
     const storedAssetResult = await settleTask(
       saveRemoteAsset({
@@ -91,7 +96,9 @@ export async function POST(request: Request) {
       storageError: storedAssetResult.error || undefined,
       taskId: generatedImage.taskId,
       prompt,
-      provider: "dashscope-text2image",
+      provider: generatedImage.provider,
+      model: generatedImage.model,
+      modelId: generatedImage.modelId,
       limitation: "基于商品分析结果生成，非原图参考生成",
     };
     const historyResult = await settleTask(

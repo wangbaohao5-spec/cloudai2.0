@@ -1,5 +1,10 @@
 "use client";
 
+import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
+import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
+import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
+import { useState } from "react";
+
 type UploadedAsset = {
   assetId: string;
   name: string;
@@ -9,7 +14,7 @@ type UploadedAsset = {
 export type ImageEditFormData = {
   assetId: string;
   prompt: string;
-  model: string;
+  goalId: ProductImageEditGoalId;
 };
 
 type ImageEditFormProps = {
@@ -21,9 +26,16 @@ type ImageEditFormProps = {
   onSubmit: (data: ImageEditFormData) => void;
 };
 
-const defaultPrompt = "保留商品主体，优化为高质量电商商品图，背景更干净，光线更专业，突出产品质感。";
-
 export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChange, uploadedAsset }: ImageEditFormProps) {
+  const defaultGoalId: ProductImageEditGoalId = "main-image";
+  const [goalId, setGoalId] = useState<ProductImageEditGoalId>(defaultGoalId);
+  const [prompt, setPrompt] = useState(() => buildProductImageEditPrompt({ goalId: defaultGoalId }));
+
+  function handleGoalChange(nextGoalId: ProductImageEditGoalId) {
+    setGoalId(nextGoalId);
+    setPrompt(buildProductImageEditPrompt({ goalId: nextGoalId }));
+  }
+
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -51,19 +63,17 @@ export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChan
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-
     onSubmit({
-      assetId: String(formData.get("assetId") || "").trim(),
-      prompt: String(formData.get("prompt") || "").trim(),
-      model: String(formData.get("model") || "gpt-image-2").trim(),
+      assetId: uploadedAsset?.assetId || "",
+      prompt: prompt.trim(),
+      goalId,
     });
   }
 
   return (
     <form className="image-edit-form" onSubmit={handleSubmit}>
       <label>
-        选择图片
+        上传商品图片
         <input
           accept="image/png,image/jpeg,image/webp"
           disabled={disabled}
@@ -82,38 +92,30 @@ export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChan
           // eslint-disable-next-line @next/next/no-img-element
           <img alt={uploadedAsset.name || "待编辑图片"} src={uploadedAsset.url} />
         ) : (
-          <p>可以上传一张测试图片，或直接输入已有 Asset ID。</p>
+          <p>上传商品图片后，CloudAI 会使用这张图进行 AI 优化。</p>
         )}
       </div>
 
       {uploadedAsset ? <span>{uploadedAsset.name}</span> : null}
 
+      <ImageEditGoalSelector value={goalId} onChange={handleGoalChange} />
+
       <label>
-        Asset ID
-        <input
-          key={uploadedAsset?.assetId || "manual-asset-id"}
-          name="assetId"
-          placeholder="输入已有图片 Asset ID"
+        优化 Prompt
+        <textarea
+          name="prompt"
+          placeholder="系统会根据优化目标生成基础 Prompt，你也可以追加具体要求。"
           required
-          type="text"
-          defaultValue={uploadedAsset?.assetId || ""}
+          rows={8}
+          value={prompt}
+          onChange={(event) => setPrompt(event.target.value)}
         />
       </label>
 
-      <label>
-        编辑 Prompt
-        <textarea name="prompt" defaultValue={defaultPrompt} placeholder="描述希望如何编辑这张图片" required rows={5} />
-      </label>
-
-      <label>
-        模型
-        <input name="model" type="text" defaultValue="gpt-image-2" />
-      </label>
-
       <button className="button primary" disabled={disabled} type="submit">
-        {disabled ? "编辑中..." : "测试图片编辑"}
+        {disabled ? "优化中..." : "优化商品图片"}
       </button>
-      <p className="image-generation-helper">实验能力会调用 Run API，并按 image-enhance 类型记录 Usage 和 History。</p>
+      <p className="image-generation-helper">将调用 GPT-image-2 图片编辑能力，并按 image-enhance 类型记录 Usage 和 History。</p>
       {error ? <p className="image-generation-error">{error}</p> : null}
     </form>
   );

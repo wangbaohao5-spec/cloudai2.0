@@ -1,4 +1,5 @@
 import { generateImage } from "@/lib/ai/image-provider";
+import { resolveRoutedImageModel } from "@/lib/ai/image-router";
 import { buildImagePrompt } from "@/lib/ai/image-prompt-builder";
 import { saveRemoteAsset } from "@/lib/asset-ingest";
 import { getCurrentUser } from "@/lib/current-user";
@@ -31,14 +32,18 @@ export async function POST(request: Request) {
       purpose: body.purpose,
       style: body.style,
     });
+    const imageRoute = resolveRoutedImageModel("product-main-image");
 
     await enforceUsageLimitAndRecord({
       userId: user.id,
-      type: "image",
-      model: "wanx2.1-t2i-turbo",
+      type: imageRoute.usageType,
+      model: imageRoute.model,
     });
 
-    const generatedImage = await generateImage(prompt);
+    const generatedImage = await generateImage({
+      task: "product-main-image",
+      prompt,
+    });
     const storedAssetResult = await settleTask(
       saveRemoteAsset({
         userId: user.id,
@@ -56,6 +61,9 @@ export async function POST(request: Request) {
       storageError: storedAssetResult.error || undefined,
       taskId: generatedImage.taskId,
       prompt,
+      provider: generatedImage.provider,
+      model: generatedImage.model,
+      modelId: generatedImage.modelId,
     };
     const historyResult = await settleTask(
       saveHistory({
