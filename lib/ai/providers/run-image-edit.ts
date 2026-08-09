@@ -22,22 +22,33 @@ function getB64Json(data: RunImageEditResponse) {
   return data.data?.[0]?.b64_json || data.b64_json || "";
 }
 
+async function loadImageBlob(imageUrl: string) {
+  const response = await fetch(imageUrl);
+
+  if (!response.ok) {
+    throw new Error("Failed to load source image for edit.");
+  }
+
+  return response.blob();
+}
+
 export async function editImageWithRunApi(input: ImageEditInput): Promise<ImageEditResult> {
   const apiKey = getRequiredEnv("RUN_API_KEY");
   const model = input.model || "gpt-image-2";
+  const imageBlob = await loadImageBlob(input.imageUrl);
+  const formData = new FormData();
+
+  formData.append("model", model);
+  formData.append("prompt", input.prompt);
+  formData.append("response_format", "b64_json");
+  formData.append("image", imageBlob, input.fileName || "image.png");
 
   const response = await fetch(getRunApiUrl(), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      prompt: input.prompt,
-      image_urls: input.imageUrls,
-      response_format: "b64_json",
-    }),
+    body: formData,
   });
   const data = (await response.json().catch(() => null)) as RunImageEditResponse | null;
 

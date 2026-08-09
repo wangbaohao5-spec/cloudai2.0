@@ -64,7 +64,8 @@ export async function POST(request: Request) {
 
     const sourceImageUrl = await getFileUrl(sourceAsset.url);
     const editedImage = await editImage({
-      imageUrls: [sourceImageUrl],
+      imageUrl: sourceImageUrl,
+      fileName: sourceAsset.name,
       prompt,
       model,
     });

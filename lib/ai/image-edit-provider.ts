@@ -1,5 +1,6 @@
 export type ImageEditInput = {
-  imageUrls: string[];
+  imageUrl: string;
+  fileName?: string;
   prompt: string;
   model?: string;
 };
