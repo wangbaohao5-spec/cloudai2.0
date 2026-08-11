@@ -2,7 +2,7 @@ import { editImage } from "@/lib/ai/image-edit-provider";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
-import { saveHistory } from "@/lib/history";
+import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { getFileUrl, uploadFile } from "@/lib/storage";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
@@ -13,6 +13,7 @@ type ImageEditRequestBody = {
   assetId?: string;
   prompt?: string;
   model?: string;
+  analysisHistoryId?: string;
 };
 
 function sanitizeAssetName(name: string) {
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     const sourceAssetId = body.assetId?.trim();
     const prompt = body.prompt?.trim();
     const model = body.model?.trim() || "gpt-image-2";
+    const analysisHistoryId = body.analysisHistoryId?.trim();
 
     if (!sourceAssetId) {
       return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
@@ -54,6 +56,22 @@ export async function POST(request: Request) {
 
     if (sourceAsset.type !== "image" && sourceAsset.type !== "upload") {
       return NextResponse.json({ error: "Only image assets can be edited." }, { status: 400 });
+    }
+
+    if (analysisHistoryId) {
+      const analysisRecord = await getHistoryRecordForUser(user.id, analysisHistoryId);
+
+      if (!analysisRecord) {
+        return NextResponse.json({ error: "Product analysis history not found." }, { status: 404 });
+      }
+
+      if (analysisRecord.type !== "product-analysis") {
+        return NextResponse.json({ error: "History record is not a product analysis." }, { status: 400 });
+      }
+
+      if (analysisRecord.assetId !== sourceAssetId) {
+        return NextResponse.json({ error: "Product analysis history does not match the source image asset." }, { status: 400 });
+      }
     }
 
     await enforceUsageLimitAndRecord({
@@ -84,18 +102,20 @@ export async function POST(request: Request) {
       name: fileName,
       url: uploadedFile.path,
     });
+    const historyInput = {
+      source: analysisHistoryId ? "product-image-edit" : "run-image-edit",
+      sourceAssetId,
+      ...(analysisHistoryId ? { analysisHistoryId } : {}),
+      prompt,
+      model,
+    };
     const historyResult = await settleTask(
       saveHistory({
         userId: user.id,
         assetId: asset.id,
         type: "image-enhance",
         title: `${sourceAsset.name} 图片编辑`,
-        input: {
-          source: "run-image-edit",
-          sourceAssetId,
-          prompt,
-          model,
-        },
+        input: historyInput,
         output: {
           assetId: asset.id,
           provider: editedImage.provider,

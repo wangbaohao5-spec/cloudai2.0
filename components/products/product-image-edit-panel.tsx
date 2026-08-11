@@ -55,6 +55,7 @@ export function ProductImageEditPanel({ analysisResult }: ProductImageEditPanelP
         },
         body: JSON.stringify({
           assetId: analysisResult.assetId,
+          analysisHistoryId: analysisResult.historyId,
           prompt: nextPrompt,
           model: "gpt-image-2",
         }),
