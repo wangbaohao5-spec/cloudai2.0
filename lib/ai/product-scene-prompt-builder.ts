@@ -52,3 +52,31 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
     "这是基于商品分析结果生成的营销场景图，不是原图精确复刻",
   ].join("，");
 }
+
+export function buildProductSceneEditPrompt({ analysis, scene, platform, style }: ProductScenePromptInput) {
+  const productName = analysis.productNameSuggestions[0] || analysis.category || "商品";
+  const platformGuide = platformGuides[platform] || "适合通用电商平台，突出商品主体、使用场景和商业转化";
+  const styleGuide = styleGuides[style] || style || "高质量电商商业摄影风格";
+  const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以原图可见材质和颜色为准";
+
+  return [
+    "请基于用户上传的商品图片进行电商营销场景图编辑",
+    "上传图片中的商品是唯一商品主体，必须保持原商品身份一致",
+    "严格保持商品结构、轮廓、Logo、品牌标识、材质、颜色、尺寸比例和关键设计细节",
+    "禁止重新设计商品，禁止替换成同品类的其他商品，禁止改变商品型号、鞋型、结构、配色或标识",
+    "只允许改变商品周围的背景、环境、陈列方式、光影、拍摄角度氛围和营销场景",
+    `商品名称参考：${productName}`,
+    `商品类别：${analysis.category || "商品"}`,
+    `可见商品特点：${joinList(analysis.features)}`,
+    `核心卖点：${joinList(analysis.sellingPoints)}`,
+    `目标用户：${analysis.targetAudience || "电商消费者"}`,
+    `推荐使用场景：${joinList(analysis.scenes)}`,
+    `用户选择营销场景：${scene}`,
+    `目标平台：${platformGuide}`,
+    `视觉风格：${styleGuide}`,
+    `材质和颜色参考：${materialColor}`,
+    `视觉分析参考：${analysis.visualStyle || "专业电商视觉"}`,
+    "生成高质量商业摄影效果，商品主体清晰突出，背景服务于营销表达，适合电商投放或上架使用",
+    "不要生成文字，不要水印，不要额外 logo，不要添加不存在的功能、参数、配件或无法确认的品牌信息",
+  ].join("，");
+}

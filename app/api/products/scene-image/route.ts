@@ -1,11 +1,11 @@
-import { generateImage } from "@/lib/ai/image-provider";
-import { resolveRoutedImageModel } from "@/lib/ai/image-router";
-import { buildProductScenePrompt } from "@/lib/ai/product-scene-prompt-builder";
+import { editImage } from "@/lib/ai/image-edit-provider";
+import { buildProductSceneEditPrompt } from "@/lib/ai/product-scene-prompt-builder";
 import { jsonError, settleTask } from "@/lib/api-errors";
-import { saveRemoteAsset } from "@/lib/asset-ingest";
+import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
+import { getFileUrl, uploadFile } from "@/lib/storage";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
@@ -22,6 +22,16 @@ function getProductTitle(analysis: { productNameSuggestions?: string[]; category
   const productName = analysis.productNameSuggestions?.[0] || analysis.category || "商品";
 
   return `${productName} ${scene}场景图`;
+}
+
+function sanitizeAssetName(name: string) {
+  return name.replace(/\.[^.]+$/, "") || "product-scene";
+}
+
+function decodeBase64Image(b64Json: string) {
+  const [, base64Payload] = b64Json.match(/^data:image\/\w+;base64,(.+)$/) || [];
+
+  return Buffer.from(base64Payload || b64Json, "base64");
 }
 
 export async function POST(request: Request) {
@@ -60,51 +70,71 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Product analysis result is invalid." }, { status: 400 });
     }
 
-    const prompt = buildProductScenePrompt({
+    if (!analysisRecord.assetId) {
+      return NextResponse.json({ error: "Product analysis history does not include a source image asset." }, { status: 400 });
+    }
+
+    const sourceAsset = await getAssetForUser(user.id, analysisRecord.assetId);
+
+    if (!sourceAsset) {
+      return NextResponse.json({ error: "Product source image asset not found." }, { status: 404 });
+    }
+
+    if (sourceAsset.type !== "image" && sourceAsset.type !== "upload") {
+      return NextResponse.json({ error: "Product source asset is not an editable image." }, { status: 400 });
+    }
+
+    const prompt = buildProductSceneEditPrompt({
       analysis: analysisRecord.output,
       scene,
       platform,
       style,
     });
-    const imageRoute = resolveRoutedImageModel("product-scene-image");
+    const model = "gpt-image-2";
 
     await enforceUsageLimitAndRecord({
       userId: user.id,
-      type: imageRoute.usageType,
-      model: imageRoute.model,
+      type: "image",
+      model: "gpt-image-2:product-scene",
     });
 
-    const generatedImage = await generateImage({
-      task: "product-scene-image",
+    const sourceImageUrl = await getFileUrl(sourceAsset.url);
+    const editedImage = await editImage({
+      imageUrl: sourceImageUrl,
+      fileName: sourceAsset.name,
       prompt,
+      model,
     });
     const title = getProductTitle(analysisRecord.output, scene);
-    const storedAssetResult = await settleTask(
-      saveRemoteAsset({
-        userId: user.id,
-        type: "image",
-        sourceUrl: generatedImage.imageUrl,
-        name: `${title}-${generatedImage.taskId || Date.now()}`,
-      }),
-    );
-    const storedAsset = storedAssetResult.data;
-    const imageUrl = storedAsset?.signedUrl || generatedImage.imageUrl;
+    const imageBuffer = decodeBase64Image(editedImage.b64Json);
+    const fileName = `${sanitizeAssetName(sourceAsset.name)}-${scene}-${Date.now()}.png`;
+    const uploadedFile = await uploadFile({
+      userId: user.id,
+      type: "image",
+      name: fileName,
+      content: imageBuffer,
+      contentType: "image/png",
+    });
+    const asset = await createAsset({
+      userId: user.id,
+      type: "image",
+      name: fileName,
+      url: uploadedFile.path,
+    });
     const output = {
-      imageUrl,
-      assetId: storedAsset?.asset.id,
-      storagePath: storedAsset?.asset.url,
-      storageError: storedAssetResult.error || undefined,
-      taskId: generatedImage.taskId,
+      imageUrl: uploadedFile.signedUrl,
+      assetId: asset.id,
+      storagePath: asset.url,
       prompt,
-      provider: generatedImage.provider,
-      model: generatedImage.model,
-      modelId: generatedImage.modelId,
-      limitation: "基于商品分析结果生成，非原图参考生成",
+      provider: editedImage.provider,
+      model: editedImage.model,
+      modelId: "run-api-gpt-image-2-product-scene",
+      limitation: "基于原商品图编辑生成，尽量保持商品主体一致",
     };
     const historyResult = await settleTask(
       saveHistory({
         userId: user.id,
-        assetId: storedAsset?.asset.id || null,
+        assetId: asset.id,
         type: "image",
         title,
         input: {
@@ -118,16 +148,15 @@ export async function POST(request: Request) {
         output,
       }),
     );
-    const warnings = [storedAssetResult.error, historyResult.error].filter((warning): warning is string => Boolean(warning));
+    const warnings = [historyResult.error].filter((warning): warning is string => Boolean(warning));
 
     return NextResponse.json({
       prompt,
       type: "商品场景图",
       status: "success" as const,
-      imageUrl,
-      taskId: generatedImage.taskId,
-      assetId: storedAsset?.asset.id,
-      storagePath: storedAsset?.asset.url,
+      imageUrl: uploadedFile.signedUrl,
+      assetId: asset.id,
+      storagePath: asset.url,
       historyId: historyResult.data?.id,
       warnings: warnings.length ? warnings : undefined,
     });
