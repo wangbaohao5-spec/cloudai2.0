@@ -2508,6 +2508,7 @@ h3 {
   display: grid;
   place-items: center;
   padding: 24px;
+  overflow: auto;
   background: rgba(2, 8, 16, 0.86);
 }
 
@@ -2522,8 +2523,10 @@ h3 {
   position: relative;
   z-index: 1;
   display: block;
-  max-width: min(100%, 1120px);
-  max-height: 88vh;
+  width: auto;
+  height: auto;
+  max-width: min(92vw, 1120px);
+  max-height: min(88vh, 900px);
   border: 1px solid var(--card-border);
   border-radius: 18px;
   object-fit: contain;

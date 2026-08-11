@@ -15,6 +15,8 @@ type UploadedAsset = {
   url: string;
 };
 
+const PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY = "cloudai:products:last-analysis-history-id";
+
 type WorkflowStepStatus = "done" | "current" | "locked";
 
 function getWorkflowStepStatus(
@@ -36,6 +38,30 @@ function getWorkflowStepStatus(
   }
 
   return hasResult ? "current" : "locked";
+}
+
+function getStoredAnalysisHistoryId() {
+  try {
+    return sessionStorage.getItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY)?.trim() || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveStoredAnalysisHistoryId(analysisHistoryId: string) {
+  try {
+    sessionStorage.setItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY, analysisHistoryId);
+  } catch {
+    // Ignore storage errors so the workflow still works without persistence.
+  }
+}
+
+function clearStoredAnalysisHistoryId() {
+  try {
+    sessionStorage.removeItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors so a new product analysis can still continue.
+  }
 }
 
 export function ProductWorkflowShell() {
@@ -68,7 +94,8 @@ export function ProductWorkflowShell() {
 
   useEffect(() => {
     let isMounted = true;
-    const analysisHistoryId = new URLSearchParams(window.location.search).get("analysis")?.trim();
+    const urlAnalysisHistoryId = new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
+    const analysisHistoryId = urlAnalysisHistoryId || getStoredAnalysisHistoryId();
 
     async function restoreProductWorkflow() {
       if (!analysisHistoryId) {
@@ -110,10 +137,16 @@ export function ProductWorkflowShell() {
           title: data.product.title,
           analysis: data.analysis,
         });
+        saveStoredAnalysisHistoryId(data.product.analysisHistoryId);
+
+        if (!urlAnalysisHistoryId) {
+          updateAnalysisUrl(data.product.analysisHistoryId);
+        }
       } catch (caughtError) {
         if (isMounted) {
           setError(caughtError instanceof Error ? caughtError.message : "Product workflow restore failed. Please analyze the product image again.");
           updateAnalysisUrl();
+          clearStoredAnalysisHistoryId();
         }
       } finally {
         if (isMounted) {
@@ -139,6 +172,7 @@ export function ProductWorkflowShell() {
     setError("");
     setResult(null);
     updateAnalysisUrl();
+    clearStoredAnalysisHistoryId();
     setIsUploading(true);
 
     try {
@@ -196,6 +230,7 @@ export function ProductWorkflowShell() {
 
       if (data.historyId) {
         updateAnalysisUrl(data.historyId);
+        saveStoredAnalysisHistoryId(data.historyId);
       }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "商品图片分析失败，请稍后再试。");
