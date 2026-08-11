@@ -2,8 +2,8 @@
 
 import { ImageEditForm, type ImageEditFormData } from "@/components/image-edit/image-edit-form";
 import { ImageEditResult, type ImageEditViewResult } from "@/components/image-edit/image-edit-result";
+import { ImageModeTabs } from "@/components/image-navigation/image-mode-tabs";
 import { getProductImageEditGoal } from "@/lib/product-image-edit-options";
-import Link from "next/link";
 import { useState } from "react";
 
 type UploadedAsset = {
@@ -69,13 +69,7 @@ export function ImageEditShell() {
 
   return (
     <main className="dashboard-content">
-      <div className="image-mode-tabs">
-        <Link href="/dashboard/image">AI 图片生成</Link>
-        <Link href="/dashboard/image-enhance">商品图优化</Link>
-        <Link className="active" href="/dashboard/image-edit">
-          商品图片优化
-        </Link>
-      </div>
+      <ImageModeTabs />
       <section className="image-edit-shell">
         <div className="image-edit-panel glass-card">
           <p className="eyebrow">Product Image Edit</p>

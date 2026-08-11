@@ -3,8 +3,8 @@
 import { EnhanceForm } from "@/components/image-enhance/enhance-form";
 import { EnhanceResult } from "@/components/image-enhance/enhance-result";
 import { ImageUpload } from "@/components/image-enhance/image-upload";
+import { ImageModeTabs } from "@/components/image-navigation/image-mode-tabs";
 import type { ImageEnhanceInput, ImageEnhanceResult } from "@/lib/ai/image-enhance-provider";
-import Link from "next/link";
 import { useState } from "react";
 
 export default function ImageEnhancePage() {
@@ -45,12 +45,7 @@ export default function ImageEnhancePage() {
 
   return (
     <main className="dashboard-content">
-      <div className="image-mode-tabs">
-        <Link href="/dashboard/image">AI 图片生成</Link>
-        <Link className="active" href="/dashboard/image-enhance">
-          商品图优化
-        </Link>
-      </div>
+      <ImageModeTabs />
       <section className="image-enhance-shell">
         <div className="image-enhance-panel glass-card">
           <p className="eyebrow">Image Enhance</p>

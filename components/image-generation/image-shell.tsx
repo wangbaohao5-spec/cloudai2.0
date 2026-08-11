@@ -2,8 +2,8 @@
 
 import { ImageForm } from "@/components/image-generation/image-form";
 import { ImageResult } from "@/components/image-generation/image-result";
+import { ImageModeTabs } from "@/components/image-navigation/image-mode-tabs";
 import type { ImageGenerationFormData, ImageGenerationResult } from "@/lib/types";
-import Link from "next/link";
 import { useState } from "react";
 
 export function ImageShell() {
@@ -42,12 +42,7 @@ export function ImageShell() {
 
   return (
     <main className="dashboard-content">
-      <div className="image-mode-tabs">
-        <Link className="active" href="/dashboard/image">
-          AI 图片生成
-        </Link>
-        <Link href="/dashboard/image-enhance">商品图优化</Link>
-      </div>
+      <ImageModeTabs />
       <section className="image-generation-shell">
         <div className="image-generation-panel glass-card">
           <p className="eyebrow">AI Commerce Visual</p>
