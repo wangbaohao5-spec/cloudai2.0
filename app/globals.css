@@ -2314,6 +2314,28 @@ h3 {
   background: rgba(7, 17, 31, 0.32);
 }
 
+.history-product-analysis-detail {
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: start;
+}
+
+.history-product-analysis-detail.expanded {
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+
+.history-product-analysis-detail.expanded .history-media-preview.asset {
+  width: 180px;
+  height: 180px;
+}
+
+.history-product-analysis-detail > .history-detail-grid {
+  grid-column: 2;
+}
+
+.history-product-analysis-detail > .history-detail-actions {
+  grid-column: 1 / -1;
+}
+
 .history-readable-detail section {
   display: grid;
   gap: 8px;
@@ -2907,6 +2929,16 @@ h3 {
 
   .history-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .history-product-analysis-detail,
+  .history-product-analysis-detail.expanded {
+    grid-template-columns: 1fr;
+  }
+
+  .history-product-analysis-detail > .history-detail-grid,
+  .history-product-analysis-detail > .history-detail-actions {
+    grid-column: auto;
   }
 
   .chat-shell {

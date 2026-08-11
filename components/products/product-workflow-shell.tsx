@@ -5,8 +5,9 @@ import { ProductCreationCenter } from "@/components/products/product-creation-ce
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
+import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type UploadedAsset = {
   assetId: string;
@@ -40,6 +41,7 @@ function getWorkflowStepStatus(
 export function ProductWorkflowShell() {
   const [error, setError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
@@ -52,6 +54,81 @@ export function ProductWorkflowShell() {
     { id: "scene" as const, label: "场景图" },
   ];
 
+  function updateAnalysisUrl(analysisHistoryId?: string) {
+    const url = new URL(window.location.href);
+
+    if (analysisHistoryId) {
+      url.searchParams.set("analysis", analysisHistoryId);
+    } else {
+      url.searchParams.delete("analysis");
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  useEffect(() => {
+    let isMounted = true;
+    const analysisHistoryId = new URLSearchParams(window.location.search).get("analysis")?.trim();
+
+    async function restoreProductWorkflow() {
+      if (!analysisHistoryId) {
+        return;
+      }
+
+      setIsRestoring(true);
+      setError("");
+
+      try {
+        const response = await fetch(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(errorData?.error || "Product workflow restore failed. Please analyze the product image again.");
+        }
+
+        const data = (await response.json()) as ProductCreationCenterData;
+        const assetId = data.originalAsset?.id || data.product.assetId || "";
+
+        if (!assetId) {
+          throw new Error("The product analysis history is missing its original asset.");
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setUploadedAsset({
+          assetId,
+          name: data.originalAsset?.name || data.product.title,
+          url: data.originalAsset?.url || "",
+        });
+        setResult({
+          assetId,
+          historyId: data.product.analysisHistoryId,
+          title: data.product.title,
+          analysis: data.analysis,
+        });
+      } catch (caughtError) {
+        if (isMounted) {
+          setError(caughtError instanceof Error ? caughtError.message : "Product workflow restore failed. Please analyze the product image again.");
+          updateAnalysisUrl();
+        }
+      } finally {
+        if (isMounted) {
+          setIsRestoring(false);
+        }
+      }
+    }
+
+    void restoreProductWorkflow();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -61,6 +138,7 @@ export function ProductWorkflowShell() {
 
     setError("");
     setResult(null);
+    updateAnalysisUrl();
     setIsUploading(true);
 
     try {
@@ -115,6 +193,10 @@ export function ProductWorkflowShell() {
       const data = (await response.json()) as ProductAnalysisResponse;
       setResult(data);
       setCreationCenterRefreshKey(0);
+
+      if (data.historyId) {
+        updateAnalysisUrl(data.historyId);
+      }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "商品图片分析失败，请稍后再试。");
     } finally {
@@ -160,7 +242,7 @@ export function ProductWorkflowShell() {
             {uploadedAsset ? <span>{uploadedAsset.name}</span> : null}
           </div>
 
-          <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing} type="button" onClick={() => void handleAnalyze()}>
+          <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={() => void handleAnalyze()}>
             {isUploading ? "上传中..." : isAnalyzing ? "分析中..." : "分析商品图片"}
           </button>
 

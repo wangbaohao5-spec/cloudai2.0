@@ -61,8 +61,8 @@ export function HistoryProductAnalysisDetail({ expanded, record }: HistoryProduc
   }
 
   return (
-    <div className="history-readable-detail">
-      <HistoryMediaPreview record={record} variant="thumbnail" />
+    <div className={`history-readable-detail history-product-analysis-detail ${expanded ? "expanded" : ""}`}>
+      <HistoryMediaPreview record={record} variant="asset" />
       <div className="history-detail-grid">
         <section>
           <strong>商品类别</strong>

@@ -16,6 +16,7 @@ export type ProductCreationCenterAsset = {
 export type ProductCreationCenterData = {
   product: {
     analysisHistoryId: string;
+    assetId: string | null;
     title: string;
     createdAt: string;
   };
@@ -97,6 +98,7 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
   return {
     product: {
       analysisHistoryId: analysisRecord.id,
+      assetId: analysisRecord.assetId ?? null,
       title: analysisRecord.title,
       createdAt: analysisRecord.createdAt,
     },

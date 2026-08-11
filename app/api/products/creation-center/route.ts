@@ -22,7 +22,11 @@ export async function GET(request: Request) {
 
     const data = await getProductCreationCenterData(user.id, analysisHistoryId);
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (error) {
     return jsonError(error, "Product creation center could not be loaded.");
   }
