@@ -26,6 +26,10 @@ function isMediaRecord(type: HistoryRecord["type"]) {
   return type === "image" || type === "image-enhance" || type === "video";
 }
 
+function isImageAssetRecord(type: HistoryRecord["type"]) {
+  return type === "image" || type === "image-enhance";
+}
+
 function getStringField(value: unknown, key: string) {
   if (!value || typeof value !== "object") {
     return "";
@@ -34,6 +38,15 @@ function getStringField(value: unknown, key: string) {
   const record = value as Record<string, unknown>;
 
   return typeof record[key] === "string" ? record[key] : "";
+}
+
+function getMediaBasicItems(record: HistoryRecord) {
+  return [
+    ["商品", getStringField(record.input, "product") || getStringField(record.input, "productName") || getStringField(record.input, "fileName")],
+    ["平台", getStringField(record.input, "platform")],
+    ["用途", getStringField(record.input, "purpose")],
+    ["风格", getStringField(record.input, "style")],
+  ].filter((item): item is [string, string] => Boolean(item[1]));
 }
 
 function MediaMeta({ record }: { record: HistoryRecord }) {
@@ -61,6 +74,50 @@ function MediaMeta({ record }: { record: HistoryRecord }) {
   );
 }
 
+function ImageAssetBasicInfo({ record }: { record: HistoryRecord }) {
+  const basicItems = getMediaBasicItems(record);
+
+  if (!basicItems.length) {
+    return <p className="history-asset-muted">暂无更多基础信息</p>;
+  }
+
+  return (
+    <div className="history-asset-basic">
+      {basicItems.map(([label, value]) => (
+        <span key={label}>
+          {label}：{value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ImageAssetExpandedDetail({ record }: { record: HistoryRecord }) {
+  const detailItems = [
+    ["Prompt", getStringField(record.output, "prompt") || getStringField(record.input, "prompt")],
+    ["模型", getStringField(record.output, "model") || getStringField(record.output, "modelId") || getStringField(record.input, "model")],
+    ["服务", getStringField(record.output, "provider")],
+    ["任务 ID", getStringField(record.output, "taskId")],
+    ["状态", getStringField(record.output, "status")],
+    ["Asset ID", record.assetId || getStringField(record.output, "assetId")],
+  ].filter((item): item is [string, string] => Boolean(item[1]));
+
+  if (!detailItems.length) {
+    return null;
+  }
+
+  return (
+    <div className="history-asset-expanded">
+      {detailItems.map(([label, value]) => (
+        <section key={label}>
+          <strong>{label}</strong>
+          <p>{value}</p>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function HistoryRecordDetail({ expanded, record }: { expanded: boolean; record: HistoryRecord }) {
   if (record.type === "copywriting") {
     return <HistoryCopywritingDetail expanded={expanded} output={record.output} />;
@@ -72,6 +129,18 @@ function HistoryRecordDetail({ expanded, record }: { expanded: boolean; record: 
 
   if (record.type === "product-analysis") {
     return <HistoryProductAnalysisDetail expanded={expanded} record={record} />;
+  }
+
+  if (isImageAssetRecord(record.type)) {
+    return (
+      <div className={`history-asset-summary ${expanded ? "expanded" : ""}`}>
+        <HistoryMediaPreview record={record} variant="asset" />
+        <div className="history-asset-content">
+          <ImageAssetBasicInfo record={record} />
+          {expanded ? <ImageAssetExpandedDetail record={record} /> : null}
+        </div>
+      </div>
+    );
   }
 
   if (isMediaRecord(record.type)) {

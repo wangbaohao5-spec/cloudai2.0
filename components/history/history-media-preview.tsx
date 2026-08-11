@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 type HistoryMediaPreviewProps = {
   record: HistoryRecord;
-  variant?: "thumbnail" | "detail";
+  variant?: "thumbnail" | "detail" | "asset";
 };
 
 type AssetUrlResponse = {
@@ -36,6 +36,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
   const mediaUrl = assetUrl || directUrl;
   const shouldLoadAsset = Boolean(record.assetId);
   const previewType = isImagePreviewType(record.type) ? "image" : "video";
+  const isCompact = variant === "thumbnail" || variant === "asset";
 
   useEffect(() => {
     let isMounted = true;
@@ -79,10 +80,10 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
   }
 
   return (
-    <div className={`history-media-preview ${previewType} ${variant === "thumbnail" ? "compact" : ""}`}>
+    <div className={`history-media-preview ${previewType} ${isCompact ? "compact" : ""} ${variant === "asset" ? "asset" : ""}`}>
       {mediaUrl && isImagePreviewType(record.type) ? (
         <button type="button" onClick={() => setIsPreviewOpen(true)} aria-label="放大查看图片">
-          <Image alt={record.title} height={variant === "thumbnail" ? 360 : 640} src={mediaUrl} unoptimized width={variant === "thumbnail" ? 540 : 960} />
+          <Image alt={record.title} height={isCompact ? 360 : 640} src={mediaUrl} unoptimized width={isCompact ? 540 : 960} />
         </button>
       ) : null}
 
