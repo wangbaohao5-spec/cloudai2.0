@@ -2,6 +2,13 @@ import Link from "next/link";
 
 const quickActions = [
   {
+    icon: "商",
+    title: "商品 AI 工作流",
+    description: "上传商品图，完成商品分析、文案、原图优化和场景图生成。",
+    href: "/dashboard/products",
+    buttonLabel: "开始工作流",
+  },
+  {
     icon: "聊",
     title: "AI 聊天",
     description: "连续讨论商品定位、平台打法、标题优化和运营建议。",
@@ -17,10 +24,10 @@ const quickActions = [
   },
   {
     icon: "图",
-    title: "AI 图片",
+    title: "AI 商品图",
     description: "为商品主图、场景图、详情页图片和广告海报生成视觉内容。",
     href: "/dashboard/image",
-    buttonLabel: "生成图片",
+    buttonLabel: "生成商品图",
   },
   {
     icon: "影",

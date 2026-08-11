@@ -6,15 +6,11 @@ import { usePathname } from "next/navigation";
 const imageModeTabs = [
   {
     href: "/dashboard/image",
-    label: "AI 图片生成",
-  },
-  {
-    href: "/dashboard/image-enhance",
-    label: "商品图优化",
+    label: "AI 商品图生成",
   },
   {
     href: "/dashboard/image-edit",
-    label: "商品图片优化",
+    label: "商品原图优化",
   },
 ];
 

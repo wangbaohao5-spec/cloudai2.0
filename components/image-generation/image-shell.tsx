@@ -46,7 +46,7 @@ export function ImageShell() {
       <section className="image-generation-shell">
         <div className="image-generation-panel glass-card">
           <p className="eyebrow">AI Commerce Visual</p>
-          <h2>AI 电商视觉助手</h2>
+          <h2>AI 商品图生成</h2>
           <p className="image-generation-intro">根据商品、平台、用途和风格自动生成电商图片 Prompt，并调用通义万相生成视觉素材。</p>
           <ImageForm error={error} isLoading={isLoading} onRegenerate={lastFormData ? () => handleSubmit(lastFormData) : undefined} onSubmit={handleSubmit} resultImageUrl={result?.imageUrl} />
         </div>

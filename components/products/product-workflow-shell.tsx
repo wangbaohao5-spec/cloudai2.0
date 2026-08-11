@@ -15,7 +15,12 @@ type UploadedAsset = {
 
 type WorkflowStepStatus = "done" | "current" | "locked";
 
-function getWorkflowStepStatus(step: "upload" | "analysis" | "copywriting" | "scene", hasAsset: boolean, isAnalyzing: boolean, hasResult: boolean): WorkflowStepStatus {
+function getWorkflowStepStatus(
+  step: "upload" | "analysis" | "copywriting" | "imageEdit" | "scene",
+  hasAsset: boolean,
+  isAnalyzing: boolean,
+  hasResult: boolean,
+): WorkflowStepStatus {
   if (step === "upload") {
     return hasAsset ? "done" : "current";
   }
@@ -41,6 +46,7 @@ export function ProductWorkflowShell() {
     { id: "upload" as const, label: "上传商品图" },
     { id: "analysis" as const, label: "AI分析" },
     { id: "copywriting" as const, label: "商品文案" },
+    { id: "imageEdit" as const, label: "原图优化" },
     { id: "scene" as const, label: "场景图" },
   ];
 
