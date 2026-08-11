@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductAnalysisResult } from "@/components/products/product-analysis-result";
+import { ProductCreationCenter } from "@/components/products/product-creation-center";
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
@@ -41,6 +42,7 @@ export function ProductWorkflowShell() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
+  const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
   const [result, setResult] = useState<ProductAnalysisResponse | null>(null);
   const workflowSteps = [
     { id: "upload" as const, label: "上传商品图" },
@@ -112,6 +114,7 @@ export function ProductWorkflowShell() {
 
       const data = (await response.json()) as ProductAnalysisResponse;
       setResult(data);
+      setCreationCenterRefreshKey(0);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "商品图片分析失败，请稍后再试。");
     } finally {
@@ -167,9 +170,10 @@ export function ProductWorkflowShell() {
 
         <div className="product-workflow-results">
           <ProductAnalysisResult analysis={result?.analysis || null} title={result?.title} />
-          <ProductCopywritingPanel analysisResult={result} />
-          <ProductImageEditPanel analysisResult={result} />
-          <ProductSceneImagePanel analysisResult={result} />
+          <ProductCreationCenter analysisHistoryId={result?.historyId} refreshKey={creationCenterRefreshKey} />
+          <ProductCopywritingPanel analysisResult={result} onGenerated={() => setCreationCenterRefreshKey((value) => value + 1)} />
+          <ProductImageEditPanel analysisResult={result} onGenerated={() => setCreationCenterRefreshKey((value) => value + 1)} />
+          <ProductSceneImagePanel analysisResult={result} onGenerated={() => setCreationCenterRefreshKey((value) => value + 1)} />
         </div>
       </section>
     </main>

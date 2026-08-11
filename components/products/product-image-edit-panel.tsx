@@ -8,6 +8,7 @@ import { useState } from "react";
 
 type ProductImageEditPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  onGenerated?: () => void;
 };
 
 type ProductImageEditResult = {
@@ -16,7 +17,7 @@ type ProductImageEditResult = {
   warnings?: string[];
 };
 
-export function ProductImageEditPanel({ analysisResult }: ProductImageEditPanelProps) {
+export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductImageEditPanelProps) {
   const defaultGoalId: ProductImageEditGoalId = "main-image";
   const [error, setError] = useState("");
   const [goalId, setGoalId] = useState<ProductImageEditGoalId>(defaultGoalId);
@@ -66,7 +67,13 @@ export function ProductImageEditPanel({ analysisResult }: ProductImageEditPanelP
         throw new Error(errorData?.error || "商品图片优化失败，请稍后再试。");
       }
 
-      setResult((await response.json()) as ProductImageEditResult);
+      const data = (await response.json()) as ProductImageEditResult;
+
+      setResult(data);
+
+      if (!data.warnings?.length) {
+        onGenerated?.();
+      }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "商品图片优化失败，请稍后再试。");
     } finally {

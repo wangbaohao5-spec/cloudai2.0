@@ -6,6 +6,7 @@ import { useState } from "react";
 
 type ProductSceneImagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  onGenerated?: () => void;
 };
 
 type SceneImageResult = {
@@ -13,6 +14,7 @@ type SceneImageResult = {
   scene: string;
   platform: string;
   style: string;
+  warnings?: string[];
 };
 
 const platformOptions = [
@@ -36,7 +38,7 @@ function getOptionLabel(options: { value: string; label: string }[], value: stri
   return options.find((option) => option.value === value)?.label || value;
 }
 
-export function ProductSceneImagePanel({ analysisResult }: ProductSceneImagePanelProps) {
+export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductSceneImagePanelProps) {
   const [error, setError] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SceneImageResult | null>(null);
@@ -77,7 +79,7 @@ export function ProductSceneImagePanel({ analysisResult }: ProductSceneImagePane
         throw new Error(errorData?.error || "商品营销场景图生成失败，请稍后再试。");
       }
 
-      const data = (await response.json()) as { imageUrl?: string };
+      const data = (await response.json()) as { imageUrl?: string; warnings?: string[] };
 
       if (!data.imageUrl) {
         throw new Error("图片生成成功，但没有返回可预览的图片地址。");
@@ -88,7 +90,12 @@ export function ProductSceneImagePanel({ analysisResult }: ProductSceneImagePane
         scene,
         platform,
         style,
+        warnings: data.warnings,
       });
+
+      if (!data.warnings?.length) {
+        onGenerated?.();
+      }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "商品营销场景图生成失败，请稍后再试。");
     } finally {

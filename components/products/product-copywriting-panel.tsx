@@ -7,6 +7,7 @@ import { useState } from "react";
 
 type ProductCopywritingPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  onGenerated?: () => void;
 };
 
 const platformOptions = [
@@ -38,7 +39,7 @@ function buildCopywritingText(result: CopywritingResult) {
   ].join("\n\n");
 }
 
-export function ProductCopywritingPanel({ analysisResult }: ProductCopywritingPanelProps) {
+export function ProductCopywritingPanel({ analysisResult, onGenerated }: ProductCopywritingPanelProps) {
   const [copywritingError, setCopywritingError] = useState("");
   const [copywritingResult, setCopywritingResult] = useState<CopywritingResult | null>(null);
   const [isCopywritingLoading, setIsCopywritingLoading] = useState(false);
@@ -78,8 +79,12 @@ export function ProductCopywritingPanel({ analysisResult }: ProductCopywritingPa
         throw new Error(errorData?.error || "基于商品分析生成文案失败，请稍后再试。");
       }
 
-      const data = (await response.json()) as CopywritingResult;
+      const data = (await response.json()) as CopywritingResult & { warnings?: string[] };
       setCopywritingResult(data);
+
+      if (!data.warnings?.length) {
+        onGenerated?.();
+      }
     } catch (caughtError) {
       setCopywritingError(caughtError instanceof Error ? caughtError.message : "基于商品分析生成文案失败，请稍后再试。");
     } finally {
