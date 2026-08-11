@@ -57,18 +57,6 @@ export function ProductAnalysisResult({ analysis, title }: ProductAnalysisResult
             </section>
           </div>
 
-          <div className="product-next-actions">
-            <div>
-              <span>下一步</span>
-              <strong>继续把分析结果变成可用素材</strong>
-            </div>
-            <div>
-              <a href="#product-copywriting-panel">生成商品文案</a>
-              <a href="#product-image-edit-panel">优化商品原图</a>
-              <a href="#product-scene-image-panel">生成营销场景图</a>
-            </div>
-          </div>
-
           <button className="product-analysis-toggle" type="button" onClick={() => setIsExpanded((current) => !current)}>
             {isExpanded ? "收起完整分析" : "查看完整分析"}
           </button>

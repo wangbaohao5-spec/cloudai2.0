@@ -99,7 +99,8 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
       {isPreviewOpen && mediaUrl ? (
         <div className="history-media-lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
           <button type="button" onClick={() => setIsPreviewOpen(false)} aria-label="关闭图片预览" />
-          <Image alt={record.title} height={900} src={mediaUrl} unoptimized width={1400} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt={record.title} className="history-media-lightbox-image" src={mediaUrl} />
         </div>
       ) : null}
     </div>

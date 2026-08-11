@@ -1,6 +1,9 @@
 "use client";
 
 import { ProductAssetGallery } from "@/components/products/product-asset-gallery";
+import { ProductContentPackage } from "@/components/products/product-content-package";
+import { ProductCreationActions } from "@/components/products/product-creation-actions";
+import { ProductCreationProgress } from "@/components/products/product-creation-progress";
 import { ProductCreationSummary } from "@/components/products/product-creation-summary";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { useEffect, useState } from "react";
@@ -67,7 +70,7 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
       <section className="product-creation-center glass-card">
         <p className="eyebrow">Creation Center</p>
         <h2>商品创作中心</h2>
-        <p className="image-generation-intro">完成商品图片分析后，这里会汇总这个商品的文案、原图优化和营销场景图。</p>
+        <p className="image-generation-intro">完成商品图片分析后，这里会汇总这个商品的创作进度、继续创作入口和已生成素材。</p>
       </section>
     );
   }
@@ -98,22 +101,11 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
 
   return (
     <section className="product-creation-center glass-card">
-      <ProductCreationSummary
-        analysis={data.analysis}
-        counts={{
-          copywriting: data.copywriting.length,
-          imageEdits: data.imageEdits.length,
-          sceneImages: data.sceneImages.length,
-        }}
-        originalAsset={data.originalAsset}
-        product={data.product}
-      />
+      <ProductCreationSummary analysis={data.analysis} originalAsset={data.originalAsset} product={data.product} />
+      <ProductCreationProgress copywritingCount={data.copywriting.length} imageEditCount={data.imageEdits.length} sceneImageCount={data.sceneImages.length} />
+      <ProductCreationActions />
+      <ProductContentPackage data={data} />
       <ProductAssetGallery originalAsset={data.originalAsset} imageEdits={data.imageEdits} sceneImages={data.sceneImages} />
-      <div className="product-creation-actions" aria-label="继续创作">
-        <a href="#product-copywriting-panel">继续生成文案</a>
-        <a href="#product-image-edit-panel">继续优化原图</a>
-        <a href="#product-scene-image-panel">继续生成场景图</a>
-      </div>
     </section>
   );
 }

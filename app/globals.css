@@ -1375,6 +1375,12 @@ h3 {
   padding: 28px;
 }
 
+#product-copywriting-panel,
+#product-image-edit-panel,
+#product-scene-image-panel {
+  scroll-margin-top: 120px;
+}
+
 .product-creation-center {
   display: grid;
   gap: 22px;
@@ -1417,6 +1423,189 @@ h3 {
   margin: 0;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.product-creation-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-creation-section-header strong {
+  color: var(--text);
+  font-size: 1.02rem;
+}
+
+.product-creation-section-header span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.product-creation-progress,
+.product-creation-action-panel,
+.product-content-package {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 20px;
+}
+
+.product-creation-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.product-creation-progress-grid article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(7, 17, 31, 0.32);
+}
+
+.product-creation-progress-grid article > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 900;
+}
+
+.product-creation-progress-grid article.done > span {
+  border-color: rgba(120, 247, 200, 0.52);
+  color: #06101d;
+  background: linear-gradient(135deg, var(--accent), var(--primary-light));
+}
+
+.product-creation-progress-grid strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.product-creation-progress-grid p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.product-creation-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.product-creation-action-grid a {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid rgba(40, 216, 255, 0.42);
+  border-radius: 18px;
+  padding: 14px;
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(40, 216, 255, 0.15), rgba(124, 92, 255, 0.18));
+  text-decoration: none;
+}
+
+.product-creation-action-grid a:hover {
+  border-color: rgba(120, 247, 200, 0.56);
+  background: linear-gradient(135deg, rgba(120, 247, 200, 0.16), rgba(40, 216, 255, 0.18));
+}
+
+.product-creation-action-grid strong {
+  color: var(--text);
+}
+
+.product-creation-action-grid span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.product-content-package .product-creation-section-header > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.product-content-package-actions,
+.product-content-package-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.product-content-package-actions {
+  justify-content: flex-end;
+}
+
+.product-content-package-actions button,
+.product-content-package-summary span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 9px 13px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.product-content-package-actions button:hover {
+  border-color: rgba(120, 247, 200, 0.52);
+  background: rgba(120, 247, 200, 0.12);
+}
+
+.product-content-package-summary span {
+  color: var(--muted);
+}
+
+.product-content-preview {
+  display: grid;
+  gap: 12px;
+}
+
+.product-content-preview button {
+  justify-self: start;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 9px 13px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.product-content-preview button:hover {
+  border-color: rgba(120, 247, 200, 0.52);
+  background: rgba(120, 247, 200, 0.12);
+}
+
+.product-content-preview button span {
+  margin-right: 6px;
+  color: var(--accent);
+}
+
+.product-content-preview pre {
+  max-height: 340px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  color: var(--text);
+  background: rgba(7, 17, 31, 0.42);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.84rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .product-creation-counts,
@@ -1472,6 +1661,41 @@ h3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.product-asset-groups {
+  display: grid;
+  gap: 16px;
+}
+
+.product-asset-group {
+  display: grid;
+  gap: 12px;
+}
+
+.product-asset-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-asset-group-header strong {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.product-asset-group-header span {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  font-weight: 900;
 }
 
 .product-asset-tile {
@@ -2519,17 +2743,18 @@ h3 {
   background: transparent;
 }
 
-.history-media-lightbox img {
+.history-media-lightbox-image {
   position: relative;
   z-index: 1;
   display: block;
   width: auto;
   height: auto;
-  max-width: min(92vw, 1120px);
-  max-height: min(88vh, 900px);
+  max-width: min(86vw, 1120px);
+  max-height: 82vh;
   border: 1px solid var(--card-border);
   border-radius: 18px;
   object-fit: contain;
+  object-position: center;
   box-shadow: var(--shadow);
 }
 
@@ -2899,12 +3124,28 @@ h3 {
   }
 
   .product-workflow-shell,
+  .product-creation-summary,
+  .product-creation-progress-grid,
+  .product-creation-action-grid,
   .product-analysis-summary-grid,
   .product-analysis-grid,
   .product-scene-options,
   .product-scene-controls,
   .product-scene-image-result dl {
     grid-template-columns: 1fr;
+  }
+
+  .product-creation-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .product-content-package-actions {
+    justify-content: flex-start;
+  }
+
+  .product-content-preview pre {
+    max-height: 280px;
   }
 
   .product-next-actions {
