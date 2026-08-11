@@ -64,6 +64,7 @@ export function ProductAnalysisResult({ analysis, title }: ProductAnalysisResult
             </div>
             <div>
               <a href="#product-copywriting-panel">生成商品文案</a>
+              <a href="#product-image-edit-panel">优化商品原图</a>
               <a href="#product-scene-image-panel">生成营销场景图</a>
             </div>
           </div>

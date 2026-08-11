@@ -1,0 +1,139 @@
+"use client";
+
+import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
+import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
+import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
+import type { ProductAnalysisResponse } from "@/lib/product-types";
+import { useState } from "react";
+
+type ProductImageEditPanelProps = {
+  analysisResult: ProductAnalysisResponse | null;
+};
+
+type ProductImageEditResult = {
+  imageUrl: string;
+  assetId: string;
+  warnings?: string[];
+};
+
+export function ProductImageEditPanel({ analysisResult }: ProductImageEditPanelProps) {
+  const defaultGoalId: ProductImageEditGoalId = "main-image";
+  const [error, setError] = useState("");
+  const [goalId, setGoalId] = useState<ProductImageEditGoalId>(defaultGoalId);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [prompt, setPrompt] = useState(() => buildProductImageEditPrompt({ goalId: defaultGoalId }));
+  const [result, setResult] = useState<ProductImageEditResult | null>(null);
+
+  function handleGoalChange(nextGoalId: ProductImageEditGoalId) {
+    setGoalId(nextGoalId);
+    setPrompt(buildProductImageEditPrompt({ goalId: nextGoalId }));
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!analysisResult?.assetId) {
+      setError("请先完成商品图片分析，再优化商品原图。");
+      return;
+    }
+
+    const nextPrompt = prompt.trim();
+
+    if (!nextPrompt) {
+      setError("请输入商品图片优化 Prompt。");
+      return;
+    }
+
+    setError("");
+    setIsGenerating(true);
+
+    try {
+      const response = await fetch("/api/image/edit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assetId: analysisResult.assetId,
+          prompt: nextPrompt,
+          model: "gpt-image-2",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(errorData?.error || "商品图片优化失败，请稍后再试。");
+      }
+
+      setResult((await response.json()) as ProductImageEditResult);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "商品图片优化失败，请稍后再试。");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  if (!analysisResult) {
+    return (
+      <section className="product-scene-image-panel glass-card" id="product-image-edit-panel">
+        <p className="eyebrow">Image Workflow</p>
+        <h2>AI 商品原图优化</h2>
+        <p className="image-generation-intro">完成商品图片分析后，可以基于上传的原商品图生成主图、详情图、种草图或广告视觉图。</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="product-scene-image-panel glass-card" id="product-image-edit-panel">
+      <div className="dashboard-section-header">
+        <div>
+          <p className="eyebrow">Image Workflow</p>
+          <h2>AI 商品原图优化</h2>
+          <p className="image-generation-intro">基于当前上传的原商品图进行 AI 编辑优化，尽量保持商品主体、颜色和结构一致。</p>
+        </div>
+        <span>已连接原图 Asset</span>
+      </div>
+
+      <form className="image-edit-form" onSubmit={(event) => void handleSubmit(event)}>
+        <ImageEditGoalSelector value={goalId} onChange={handleGoalChange} />
+
+        <label>
+          优化 Prompt
+          <textarea
+            name="prompt"
+            placeholder="系统会根据优化目标生成基础 Prompt，你也可以继续补充具体要求。"
+            required
+            rows={8}
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+          />
+        </label>
+
+        <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
+          {isGenerating ? "优化商品原图中..." : "优化商品原图"}
+        </button>
+        <p className="image-generation-helper">将调用现有图片编辑接口，并按 image-enhance 类型记录 Usage 和 History。</p>
+        {error ? <p className="image-generation-error">{error}</p> : null}
+      </form>
+
+      {result ? (
+        <div className="product-scene-image-result">
+          <div className="product-scene-image-preview">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="商品原图优化结果" src={result.imageUrl} />
+          </div>
+          <dl>
+            <div>
+              <dt>模型</dt>
+              <dd>GPT-image-2</dd>
+            </div>
+            <div>
+              <dt>结果 Asset</dt>
+              <dd>{result.assetId}</dd>
+            </div>
+          </dl>
+        </div>
+      ) : null}
+    </section>
+  );
+}

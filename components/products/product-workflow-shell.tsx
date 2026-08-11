@@ -2,6 +2,7 @@
 
 import { ProductAnalysisResult } from "@/components/products/product-analysis-result";
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
+import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useState } from "react";
@@ -161,6 +162,7 @@ export function ProductWorkflowShell() {
         <div className="product-workflow-results">
           <ProductAnalysisResult analysis={result?.analysis || null} title={result?.title} />
           <ProductCopywritingPanel analysisResult={result} />
+          <ProductImageEditPanel analysisResult={result} />
           <ProductSceneImagePanel analysisResult={result} />
         </div>
       </section>
