@@ -21,12 +21,12 @@ type ProductWorkspaceTabsProps = {
 type TabId = "analysis" | "assets" | "copywriting" | "images" | "scenes" | "export";
 
 const tabs: Array<{ id: TabId; label: string }> = [
-  { id: "analysis", label: "Analysis" },
-  { id: "assets", label: "Assets" },
-  { id: "copywriting", label: "Copywriting" },
-  { id: "images", label: "Images" },
-  { id: "scenes", label: "Scenes" },
-  { id: "export", label: "Export" },
+  { id: "analysis", label: "分析" },
+  { id: "assets", label: "素材" },
+  { id: "copywriting", label: "文案" },
+  { id: "images", label: "图片" },
+  { id: "scenes", label: "场景" },
+  { id: "export", label: "导出" },
 ];
 
 function ProductWorkspaceEmpty({ children, title }: { children: React.ReactNode; title: string }) {
@@ -52,17 +52,17 @@ function CreationCenterState({
   type: "assets" | "export";
 }) {
   if (isCreationCenterLoading) {
-    return <ProductWorkspaceEmpty title="Loading product materials">CloudAI is refreshing the current product workspace.</ProductWorkspaceEmpty>;
+    return <ProductWorkspaceEmpty title="正在加载商品素材">CloudAI 正在刷新当前商品工作台。</ProductWorkspaceEmpty>;
   }
 
   if (creationCenterError) {
-    return <ProductWorkspaceEmpty title="Workspace data unavailable">{creationCenterError}</ProductWorkspaceEmpty>;
+    return <ProductWorkspaceEmpty title="工作台数据暂不可用">{creationCenterError}</ProductWorkspaceEmpty>;
   }
 
   if (!creationCenterData) {
     return (
-      <ProductWorkspaceEmpty title={type === "assets" ? "No assets yet" : "Nothing to export yet"}>
-        Upload and analyze a product image before using this tab.
+      <ProductWorkspaceEmpty title={type === "assets" ? "暂无素材" : "暂无可导出内容"}>
+        上传并分析商品后即可使用此区域。
       </ProductWorkspaceEmpty>
     );
   }
@@ -78,10 +78,20 @@ export function ProductWorkspaceTabs({
   result,
 }: ProductWorkspaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("analysis");
+  const tabCounts: Partial<Record<TabId, number>> = {
+    analysis: result ? 1 : 0,
+    assets: creationCenterData
+      ? Number(Boolean(creationCenterData.originalAsset)) + creationCenterData.imageEdits.length + creationCenterData.sceneImages.length
+      : 0,
+    copywriting: creationCenterData?.copywriting.length || 0,
+    images: creationCenterData?.imageEdits.length || 0,
+    scenes: creationCenterData?.sceneImages.length || 0,
+    export: creationCenterData ? 1 : 0,
+  };
 
   return (
     <section className="product-workspace-main">
-      <div className="product-workspace-tabs" role="tablist" aria-label="Product workspace sections">
+      <div className="product-workspace-tabs" role="tablist" aria-label="商品工作台分区">
         {tabs.map((tab) => (
           <button
             aria-controls={`product-workspace-panel-${tab.id}`}
@@ -93,7 +103,8 @@ export function ProductWorkspaceTabs({
             role="tab"
             type="button"
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {tabCounts[tab.id] ? <em>{tabCounts[tab.id]}</em> : null}
           </button>
         ))}
       </div>
