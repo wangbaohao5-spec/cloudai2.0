@@ -1,9 +1,8 @@
 const navItems = [
+  { href: "#features", label: "功能介绍" },
   { href: "#copywriting", label: "文案生成" },
   { href: "#image-generation", label: "图片生成" },
-  { href: "#ai-chat", label: "AI 聊天" },
-  { href: "#features", label: "功能介绍" },
-  { href: "#contact", label: "联系我们" },
+  { href: "#ai-chat", label: "AI 助手" },
 ];
 
 export function SiteHeader() {
@@ -25,14 +24,9 @@ export function SiteHeader() {
               <a href={item.href}>{item.label}</a>
             </li>
           ))}
-          <li>
-            <button className="nav-history-button" type="button">
-              History
-            </button>
-          </li>
         </ul>
-        <a className="nav-cta" href="#contact">
-          免费体验
+        <a className="nav-cta" href="/dashboard">
+          进入工作台
         </a>
       </nav>
     </header>
