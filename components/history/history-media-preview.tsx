@@ -3,6 +3,7 @@
 import type { HistoryRecord } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type HistoryMediaPreviewProps = {
   record: HistoryRecord;
@@ -75,9 +76,47 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
     };
   }, [record.assetId, shouldLoadAsset]);
 
+  useEffect(() => {
+    if (!isPreviewOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsPreviewOpen(false);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isPreviewOpen]);
+
   if (!record.assetId && !directUrl) {
     return null;
   }
+
+  const lightbox =
+    isPreviewOpen && mediaUrl && typeof document !== "undefined"
+      ? createPortal(
+          <div className="history-media-lightbox" role="dialog" aria-modal="true" aria-label="图片预览" onMouseDown={() => setIsPreviewOpen(false)}>
+            <div className="history-media-lightbox-content" onMouseDown={(event) => event.stopPropagation()}>
+              <button className="history-media-lightbox-close" type="button" onClick={() => setIsPreviewOpen(false)} aria-label="关闭图片预览">
+                关闭
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt={record.title} className="history-media-lightbox-image" src={mediaUrl} />
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div className={`history-media-preview ${previewType} ${isCompact ? "compact" : ""} ${variant === "asset" ? "asset" : ""}`}>
@@ -96,13 +135,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
       {!mediaUrl && !assetError ? <p>正在加载媒体预览...</p> : null}
       {assetError ? <p>{assetError}</p> : null}
 
-      {isPreviewOpen && mediaUrl ? (
-        <div className="history-media-lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
-          <button type="button" onClick={() => setIsPreviewOpen(false)} aria-label="关闭图片预览" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt={record.title} className="history-media-lightbox-image" src={mediaUrl} />
-        </div>
-      ) : null}
+      {lightbox}
     </div>
   );
 }
