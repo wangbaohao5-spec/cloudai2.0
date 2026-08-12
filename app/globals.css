@@ -390,13 +390,224 @@ h3 {
   font-size: 1.3rem;
 }
 
+.hero-workflow-preview {
+  display: grid;
+  gap: 16px;
+  transform: rotate(1.2deg);
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.hero-workflow-preview:hover {
+  border-color: var(--selected-border);
+  transform: rotate(0deg) translateY(-3px);
+}
+
+.hero-product-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--workspace-border);
+  border-radius: 24px;
+  padding: 16px;
+  background: var(--workspace-surface);
+}
+
+.hero-product-image {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px dashed var(--preview-border);
+  border-radius: 20px;
+  color: var(--accent);
+  background:
+    radial-gradient(circle at 30% 22%, var(--accent-soft), transparent 34%),
+    var(--preview-bg);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-product-card h2 {
+  margin-bottom: 8px;
+  font-size: 1.45rem;
+  letter-spacing: 0;
+}
+
+.hero-product-card p:last-child,
+.hero-analysis-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hero-analysis-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 22px;
+  padding: 18px;
+  background: var(--workspace-panel);
+}
+
+.hero-analysis-card strong {
+  color: var(--text);
+}
+
+.hero-workflow-status {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hero-workflow-status article {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.hero-workflow-status span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.hero-workflow-status strong {
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
 .showcase {
   border-top: 1px solid var(--header-border);
+}
+
+.landing-workflow,
+.landing-capabilities,
+.landing-example {
+  scroll-margin-top: 96px;
 }
 
 .section-heading {
   max-width: 760px;
   margin-bottom: 34px;
+}
+
+.landing-workflow-grid,
+.landing-capability-grid,
+.landing-example-grid {
+  display: grid;
+  gap: 22px;
+}
+
+.landing-workflow-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.landing-capability-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.landing-example-grid {
+  grid-template-columns: 0.85fr 1fr 1fr;
+  align-items: stretch;
+}
+
+.landing-workflow-card,
+.landing-capability-card,
+.landing-example-card {
+  border: 1px solid var(--card-border);
+  border-radius: 26px;
+  padding: 24px;
+  background: var(--panel-gradient);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.landing-workflow-card {
+  display: grid;
+  gap: 14px;
+  min-height: 230px;
+}
+
+.landing-workflow-card > span,
+.landing-example-card > span {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.landing-workflow-card h3,
+.landing-capability-card h3,
+.landing-example-card h3 {
+  margin-bottom: 0;
+  color: var(--text);
+}
+
+.landing-workflow-card p,
+.landing-capability-card p,
+.landing-example-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.landing-capability-card {
+  min-height: 210px;
+  background:
+    radial-gradient(circle at 16% 12%, var(--accent-soft), transparent 30%),
+    var(--surface);
+}
+
+.landing-example-card {
+  display: grid;
+  gap: 18px;
+  background: var(--workspace-surface);
+}
+
+.landing-example-product {
+  display: grid;
+  min-height: 240px;
+  align-content: end;
+  border: 1px dashed var(--preview-border);
+  border-radius: 22px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 34% 22%, var(--accent-soft), transparent 28%),
+    var(--preview-bg);
+}
+
+.landing-example-product strong {
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.landing-example-output > div {
+  display: grid;
+  gap: 10px;
+}
+
+.landing-example-output p {
+  border: 1px solid var(--workspace-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+  font-weight: 800;
+}
+
+.landing-final-cta .about-card {
+  text-align: center;
+}
+
+.landing-final-cta .hero-actions {
+  justify-content: center;
 }
 
 .feature-grid {
@@ -3777,6 +3988,34 @@ h3 {
   .hero {
     min-height: auto;
     padding-top: 70px;
+  }
+
+  .hero-workflow-preview {
+    transform: none;
+  }
+
+  .hero-product-card,
+  .landing-example-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-product-image {
+    max-height: 180px;
+  }
+
+  .hero-workflow-status {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-workflow-grid,
+  .landing-capability-grid,
+  .recent-products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-workflow-card,
+  .landing-capability-card {
+    min-height: auto;
   }
 
   .dashboard-shell {

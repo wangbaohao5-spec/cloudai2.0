@@ -1,8 +1,7 @@
 const navItems = [
-  { href: "#features", label: "功能介绍" },
-  { href: "#copywriting", label: "文案生成" },
-  { href: "#image-generation", label: "图片生成" },
-  { href: "#ai-chat", label: "AI 助手" },
+  { href: "#workflow", label: "工作流" },
+  { href: "#capabilities", label: "核心能力" },
+  { href: "#example", label: "示例" },
 ];
 
 export function SiteHeader() {
