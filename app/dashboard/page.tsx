@@ -1,7 +1,6 @@
-import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import { DashboardHomeShell } from "@/components/dashboard/home/dashboard-home-shell";
 import { getCurrentUser } from "@/lib/current-user";
-import { getRecentHistory } from "@/lib/history";
-import { getUsageStats } from "@/lib/usage";
+import { getDashboardHomeData } from "@/lib/dashboard-home";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
@@ -11,7 +10,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [usageStats, recentHistory] = await Promise.all([getUsageStats(user.id), getRecentHistory(user.id, 8)]);
+  const dashboardHomeData = await getDashboardHomeData(user.id);
 
-  return <DashboardOverview recentHistory={recentHistory} usageStats={usageStats} />;
+  return <DashboardHomeShell data={dashboardHomeData} />;
 }
