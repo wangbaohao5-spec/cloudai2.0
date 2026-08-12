@@ -1,5 +1,5 @@
-import { ProductWorkflowShell } from "@/components/products/product-workflow-shell";
+import { ProductWorkspaceShell } from "@/components/products/product-workspace-shell";
 
 export default function ProductsPage() {
-  return <ProductWorkflowShell />;
+  return <ProductWorkspaceShell />;
 }
