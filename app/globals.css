@@ -452,23 +452,49 @@ h3 {
 
 .dashboard-nav {
   display: grid;
-  gap: 10px;
+  gap: 24px;
   margin-top: 36px;
 }
 
-.dashboard-nav a,
-.dashboard-mobile-nav a {
+.dashboard-nav-section {
+  display: grid;
+  gap: 9px;
+}
+
+.dashboard-nav-label {
+  margin: 0;
+  padding: 0 14px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dashboard-nav-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-nav-link {
   border: 1px solid transparent;
   border-radius: 14px;
   padding: 12px 14px;
   color: var(--muted);
 }
 
-.dashboard-nav a:hover,
-.dashboard-mobile-nav a:hover {
+.dashboard-nav-link:hover,
+.dashboard-nav-link.active {
   border-color: var(--card-border);
   color: var(--text);
   background: var(--surface);
+}
+
+.dashboard-nav-link.active {
+  border-color: var(--selected-border);
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  font-weight: 900;
 }
 
 .dashboard-main {
@@ -1233,19 +1259,30 @@ h3 {
   display: none;
 }
 
-.dashboard-mobile-nav nav {
+.dashboard-mobile-nav .dashboard-nav {
   position: absolute;
   top: 82px;
   right: 24px;
   left: 24px;
   z-index: 20;
   display: grid;
-  gap: 10px;
+  gap: 18px;
+  max-height: calc(100vh - 110px);
+  margin-top: 0;
   border: 1px solid var(--card-border);
   border-radius: 20px;
   padding: 14px;
   background: var(--menu-bg);
   box-shadow: var(--shadow);
+  overflow-y: auto;
+}
+
+.dashboard-mobile-nav .dashboard-nav-label {
+  padding-inline: 8px;
+}
+
+.dashboard-mobile-nav .dashboard-nav-link {
+  padding: 11px 12px;
 }
 
 .copywriting-shell {
