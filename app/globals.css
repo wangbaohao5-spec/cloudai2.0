@@ -3724,10 +3724,11 @@ h3 {
   position: fixed;
   inset: 0;
   z-index: 80;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
-  overflow: auto;
+  overflow: hidden;
   background: var(--overlay);
 }
 
@@ -3738,14 +3739,14 @@ h3 {
   background: transparent;
 }
 
-.history-media-lightbox-image {
+.history-media-lightbox .history-media-lightbox-image {
   position: relative;
   z-index: 1;
   display: block;
+  max-width: 90vw;
+  max-height: 85vh;
   width: auto;
   height: auto;
-  max-width: min(86vw, 1120px);
-  max-height: 82vh;
   border: 1px solid var(--card-border);
   border-radius: 18px;
   object-fit: contain;

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CloudAI - 现代 AI 工具平台",
+  title: "CloudAI - AI 电商商品创作工作台",
   description:
-    "CloudAI 是面向团队与创作者的现代 AI 工具平台，提供文案生成、图片生成与智能工作流能力。",
+    "CloudAI 是面向电商创作者的 AI 商品内容工作台，支持商品分析、营销文案、图片优化、场景图生成和商品素材包整理。",
 };
 
 export default function RootLayout({
