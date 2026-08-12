@@ -42,6 +42,12 @@ const capabilities = [
   },
 ];
 
+const productTags = ["洁面乳", "个人护理", "敏感肌"];
+const analysisItems = [
+  { label: "类别", value: "个人护理" },
+  { label: "目标用户", value: "敏感肌 / 日常洁面人群" },
+  { label: "核心卖点", value: "温和、保湿、低刺激" },
+];
 const outputItems = ["标题文案", "核心卖点", "图片优化", "场景图", "Markdown 素材包"];
 
 export function FeatureSection() {
@@ -88,22 +94,37 @@ export function FeatureSection() {
         </div>
         <div className="landing-example-grid">
           <article className="landing-example-card">
-            <span>商品原图</span>
-            <div className="landing-example-product">
+            <span>商品输入</span>
+            <div className="landing-product-mock">
+              <small>PRODUCT</small>
               <strong>Freeplus 温和洁面乳</strong>
-              <p>低刺激洁面 · 敏感肌友好</p>
+              <p>温和清洁 · 敏感肌友好</p>
+              <div>
+                {productTags.map((tag) => (
+                  <em key={tag}>{tag}</em>
+                ))}
+              </div>
             </div>
           </article>
           <article className="landing-example-card">
-            <span>AI 分析摘要</span>
-            <h3>温和、保湿、日常复购</h3>
-            <p>适合关注成分安全、清洁力适中和长期肤感稳定的年轻通勤用户。</p>
+            <span>AI 分析</span>
+            <div className="landing-analysis-list">
+              {analysisItems.map((item) => (
+                <p key={item.label}>
+                  <strong>{item.label}</strong>
+                  <span>{item.value}</span>
+                </p>
+              ))}
+            </div>
           </article>
           <article className="landing-example-card landing-example-output">
-            <span>输出内容</span>
-            <div>
+            <span>输出素材</span>
+            <div className="landing-output-list">
               {outputItems.map((item) => (
-                <p key={item}>{item}</p>
+                <p key={item}>
+                  <span aria-hidden="true" />
+                  {item}
+                </p>
               ))}
             </div>
           </article>

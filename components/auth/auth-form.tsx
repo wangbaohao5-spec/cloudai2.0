@@ -52,11 +52,11 @@ export function AuthForm({ callbackUrl, mode }: AuthFormProps) {
     <form className="auth-form" onSubmit={handleSubmit}>
       <label>
         邮箱
-        <input name="email" placeholder="you@cloudai.app" required type="email" />
+        <input autoComplete="email" name="email" placeholder="you@cloudai.app" required type="email" />
       </label>
       <label>
         密码
-        <input minLength={6} name="password" placeholder="至少 6 位密码" required type="password" />
+        <input autoComplete={isRegister ? "new-password" : "current-password"} minLength={6} name="password" placeholder="至少 6 位密码" required type="password" />
       </label>
       <button className="button primary" disabled={isLoading} type="submit">
         {isLoading ? "处理中..." : isRegister ? "创建账号" : "登录"}

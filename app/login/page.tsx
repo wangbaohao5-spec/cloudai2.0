@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { AuthForm } from "@/components/auth/auth-form";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { getSafeCallbackUrl } from "@/lib/auth-redirect";
 import { redirect } from "next/navigation";
 
@@ -18,14 +18,5 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect(safeCallbackUrl);
   }
 
-  return (
-    <main className="auth-page">
-      <section className="auth-card glass-card">
-        <p className="eyebrow">CloudAI Account</p>
-        <h1>登录 CloudAI</h1>
-        <p>进入工作台，继续创建你的 AI 电商内容。</p>
-        <AuthForm callbackUrl={safeCallbackUrl} mode="login" />
-      </section>
-    </main>
-  );
+  return <AuthShell callbackUrl={safeCallbackUrl} mode="login" />;
 }
