@@ -1,4 +1,5 @@
 import { signOut } from "@/auth";
+import { ThemeSelector } from "@/components/dashboard/theme-selector";
 import Link from "next/link";
 
 type DashboardHeaderProps = {
@@ -36,10 +37,11 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
         <h1>CloudAI 工作台</h1>
       </div>
       <div className="dashboard-user">
-        <div>
+        <div className="dashboard-user-info">
           <strong>{userName}</strong>
           <span>{userEmail}</span>
         </div>
+        <ThemeSelector />
         <form
           action={async () => {
             "use server";

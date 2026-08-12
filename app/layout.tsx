@@ -12,8 +12,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeScript = `
+    (function () {
+      try {
+        var theme = localStorage.getItem("cloudai-theme");
+        var allowed = theme === "cloudai-dark" || theme === "ecommerce-pink";
+        document.documentElement.dataset.theme = allowed ? theme : "cloudai-dark";
+      } catch (error) {
+        document.documentElement.dataset.theme = "cloudai-dark";
+      }
+    })();
+  `;
+
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-theme="cloudai-dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );
