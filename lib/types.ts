@@ -41,6 +41,7 @@ export type HistoryRecord = {
   title: string;
   input: unknown;
   output: unknown;
+  previewUrl?: string | null;
   createdAt: string;
 };
 

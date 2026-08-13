@@ -34,8 +34,8 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
   const [assetError, setAssetError] = useState("");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const directUrl = getOutputUrl(record.output);
-  const mediaUrl = assetUrl || directUrl;
-  const shouldLoadAsset = Boolean(record.assetId);
+  const mediaUrl = record.previewUrl || assetUrl || directUrl;
+  const shouldLoadAsset = Boolean(record.assetId && !record.previewUrl);
   const previewType = isImagePreviewType(record.type) ? "image" : "video";
   const isCompact = variant === "thumbnail" || variant === "asset";
 
@@ -74,7 +74,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
     return () => {
       isMounted = false;
     };
-  }, [record.assetId, shouldLoadAsset]);
+  }, [record.assetId, record.previewUrl, shouldLoadAsset]);
 
   useEffect(() => {
     if (!isPreviewOpen) {
@@ -98,7 +98,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
     };
   }, [isPreviewOpen]);
 
-  if (!record.assetId && !directUrl) {
+  if (!record.assetId && !directUrl && !record.previewUrl) {
     return null;
   }
 
@@ -122,7 +122,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
     <div className={`history-media-preview ${previewType} ${isCompact ? "compact" : ""} ${variant === "asset" ? "asset" : ""}`}>
       {mediaUrl && isImagePreviewType(record.type) ? (
         <button type="button" onClick={() => setIsPreviewOpen(true)} aria-label="放大查看图片">
-          <Image alt={record.title} height={isCompact ? 360 : 640} src={mediaUrl} unoptimized width={isCompact ? 540 : 960} />
+          <Image alt={record.title} decoding="async" height={isCompact ? 360 : 640} loading="lazy" src={mediaUrl} unoptimized width={isCompact ? 540 : 960} />
         </button>
       ) : null}
 

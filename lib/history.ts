@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getFileUrl } from "@/lib/storage";
 import type { HistoryRecord } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 
@@ -53,6 +54,43 @@ const historyRecordSelect = {
   createdAt: true,
 } satisfies Prisma.HistoryRecordSelect;
 
+function shouldAttachPreviewUrl(record: Pick<HistoryRecord, "assetId" | "type">) {
+  return Boolean(record.assetId && (record.type === "image" || record.type === "image-enhance" || record.type === "product-analysis" || record.type === "video"));
+}
+
+async function attachPreviewUrls(userId: string, records: HistoryRecord[]): Promise<HistoryRecord[]> {
+  const assetIds = Array.from(new Set(records.filter(shouldAttachPreviewUrl).map((record) => record.assetId).filter((assetId): assetId is string => Boolean(assetId))));
+
+  if (!assetIds.length) {
+    return records;
+  }
+
+  const assets = await db.asset.findMany({
+    where: {
+      userId,
+      id: {
+        in: assetIds,
+      },
+    },
+    select: {
+      id: true,
+      url: true,
+    },
+  });
+  const signedUrlEntries = await Promise.all(
+    assets.map(async (asset) => {
+      try {
+        return [asset.id, await getFileUrl(asset.url)] as const;
+      } catch {
+        return [asset.id, null] as const;
+      }
+    }),
+  );
+  const previewUrlMap = new Map(signedUrlEntries);
+
+  return records.map((record) => (record.assetId && previewUrlMap.has(record.assetId) ? { ...record, previewUrl: previewUrlMap.get(record.assetId) || null } : record));
+}
+
 export async function saveHistory(record: HistoryRecordInput) {
   return db.historyRecord.create({
     data: {
@@ -101,8 +139,10 @@ export async function getHistoryPage(userId: string, take = 20, cursor?: string 
   });
   const visibleRecords = records.slice(0, pageSize);
 
+  const historyRecords = visibleRecords.map(toHistoryRecord);
+
   return {
-    records: visibleRecords.map(toHistoryRecord),
+    records: await attachPreviewUrls(userId, historyRecords),
     nextCursor: records.length > pageSize ? visibleRecords.at(-1)?.id || null : null,
     hasMore: records.length > pageSize,
   };
