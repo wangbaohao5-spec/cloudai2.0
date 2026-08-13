@@ -182,23 +182,78 @@ h3 {
 }
 
 .button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 0;
+  gap: 8px;
+  overflow: hidden;
+  border: 1px solid transparent;
   border-radius: 999px;
   padding: 13px 22px;
+  cursor: pointer;
   font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    transform 0.24s ease,
+    border-color 0.24s ease,
+    background 0.24s ease,
+    box-shadow 0.24s ease,
+    color 0.24s ease;
 }
 
 .button.primary {
   color: var(--primary-contrast);
-  background: var(--primary-gradient);
+  background:
+    linear-gradient(135deg, var(--primary-light), var(--primary), var(--accent)) padding-box,
+    linear-gradient(135deg, var(--accent), var(--primary-light), var(--primary)) border-box;
+  box-shadow:
+    0 10px 28px var(--accent-soft),
+    inset 0 1px 0 var(--surface-hover);
 }
 
 .button.secondary {
-  border: 1px solid var(--card-border);
-  background: var(--card);
+  color: var(--text);
+  background:
+    linear-gradient(135deg, var(--surface), var(--workspace-surface)) padding-box,
+    linear-gradient(135deg, var(--card-border), var(--selected-border), var(--card-border)) border-box;
+  box-shadow: inset 0 1px 0 var(--surface-hover);
+}
+
+.button.primary:hover,
+.button.primary:focus-visible {
+  transform: translateY(-1px);
+  border-color: transparent;
+  box-shadow:
+    0 14px 34px var(--accent-soft),
+    0 0 0 1px var(--selected-border),
+    inset 0 1px 0 var(--surface-hover);
+}
+
+.button.secondary:hover,
+.button.secondary:focus-visible {
+  transform: translateY(-1px);
+  color: var(--primary-light);
+  background:
+    linear-gradient(135deg, var(--surface-hover), var(--surface)) padding-box,
+    linear-gradient(135deg, var(--selected-border), var(--primary-light), var(--card-border)) border-box;
+  box-shadow:
+    0 10px 24px var(--accent-soft),
+    inset 0 1px 0 var(--surface-hover);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--selected-border);
+  outline-offset: 3px;
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.58;
 }
 
 .glass-card {
