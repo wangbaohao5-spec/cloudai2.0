@@ -26,6 +26,14 @@ type ProductWorkspaceRailProps = {
 
 const platformOptions = ["通用", "Amazon", "Shopee", "TikTok Shop"];
 
+function getGeneratedCount(creationCenterData: ProductCreationCenterData | null) {
+  if (!creationCenterData) {
+    return 0;
+  }
+
+  return creationCenterData.copywriting.length + creationCenterData.imageEdits.length + creationCenterData.sceneImages.length;
+}
+
 function getWorkspaceStatus({
   creationCenterData,
   result,
@@ -36,18 +44,32 @@ function getWorkspaceStatus({
   uploadedAsset: UploadedAsset | null;
 }) {
   if (!uploadedAsset) {
-    return "未上传";
+    return {
+      label: "未上传",
+      description: "上传商品原图后，CloudAI 会建立当前商品工作台。",
+    };
   }
 
   if (!result) {
-    return "已上传，待分析";
+    return {
+      label: "待分析",
+      description: "商品图片已准备好，下一步进行 AI 商品分析。",
+    };
   }
 
-  const generatedCount = creationCenterData
-    ? creationCenterData.copywriting.length + creationCenterData.imageEdits.length + creationCenterData.sceneImages.length
-    : 0;
+  const generatedCount = getGeneratedCount(creationCenterData);
 
-  return generatedCount > 0 ? "已生成素材" : "已分析";
+  if (generatedCount > 0) {
+    return {
+      label: "已生成素材",
+      description: `当前商品已有 ${generatedCount} 个文案或视觉素材，可继续补充并导出素材包。`,
+    };
+  }
+
+  return {
+    label: "已分析",
+    description: "商品分析已完成，可以继续生成文案、图片和场景图。",
+  };
 }
 
 export function ProductWorkspaceRail({
@@ -103,9 +125,12 @@ export function ProductWorkspaceRail({
         ) : null}
       </section>
 
-      <div className="product-workspace-status">
-        <span>当前状态</span>
-        <strong>{status}</strong>
+      <div className="product-workspace-status" aria-live="polite">
+        <div>
+          <span>当前状态</span>
+          <p>{status.description}</p>
+        </div>
+        <strong>{status.label}</strong>
       </div>
 
       {creationCenterData ? (
@@ -120,8 +145,10 @@ export function ProductWorkspaceRail({
 
       <div className="product-platform-selector" aria-label="目标平台">
         <div className="product-creation-section-header">
-          <strong>目标平台</strong>
-          <span>用于后续模板适配</span>
+          <div>
+            <strong>目标平台</strong>
+            <span>用于后续模板适配</span>
+          </div>
         </div>
         <div>
           {platformOptions.map((option) => (
@@ -135,6 +162,17 @@ export function ProductWorkspaceRail({
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="product-workspace-future-feature" aria-disabled="true">
+        <div>
+          <strong>详情页生成</strong>
+          <span>预留能力</span>
+        </div>
+        <p>后续可基于当前分析、文案和图片素材生成完整商品详情页。本阶段仅展示入口，不接入生成流程。</p>
+        <button disabled type="button">
+          即将支持
+        </button>
       </div>
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>

@@ -35,17 +35,23 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
                   <span>暂无图片</span>
                 )}
               </div>
-              <div>
+              <div className="recent-product-content">
                 <strong>{product.title}</strong>
                 <p>{product.category || "商品类别待补充"}</p>
               </div>
-              <span>{formatDate(product.updatedAt)}</span>
+              <div className="recent-product-footer">
+                <span>上次更新 {formatDate(product.updatedAt)}</span>
+                <em>继续创作</em>
+              </div>
             </Link>
           ))}
         </div>
       ) : (
         <div className="dashboard-home-empty">
-          <p>完成一次商品分析后，最近商品会出现在这里。</p>
+          <p>完成一次商品分析后，最近商品会出现在这里，方便你继续生成文案、图片和素材包。</p>
+          <Link className="button primary" href="/dashboard/products">
+            进入商品工作台
+          </Link>
         </div>
       )}
     </section>

@@ -1139,8 +1139,33 @@ h3 {
   font-size: 0.88rem;
 }
 
-.recent-product-card > span {
-  justify-self: start;
+.recent-product-content {
+  min-width: 0;
+}
+
+.recent-product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.recent-product-footer span {
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 7px 11px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.recent-product-footer em {
+  color: var(--primary-light);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .dashboard-quick-start {
@@ -2153,25 +2178,39 @@ h3 {
 }
 
 .product-workspace-status {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   border: 1px solid var(--workspace-border);
   border-radius: 18px;
-  padding: 12px 14px;
+  padding: 14px;
   background: var(--workspace-surface);
 }
 
 .product-workspace-status span {
+  display: block;
+  margin-bottom: 4px;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
+.product-workspace-status p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
 .product-workspace-status strong {
+  border: 1px solid var(--selected-border);
+  border-radius: 999px;
+  padding: 7px 11px;
   color: var(--accent);
+  background: var(--badge-bg);
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .product-platform-selector {
@@ -2202,6 +2241,56 @@ h3 {
   border-color: var(--selected-border);
   color: var(--badge-text);
   background: var(--badge-bg);
+}
+
+.product-workspace-future-feature {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed var(--preview-border);
+  border-radius: 18px;
+  padding: 15px;
+  background: var(--result-surface);
+}
+
+.product-workspace-future-feature > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-workspace-future-feature strong {
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+.product-workspace-future-feature span {
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.product-workspace-future-feature p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.product-workspace-future-feature button {
+  justify-self: start;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.82rem;
+  font-weight: 900;
+  opacity: 0.78;
 }
 
 .product-workspace-main {
@@ -2374,8 +2463,22 @@ h3 {
 }
 
 .product-creation-section-header span {
+  display: block;
+  margin-top: 3px;
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.product-creation-progress-summary {
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 7px 11px;
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .product-creation-progress,
@@ -2402,6 +2505,10 @@ h3 {
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
+  border: 1px solid var(--workspace-border);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--workspace-surface);
 }
 
 .product-creation-progress-list article > span {
@@ -2424,6 +2531,10 @@ h3 {
   background: var(--badge-bg);
 }
 
+.product-creation-progress-list article.pending > span {
+  border-style: dashed;
+}
+
 .product-creation-progress-list article:not(:last-child) > span::after {
   position: absolute;
   top: calc(100% + 4px);
@@ -2438,6 +2549,31 @@ h3 {
   display: block;
   color: var(--text);
   font-size: 0.93rem;
+}
+
+.product-creation-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.product-creation-progress-row em {
+  flex: 0 0 auto;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.product-creation-progress-list article.done .product-creation-progress-row em {
+  border-color: var(--selected-border);
+  color: var(--badge-text);
+  background: var(--badge-bg);
 }
 
 .product-creation-progress-list p {
