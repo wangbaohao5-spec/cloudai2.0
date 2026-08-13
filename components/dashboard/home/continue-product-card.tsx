@@ -33,9 +33,9 @@ export function ContinueProductCard({ product }: ContinueProductCardProps) {
   return (
     <section className="continue-product-card glass-card">
       <div className="continue-product-media">
-        {product.imageUrl ? (
+        {product.previewUrl || product.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img alt={product.title} src={product.imageUrl} />
+          <img alt={product.title} decoding="async" src={product.previewUrl || product.imageUrl || ""} />
         ) : (
           <span>暂无图片</span>
         )}

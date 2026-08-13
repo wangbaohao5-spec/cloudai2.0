@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getFileUrl } from "@/lib/storage";
+import { getFileUrl, getImagePreviewUrlOrOriginal } from "@/lib/storage";
 import type { HistoryRecord } from "@/lib/types";
 import type { Prisma } from "@prisma/client";
 
@@ -77,18 +77,21 @@ async function attachPreviewUrls(userId: string, records: HistoryRecord[]): Prom
       url: true,
     },
   });
-  const signedUrlEntries = await Promise.all(
+  const signedUrlEntries: Array<readonly [string, { originalUrl: string | null; previewUrl: string | null }]> = await Promise.all(
     assets.map(async (asset) => {
       try {
-        return [asset.id, await getFileUrl(asset.url)] as const;
+        const originalUrl = await getFileUrl(asset.url);
+        const previewUrl = await getImagePreviewUrlOrOriginal(asset.url, originalUrl);
+
+        return [asset.id, { originalUrl, previewUrl }] as const;
       } catch {
-        return [asset.id, null] as const;
+        return [asset.id, { originalUrl: null, previewUrl: null }] as const;
       }
     }),
   );
-  const previewUrlMap = new Map(signedUrlEntries);
+  const mediaUrlMap = new Map(signedUrlEntries);
 
-  return records.map((record) => (record.assetId && previewUrlMap.has(record.assetId) ? { ...record, previewUrl: previewUrlMap.get(record.assetId) || null } : record));
+  return records.map((record) => (record.assetId && mediaUrlMap.has(record.assetId) ? { ...record, ...mediaUrlMap.get(record.assetId) } : record));
 }
 
 export async function saveHistory(record: HistoryRecordInput) {
@@ -159,7 +162,7 @@ export async function getRecentHistory(userId: string, take = 8): Promise<Histor
     take,
   });
 
-  return records.map(toHistoryRecord);
+  return attachPreviewUrls(userId, records.map(toHistoryRecord));
 }
 
 export async function getProductRelatedHistory({ userId, analysisHistoryId, sourceAssetId }: RelatedProductHistoryInput): Promise<HistoryRecord[]> {

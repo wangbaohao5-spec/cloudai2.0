@@ -28,9 +28,9 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
           {products.map((product) => (
             <Link className="recent-product-card" href={`/dashboard/products?analysis=${product.analysisHistoryId}`} key={product.analysisHistoryId}>
               <div className="recent-product-media">
-                {product.imageUrl ? (
+                {product.previewUrl || product.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img alt={product.title} src={product.imageUrl} />
+                  <img alt={product.title} decoding="async" loading="lazy" src={product.previewUrl || product.imageUrl || ""} />
                 ) : (
                   <span>暂无图片</span>
                 )}

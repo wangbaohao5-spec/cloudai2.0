@@ -14,9 +14,9 @@ export function ProductCreationSummary({ analysis, originalAsset, product }: Pro
   return (
     <div className="product-creation-summary">
       <div className="product-creation-original">
-        {originalAsset?.url ? (
+        {originalAsset?.previewUrl || originalAsset?.url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img alt={originalAsset.name || productName} src={originalAsset.url} />
+          <img alt={originalAsset.name || productName} decoding="async" src={originalAsset.previewUrl || originalAsset.url} />
         ) : (
           <span>暂无原图</span>
         )}

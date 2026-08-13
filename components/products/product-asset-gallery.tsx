@@ -12,6 +12,7 @@ type ProductAssetGalleryProps = {
 type GalleryAsset = {
   id: string;
   label: string;
+  previewUrl?: string | null;
   title: string;
   url: string;
 };
@@ -27,13 +28,15 @@ function getOutputUrl(output: unknown) {
   return typeof url === "string" ? url : "";
 }
 
-function AssetTile({ label, title, url }: { label: string; title: string; url: string }) {
+function AssetTile({ label, previewUrl, title, url }: { label: string; previewUrl?: string | null; title: string; url: string }) {
+  const displayUrl = previewUrl || url;
+
   return (
     <article className="product-asset-tile">
       <div>
-        {url ? (
+        {displayUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img alt={title} src={url} />
+          <img alt={title} decoding="async" loading="lazy" src={displayUrl} />
         ) : (
           <span>暂无预览</span>
         )}
@@ -54,7 +57,7 @@ function AssetGroup({ assets, emptyText, title }: { assets: GalleryAsset[]; empt
       {assets.length ? (
         <div className="product-asset-grid">
           {assets.map((asset) => (
-            <AssetTile key={asset.id} label={asset.label} title={asset.title} url={asset.url} />
+            <AssetTile key={asset.id} label={asset.label} previewUrl={asset.previewUrl} title={asset.title} url={asset.url} />
           ))}
         </div>
       ) : (
@@ -70,6 +73,7 @@ export function ProductAssetGallery({ imageEdits, originalAsset, sceneImages }: 
         {
           id: originalAsset.id,
           label: "原商品图",
+          previewUrl: originalAsset.previewUrl,
           title: originalAsset.name,
           url: originalAsset.url,
         },
@@ -78,12 +82,14 @@ export function ProductAssetGallery({ imageEdits, originalAsset, sceneImages }: 
   const imageEditAssets = imageEdits.map((record) => ({
     id: record.id,
     label: "原图优化",
+    previewUrl: record.previewUrl,
     title: record.title,
     url: getOutputUrl(record.output),
   }));
   const sceneImageAssets = sceneImages.map((record) => ({
     id: record.id,
     label: "营销场景图",
+    previewUrl: record.previewUrl,
     title: record.title,
     url: getOutputUrl(record.output),
   }));

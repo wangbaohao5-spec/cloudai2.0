@@ -35,6 +35,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const directUrl = getOutputUrl(record.output);
   const mediaUrl = record.previewUrl || assetUrl || directUrl;
+  const originalMediaUrl = record.originalUrl || assetUrl || directUrl || mediaUrl;
   const shouldLoadAsset = Boolean(record.assetId && !record.previewUrl);
   const previewType = isImagePreviewType(record.type) ? "image" : "video";
   const isCompact = variant === "thumbnail" || variant === "asset";
@@ -111,7 +112,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
                 关闭
               </button>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt={record.title} className="history-media-lightbox-image" src={mediaUrl} />
+              <img alt={record.title} className="history-media-lightbox-image" src={originalMediaUrl} />
             </div>
           </div>,
           document.body,

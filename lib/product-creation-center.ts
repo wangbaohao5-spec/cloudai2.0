@@ -3,13 +3,14 @@ import { getAssetForUser } from "@/lib/assets";
 import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductImageAnalysis } from "@/lib/product-types";
-import { getFileUrl } from "@/lib/storage";
+import { getFileUrl, getImagePreviewUrlOrOriginal } from "@/lib/storage";
 import type { HistoryRecord } from "@/lib/types";
 
 export type ProductCreationCenterAsset = {
   id: string;
   type: string;
   name: string;
+  previewUrl?: string | null;
   url: string;
 };
 
@@ -91,12 +92,17 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
     analysisRecord.assetId ? getAssetForUser(userId, analysisRecord.assetId) : Promise.resolve(null),
   ]);
   const originalAsset = originalAssetRecord
-    ? {
-        id: originalAssetRecord.id,
-        type: originalAssetRecord.type,
-        name: originalAssetRecord.name,
-        url: await getFileUrl(originalAssetRecord.url),
-      }
+    ? await (async () => {
+        const originalUrl = await getFileUrl(originalAssetRecord.url);
+
+        return {
+          id: originalAssetRecord.id,
+          type: originalAssetRecord.type,
+          name: originalAssetRecord.name,
+          previewUrl: await getImagePreviewUrlOrOriginal(originalAssetRecord.url, originalUrl),
+          url: originalUrl,
+        };
+      })()
     : null;
 
   return {

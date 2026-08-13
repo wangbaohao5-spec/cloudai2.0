@@ -15,6 +15,19 @@ const ASSET_BUCKET = "cloudai-assets";
 const SIGNED_URL_EXPIRES_IN = 60 * 60;
 const MB = 1024 * 1024;
 
+export type ImagePreviewTransform = {
+  width?: number;
+  height?: number;
+  resize?: "cover" | "contain" | "fill";
+  quality?: number;
+};
+
+const DEFAULT_IMAGE_PREVIEW_TRANSFORM: ImagePreviewTransform = {
+  width: 480,
+  resize: "contain",
+  quality: 72,
+};
+
 export const ASSET_UPLOAD_LIMITS = {
   image: 10 * MB,
   video: 100 * MB,
@@ -146,6 +159,27 @@ export async function getFileUrl(path: string, expiresIn = SIGNED_URL_EXPIRES_IN
   }
 
   return data.signedUrl;
+}
+
+export async function getImagePreviewUrl(path: string, expiresIn = SIGNED_URL_EXPIRES_IN, transform = DEFAULT_IMAGE_PREVIEW_TRANSFORM) {
+  const supabase = getSupabaseStorageClient();
+  const { data, error } = await supabase.storage.from(ASSET_BUCKET).createSignedUrl(path, expiresIn, {
+    transform,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.signedUrl;
+}
+
+export async function getImagePreviewUrlOrOriginal(path: string, originalUrl?: string | null, expiresIn = SIGNED_URL_EXPIRES_IN, transform = DEFAULT_IMAGE_PREVIEW_TRANSFORM) {
+  try {
+    return await getImagePreviewUrl(path, expiresIn, transform);
+  } catch {
+    return originalUrl || (await getFileUrl(path, expiresIn));
+  }
 }
 
 export async function deleteFile(path: string) {

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
-import { getFileUrl } from "@/lib/storage";
+import { getFileUrl, getImagePreviewUrlOrOriginal } from "@/lib/storage";
 import type { ProductImageAnalysis } from "@/lib/product-types";
 
 export type ProductHomeCard = {
@@ -9,6 +9,7 @@ export type ProductHomeCard = {
   category?: string | null;
   targetAudience?: string | null;
   imageUrl?: string | null;
+  previewUrl?: string | null;
   updatedAt: string;
 };
 
@@ -56,17 +57,34 @@ async function getSignedAssetUrl(assetId: string | null, assetMap: Map<string, {
   }
 }
 
+async function getPreviewAssetUrl(assetId: string | null, assetMap: Map<string, { url: string }>, originalUrl?: string | null) {
+  if (!assetId) {
+    return null;
+  }
+
+  const asset = assetMap.get(assetId);
+
+  if (!asset) {
+    return null;
+  }
+
+  return getImagePreviewUrlOrOriginal(asset.url, originalUrl);
+}
+
 async function toProductHomeCard(record: ProductAnalysisRecord, assetMap: Map<string, { url: string }>): Promise<ProductHomeCard | null> {
   if (!isProductImageAnalysis(record.output)) {
     return null;
   }
+
+  const imageUrl = await getSignedAssetUrl(record.assetId, assetMap);
 
   return {
     analysisHistoryId: record.id,
     title: getProductTitle(record, record.output),
     category: record.output.category || null,
     targetAudience: record.output.targetAudience || null,
-    imageUrl: await getSignedAssetUrl(record.assetId, assetMap),
+    imageUrl,
+    previewUrl: await getPreviewAssetUrl(record.assetId, assetMap, imageUrl),
     updatedAt: record.createdAt.toISOString(),
   };
 }
