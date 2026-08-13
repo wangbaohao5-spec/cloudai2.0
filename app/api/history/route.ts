@@ -1,11 +1,12 @@
 import { getCurrentUser } from "@/lib/current-user";
 import { jsonError } from "@/lib/api-errors";
-import { clearHistory, getHistory } from "@/lib/history";
+import { clearHistory, getHistoryPage } from "@/lib/history";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+const HISTORY_PAGE_SIZE = 20;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await getCurrentUser();
 
@@ -13,9 +14,15 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const records = await getHistory(user.id);
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get("cursor")?.trim() || null;
+    const page = await getHistoryPage(user.id, HISTORY_PAGE_SIZE, cursor);
 
-    return NextResponse.json({ records });
+    return NextResponse.json(page, {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (error) {
     return jsonError(error, "History records could not be loaded.");
   }

@@ -16,18 +16,35 @@ const historyFilters: Array<{ label: string; value: HistoryFilter }> = [
   { label: "商品分析", value: "product-analysis" },
 ];
 
+type HistoryResponse = {
+  records: HistoryRecord[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export function HistoryList() {
   const [activeFilter, setActiveFilter] = useState<HistoryFilter>("all");
   const [error, setError] = useState("");
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [records, setRecords] = useState<HistoryRecord[]>([]);
 
-  async function loadRecords() {
+  async function loadRecords(cursor?: string | null) {
+    const isLoadingNextPage = Boolean(cursor);
+
     setError("");
-    setIsLoading(true);
+
+    if (isLoadingNextPage) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
 
     try {
-      const response = await fetch("/api/history", {
+      const url = cursor ? `/api/history?cursor=${encodeURIComponent(cursor)}` : "/api/history";
+      const response = await fetch(url, {
         cache: "no-store",
       });
 
@@ -35,12 +52,27 @@ export function HistoryList() {
         throw new Error("历史记录读取失败，请稍后再试。");
       }
 
-      const data = (await response.json()) as { records: HistoryRecord[] };
-      setRecords(data.records);
+      const data = (await response.json()) as HistoryResponse;
+      setRecords((currentRecords) => {
+        if (!isLoadingNextPage) {
+          return data.records;
+        }
+
+        const seenIds = new Set(currentRecords.map((record) => record.id));
+        const nextRecords = data.records.filter((record) => !seenIds.has(record.id));
+
+        return [...currentRecords, ...nextRecords];
+      });
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "历史记录读取失败，请稍后再试。");
     } finally {
-      setIsLoading(false);
+      if (isLoadingNextPage) {
+        setIsLoadingMore(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   }
 
@@ -68,6 +100,8 @@ export function HistoryList() {
       method: "DELETE",
     });
     setRecords([]);
+    setNextCursor(null);
+    setHasMore(false);
   }
 
   return (
@@ -98,14 +132,26 @@ export function HistoryList() {
           <p>正在加载历史记录...</p>
         </div>
       ) : filteredRecords.length ? (
-        <div className="history-list">
-          {filteredRecords.map((record) => (
-            <HistoryItem key={record.id} record={record} onDelete={handleDelete} />
-          ))}
-        </div>
+        <>
+          <div className="history-list">
+            {filteredRecords.map((record) => (
+              <HistoryItem key={record.id} record={record} onDelete={handleDelete} />
+            ))}
+          </div>
+          {hasMore ? (
+            <button className="button secondary" disabled={isLoadingMore || !nextCursor} type="button" onClick={() => void loadRecords(nextCursor)}>
+              {isLoadingMore ? "正在加载..." : "加载更多"}
+            </button>
+          ) : null}
+        </>
       ) : (
         <div className="history-empty-state">
           <p>{records.length ? "当前筛选下暂无记录。" : "暂无历史记录。完成 AI 生成或商品分析后，会自动保存到这里。"}</p>
+          {hasMore ? (
+            <button className="button secondary" disabled={isLoadingMore || !nextCursor} type="button" onClick={() => void loadRecords(nextCursor)}>
+              {isLoadingMore ? "正在加载..." : "加载更多"}
+            </button>
+          ) : null}
         </div>
       )}
     </section>

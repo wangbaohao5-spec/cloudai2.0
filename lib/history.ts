@@ -11,6 +11,18 @@ export type HistoryRecordInput = {
   output: unknown;
 };
 
+export type HistoryPageResult = {
+  records: HistoryRecord[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+type RelatedProductHistoryInput = {
+  userId: string;
+  analysisHistoryId: string;
+  sourceAssetId?: string | null;
+};
+
 function toHistoryRecord(record: {
   id: string;
   assetId: string | null;
@@ -30,6 +42,16 @@ function toHistoryRecord(record: {
     createdAt: record.createdAt.toISOString(),
   };
 }
+
+const historyRecordSelect = {
+  id: true,
+  assetId: true,
+  type: true,
+  title: true,
+  input: true,
+  output: true,
+  createdAt: true,
+} satisfies Prisma.HistoryRecordSelect;
 
 export async function saveHistory(record: HistoryRecordInput) {
   return db.historyRecord.create({
@@ -57,6 +79,35 @@ export async function getHistory(userId: string): Promise<HistoryRecord[]> {
   return records.map(toHistoryRecord);
 }
 
+export async function getHistoryPage(userId: string, take = 20, cursor?: string | null): Promise<HistoryPageResult> {
+  const pageSize = Math.max(1, Math.min(take, 50));
+  const records = await db.historyRecord.findMany({
+    where: {
+      userId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: pageSize + 1,
+    ...(cursor
+      ? {
+          cursor: {
+            id: cursor,
+          },
+          skip: 1,
+        }
+      : {}),
+    select: historyRecordSelect,
+  });
+  const visibleRecords = records.slice(0, pageSize);
+
+  return {
+    records: visibleRecords.map(toHistoryRecord),
+    nextCursor: records.length > pageSize ? visibleRecords.at(-1)?.id || null : null,
+    hasMore: records.length > pageSize,
+  };
+}
+
 export async function getRecentHistory(userId: string, take = 8): Promise<HistoryRecord[]> {
   const records = await db.historyRecord.findMany({
     where: {
@@ -66,6 +117,55 @@ export async function getRecentHistory(userId: string, take = 8): Promise<Histor
       createdAt: "desc",
     },
     take,
+  });
+
+  return records.map(toHistoryRecord);
+}
+
+export async function getProductRelatedHistory({ userId, analysisHistoryId, sourceAssetId }: RelatedProductHistoryInput): Promise<HistoryRecord[]> {
+  const records = await db.historyRecord.findMany({
+    where: {
+      userId,
+      OR: [
+        {
+          type: "copywriting",
+          input: {
+            path: ["analysisHistoryId"],
+            equals: analysisHistoryId,
+          },
+        },
+        {
+          type: "image",
+          input: {
+            path: ["analysisHistoryId"],
+            equals: analysisHistoryId,
+          },
+        },
+        {
+          type: "image-enhance",
+          input: {
+            path: ["analysisHistoryId"],
+            equals: analysisHistoryId,
+          },
+        },
+        ...(sourceAssetId
+          ? [
+              {
+                type: "image-enhance",
+                input: {
+                  path: ["sourceAssetId"],
+                  equals: sourceAssetId,
+                },
+              },
+            ]
+          : []),
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 100,
+    select: historyRecordSelect,
   });
 
   return records.map(toHistoryRecord);

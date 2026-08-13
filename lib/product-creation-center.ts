@@ -1,6 +1,6 @@
 import { ApiError } from "@/lib/api-errors";
 import { getAssetForUser } from "@/lib/assets";
-import { getHistory, getHistoryRecordForUser } from "@/lib/history";
+import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductImageAnalysis } from "@/lib/product-types";
 import { getFileUrl } from "@/lib/storage";
@@ -83,7 +83,11 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
   }
 
   const [historyRecords, originalAssetRecord] = await Promise.all([
-    getHistory(userId),
+    getProductRelatedHistory({
+      userId,
+      analysisHistoryId: analysisRecord.id,
+      sourceAssetId: analysisRecord.assetId,
+    }),
     analysisRecord.assetId ? getAssetForUser(userId, analysisRecord.assetId) : Promise.resolve(null),
   ]);
   const originalAsset = originalAssetRecord

@@ -4,7 +4,7 @@ import { ProductWorkspaceRail } from "@/components/products/product-workspace-ra
 import { ProductWorkspaceTabs } from "@/components/products/product-workspace-tabs";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type UploadedAsset = {
   assetId: string;
@@ -62,6 +62,7 @@ export function ProductWorkspaceShell() {
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
   const [result, setResult] = useState<ProductAnalysisResponse | null>(null);
+  const loadedCreationCenterRef = useRef<{ analysisHistoryId: string; refreshKey: number } | null>(null);
 
   function updateAnalysisUrl(analysisHistoryId?: string) {
     const url = new URL(window.location.href);
@@ -102,6 +103,10 @@ export function ProductWorkspaceShell() {
         }
 
         setCreationCenterData(data);
+        loadedCreationCenterRef.current = {
+          analysisHistoryId: data.product.analysisHistoryId,
+          refreshKey: 0,
+        };
         setUploadedAsset({
           assetId,
           name: data.originalAsset?.name || data.product.title,
@@ -149,6 +154,14 @@ export function ProductWorkspaceShell() {
       if (!analysisHistoryId) {
         setCreationCenterData(null);
         setCreationCenterError("");
+        loadedCreationCenterRef.current = null;
+        return;
+      }
+
+      if (
+        loadedCreationCenterRef.current?.analysisHistoryId === analysisHistoryId &&
+        loadedCreationCenterRef.current.refreshKey === creationCenterRefreshKey
+      ) {
         return;
       }
 
@@ -160,11 +173,16 @@ export function ProductWorkspaceShell() {
 
         if (isMounted) {
           setCreationCenterData(data);
+          loadedCreationCenterRef.current = {
+            analysisHistoryId,
+            refreshKey: creationCenterRefreshKey,
+          };
         }
       } catch (caughtError) {
         if (isMounted) {
           setCreationCenterError(caughtError instanceof Error ? caughtError.message : "Product workspace data refresh failed.");
           setCreationCenterData(null);
+          loadedCreationCenterRef.current = null;
         }
       } finally {
         if (isMounted) {
@@ -190,6 +208,7 @@ export function ProductWorkspaceShell() {
     setError("");
     setCreationCenterError("");
     setCreationCenterData(null);
+    loadedCreationCenterRef.current = null;
     setResult(null);
     updateAnalysisUrl();
     clearStoredAnalysisHistoryId();
@@ -228,6 +247,7 @@ export function ProductWorkspaceShell() {
     setError("");
     setCreationCenterError("");
     setCreationCenterData(null);
+    loadedCreationCenterRef.current = null;
     setIsAnalyzing(true);
 
     try {
