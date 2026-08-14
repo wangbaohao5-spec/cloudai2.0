@@ -2,6 +2,7 @@
 
 import { ProductCreationProgress } from "@/components/products/product-creation-progress";
 import { ProductCreationSummary } from "@/components/products/product-creation-summary";
+import { AiThinkingLoading } from "@/components/ui/ai-thinking-loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -178,7 +179,7 @@ export function ProductWorkspaceRail({
       </div>
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>
-        {isPrimaryActionLoading ? <LoadingIndicator /> : null}
+        {isAnalyzing ? <AiThinkingLoading /> : isPrimaryActionLoading ? <LoadingIndicator /> : null}
         {isUploading ? "正在上传..." : isAnalyzing ? "正在分析..." : isRestoring ? "正在恢复..." : analyzeLabel}
       </button>
 

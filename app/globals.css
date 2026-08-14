@@ -284,6 +284,38 @@ h3 {
   animation-delay: 240ms;
 }
 
+.ai-thinking-loading {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(3, 7px);
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 32px;
+  height: 16px;
+}
+
+.ai-thinking-loading span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, var(--primary-light), var(--primary), var(--accent));
+  animation: ai-thinking-node 1.15s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+.ai-thinking-loading span:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.ai-thinking-loading span:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.ai-thinking-loading span:nth-child(3) {
+  animation-delay: 280ms;
+}
+
 @keyframes loading-indicator-pulse {
   0%,
   80%,
@@ -295,6 +327,24 @@ h3 {
   40% {
     opacity: 1;
     transform: translateY(-2px);
+  }
+}
+
+@keyframes ai-thinking-node {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translate3d(0, 2px, 0) scale(0.78);
+  }
+
+  38% {
+    opacity: 1;
+    transform: translate3d(0, -4px, 0) scale(1.08);
+  }
+
+  68% {
+    opacity: 0.72;
+    transform: translate3d(0, 1px, 0) scale(0.92);
   }
 }
 
@@ -1497,6 +1547,7 @@ h3 {
 
 @media (prefers-reduced-motion: reduce) {
   .loading-indicator span,
+  .ai-thinking-loading span,
   .skeleton-block,
   .workspace-toast {
     animation: none;
