@@ -6,10 +6,11 @@ import { ProductContentPackage } from "@/components/products/product-content-pac
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
-import { EmptyState } from "@/components/ui/empty-state";
+import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useState } from "react";
+import type { ReactNode } from "react";
 
 type ProductWorkspaceTabsProps = {
   creationCenterData: ProductCreationCenterData | null;
@@ -30,42 +31,61 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: "export", label: "导出" },
 ];
 
-function ProductWorkspaceEmpty({ actionLabel, description, icon, title }: { actionLabel?: string; description: string; icon: string; title: string }) {
-  return <EmptyState icon={icon} title={title} description={description} actionHref="/dashboard/products" actionLabel={actionLabel || "上传商品图"} />;
-}
-
 function CreationCenterState({
   children,
   creationCenterData,
   creationCenterError,
   isCreationCenterLoading,
-  type,
+  onTabChange,
 }: {
-  children: (data: ProductCreationCenterData) => React.ReactNode;
+  children: (data: ProductCreationCenterData) => ReactNode;
   creationCenterData: ProductCreationCenterData | null;
   creationCenterError: string;
   isCreationCenterLoading: boolean;
-  type: "assets" | "export";
+  onTabChange: (tabId: TabId) => void;
 }) {
   if (isCreationCenterLoading) {
-    return <ProductWorkspaceEmpty icon="⏳" title="正在加载商品素材" description="CloudAI 正在刷新当前商品工作台。" actionLabel="等待刷新" />;
+    return (
+      <ProductWorkspaceEmptyState
+        eyebrow="正在同步"
+        marker="..."
+        title="正在加载商品素材"
+        description="CloudAI 正在刷新当前商品工作台，请稍等片刻。"
+      />
+    );
   }
 
   if (creationCenterError) {
-    return <ProductWorkspaceEmpty icon="!" title="工作台数据暂不可用" description={creationCenterError} actionLabel="重新进入工作台" />;
+    return (
+      <ProductWorkspaceEmptyState
+        eyebrow="数据暂不可用"
+        marker="!"
+        title="工作台数据暂不可用"
+        description={creationCenterError}
+        actions={[{ label: "回到分析", onClick: () => onTabChange("analysis") }]}
+      />
+    );
   }
 
   if (!creationCenterData) {
     return (
-      <ProductWorkspaceEmpty
-        icon={type === "assets" ? "🖼" : "📦"}
-        title={type === "assets" ? "还没有素材" : "还没有可导出内容"}
-        description="上传并分析商品后，即可在这里整理当前商品的素材。"
+      <ProductWorkspaceEmptyState
+        eyebrow="尚未开始"
+        marker="01"
+        title="上传并分析商品后开始创作"
+        description="完成商品分析后，素材、文案、图片、场景图和导出内容会在这里统一管理。"
+        actions={[{ label: "回到分析", onClick: () => onTabChange("analysis") }]}
       />
     );
   }
 
   return <>{children(creationCenterData)}</>;
+}
+
+function scrollToPanel(panelId: string) {
+  window.requestAnimationFrame(() => {
+    document.getElementById(panelId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 export function ProductWorkspaceTabs({
@@ -76,16 +96,35 @@ export function ProductWorkspaceTabs({
   result,
 }: ProductWorkspaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("analysis");
+  const copywritingCount = creationCenterData?.copywriting.length || 0;
+  const imageEditCount = creationCenterData?.imageEdits.length || 0;
+  const sceneImageCount = creationCenterData?.sceneImages.length || 0;
+  const hasOriginalAsset = Boolean(creationCenterData?.originalAsset);
+  const generatedAssetCount = imageEditCount + sceneImageCount;
   const tabCounts: Partial<Record<TabId, number>> = {
     analysis: result ? 1 : 0,
-    assets: creationCenterData
-      ? Number(Boolean(creationCenterData.originalAsset)) + creationCenterData.imageEdits.length + creationCenterData.sceneImages.length
-      : 0,
-    copywriting: creationCenterData?.copywriting.length || 0,
-    images: creationCenterData?.imageEdits.length || 0,
-    scenes: creationCenterData?.sceneImages.length || 0,
+    assets: creationCenterData ? Number(hasOriginalAsset) + generatedAssetCount : 0,
+    copywriting: copywritingCount,
+    images: imageEditCount,
+    scenes: sceneImageCount,
     export: creationCenterData ? 1 : 0,
   };
+  const exportChecklist = [
+    { label: "分析", done: Boolean(creationCenterData) },
+    { label: "文案", done: copywritingCount > 0 },
+    { label: "图片", done: imageEditCount > 0 },
+    { label: "场景", done: sceneImageCount > 0 },
+  ];
+  const isExportReady = exportChecklist.every((item) => item.done);
+
+  function switchTab(tabId: TabId) {
+    setActiveTab(tabId);
+  }
+
+  function switchTabAndFocus(tabId: TabId, panelId: string) {
+    setActiveTab(tabId);
+    scrollToPanel(panelId);
+  }
 
   return (
     <section className="product-workspace-main">
@@ -97,7 +136,7 @@ export function ProductWorkspaceTabs({
             className={`product-workspace-tab ${activeTab === tab.id ? "active" : ""}`}
             id={`product-workspace-tab-${tab.id}`}
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => switchTab(tab.id)}
             role="tab"
             type="button"
           >
@@ -114,7 +153,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-analysis"
         role="tabpanel"
       >
-        <ProductAnalysisResult analysis={result?.analysis || null} title={result?.title} />
+        <ProductAnalysisResult analysis={result?.analysis || null} showFullAnalysisToggle={false} title={result?.title} />
       </div>
 
       <div
@@ -128,9 +167,30 @@ export function ProductWorkspaceTabs({
           creationCenterData={creationCenterData}
           creationCenterError={creationCenterError}
           isCreationCenterLoading={isCreationCenterLoading}
-          type="assets"
+          onTabChange={switchTab}
         >
-          {(data) => <ProductAssetGallery originalAsset={data.originalAsset} imageEdits={data.imageEdits} sceneImages={data.sceneImages} />}
+          {(data) => (
+            <>
+              {!generatedAssetCount ? (
+                <ProductWorkspaceEmptyState
+                  eyebrow="素材汇总"
+                  marker={hasOriginalAsset ? "IMG" : "00"}
+                  title={hasOriginalAsset ? "已收录原商品图" : "还没有素材"}
+                  description={
+                    hasOriginalAsset
+                      ? "原商品图已进入素材区。继续生成图片优化结果或营销场景图后，这里会形成更完整的素材集合。"
+                      : "生成文案、图片或场景图后，素材会汇总在这里。"
+                  }
+                  actions={[
+                    { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel"), tone: "primary" },
+                    { label: "前往场景", onClick: () => switchTabAndFocus("scenes", "product-scene-image-panel") },
+                    { label: "前往文案", onClick: () => switchTab("copywriting") },
+                  ]}
+                />
+              ) : null}
+              <ProductAssetGallery originalAsset={data.originalAsset} imageEdits={data.imageEdits} sceneImages={data.sceneImages} />
+            </>
+          )}
         </CreationCenterState>
       </div>
 
@@ -151,6 +211,18 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-images"
         role="tabpanel"
       >
+        {result && !imageEditCount ? (
+          <ProductWorkspaceEmptyState
+            eyebrow="图片素材"
+            marker="IMG"
+            title="还没有图片素材"
+            description="基于当前商品分析，生成商品展示图或优化商品原图。"
+            actions={[
+              { label: "优化商品原图", onClick: () => scrollToPanel("product-image-edit-panel"), tone: "primary" },
+              { label: "查看素材", onClick: () => switchTab("assets") },
+            ]}
+          />
+        ) : null}
         <ProductImageEditPanel analysisResult={result} onGenerated={onGenerated} />
       </div>
 
@@ -161,6 +233,15 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-scenes"
         role="tabpanel"
       >
+        {result && !sceneImageCount ? (
+          <ProductWorkspaceEmptyState
+            eyebrow="营销视觉"
+            marker="SCN"
+            title="还没有营销场景图"
+            description="生成适合电商详情页、社媒或广告使用的商品场景图。"
+            actions={[{ label: "生成场景图", onClick: () => scrollToPanel("product-scene-image-panel"), tone: "primary" }]}
+          />
+        ) : null}
         <ProductSceneImagePanel analysisResult={result} onGenerated={onGenerated} />
       </div>
 
@@ -175,9 +256,26 @@ export function ProductWorkspaceTabs({
           creationCenterData={creationCenterData}
           creationCenterError={creationCenterError}
           isCreationCenterLoading={isCreationCenterLoading}
-          type="export"
+          onTabChange={switchTab}
         >
-          {(data) => <ProductContentPackage data={data} />}
+          {(data) =>
+            isExportReady ? (
+              <ProductContentPackage data={data} />
+            ) : (
+              <ProductWorkspaceEmptyState
+                eyebrow="导出准备"
+                marker="MD"
+                title="素材包还不完整"
+                description="建议先完成文案、图片和场景图，再导出完整 Markdown 素材包。"
+                checklist={exportChecklist}
+                actions={[
+                  { label: "前往文案", onClick: () => switchTab("copywriting"), tone: "primary" },
+                  { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
+                  { label: "前往场景", onClick: () => switchTabAndFocus("scenes", "product-scene-image-panel") },
+                ]}
+              />
+            )
+          }
         </CreationCenterState>
       </div>
     </section>

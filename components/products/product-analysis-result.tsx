@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type ProductAnalysisResultProps = {
   analysis: ProductImageAnalysis | null;
+  showFullAnalysisToggle?: boolean;
   title?: string;
 };
 
@@ -22,14 +23,14 @@ function DetailList({ items }: { items: string[] }) {
   );
 }
 
-export function ProductAnalysisResult({ analysis, title }: ProductAnalysisResultProps) {
+export function ProductAnalysisResult({ analysis, showFullAnalysisToggle = true, title }: ProductAnalysisResultProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const primaryName = analysis?.productNameSuggestions[0] || "暂无明确建议";
   const summaryPoints = analysis?.sellingPoints.slice(0, 3) || [];
 
   return (
     <div className="product-analysis-result glass-card">
-      <p className="eyebrow">Analysis Result</p>
+      <p className="eyebrow">分析结果</p>
       <h2>{title || "商品图片分析结果"}</h2>
 
       {!analysis ? (
@@ -57,11 +58,13 @@ export function ProductAnalysisResult({ analysis, title }: ProductAnalysisResult
             </section>
           </div>
 
-          <button className="product-analysis-toggle" type="button" onClick={() => setIsExpanded((current) => !current)}>
-            {isExpanded ? "收起完整分析" : "查看完整分析"}
-          </button>
+          {showFullAnalysisToggle ? (
+            <button className="product-analysis-toggle" type="button" onClick={() => setIsExpanded((current) => !current)}>
+              {isExpanded ? "收起完整分析" : "查看完整分析"}
+            </button>
+          ) : null}
 
-          {isExpanded ? (
+          {showFullAnalysisToggle && isExpanded ? (
             <div className="product-analysis-grid">
               <section>
                 <strong>商品名称建议</strong>
