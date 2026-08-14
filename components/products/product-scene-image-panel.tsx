@@ -1,5 +1,7 @@
 "use client";
 
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useState } from "react";
@@ -40,15 +42,23 @@ function getOptionLabel(options: { value: string; label: string }[], value: stri
 
 export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductSceneImagePanelProps) {
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SceneImageResult | null>(null);
   const [selectedScene, setSelectedScene] = useState(PRODUCT_VISUAL_SCENES[0]?.id || "lifestyle");
+
+  function showFeedback(message: string, tone: "error" | "success" = "success") {
+    setFeedback({ message, tone });
+    window.setTimeout(() => setFeedback(null), 2200);
+  }
 
   async function handleGenerateSceneImage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!analysisResult?.historyId) {
-      setError("请先完成商品图片分析，再生成营销场景图。");
+      const message = "请先完成商品图片分析，再生成营销场景图。";
+      setError(message);
+      showFeedback(message, "error");
       return;
     }
 
@@ -95,9 +105,12 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
 
       if (!data.warnings?.length) {
         onGenerated?.();
+        showFeedback("场景图生成完成");
       }
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "商品营销场景图生成失败，请稍后再试。");
+      const message = caughtError instanceof Error ? caughtError.message : "商品营销场景图生成失败，请稍后再试。";
+      setError(message);
+      showFeedback(message, "error");
     } finally {
       setIsGenerating(false);
     }
@@ -115,11 +128,12 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
 
   return (
     <section className="product-scene-image-panel glass-card" id="product-scene-image-panel">
+      {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Visual Workflow</p>
           <h2>AI 商品营销场景图</h2>
-          <p className="image-generation-intro">基于当前商品分析结果生成营销场景图，不依赖原图复刻。</p>
+          <p className="image-generation-intro">基于当前商品分析结果生成营销场景图，不依赖原图复制。</p>
         </div>
         <span>已连接分析结果</span>
       </div>
@@ -165,9 +179,16 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
         </div>
 
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
-          {isGenerating ? "生成场景图中..." : "生成商品营销场景图"}
+          {isGenerating ? (
+            <>
+              <LoadingIndicator />
+              正在生成场景图...
+            </>
+          ) : (
+            "生成商品营销场景图"
+          )}
         </button>
-        <p className="image-generation-helper">将调用商品场景图接口，并按 image 类型记录 Usage 和 History。</p>
+        <p className="image-generation-helper">将调用商品场景图接口，并继续记录 Usage 和 History。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}
       </form>
 

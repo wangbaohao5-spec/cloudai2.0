@@ -2,6 +2,7 @@
 
 import { ProductCreationProgress } from "@/components/products/product-creation-progress";
 import { ProductCreationSummary } from "@/components/products/product-creation-summary";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useState } from "react";
@@ -86,6 +87,7 @@ export function ProductWorkspaceRail({
   const [platform, setPlatform] = useState(platformOptions[0]);
   const status = getWorkspaceStatus({ creationCenterData, result, uploadedAsset });
   const analyzeLabel = result ? "重新分析商品" : "分析商品";
+  const isPrimaryActionLoading = isUploading || isAnalyzing || isRestoring;
 
   return (
     <aside className="product-workspace-rail">
@@ -176,7 +178,8 @@ export function ProductWorkspaceRail({
       </div>
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>
-        {isUploading ? "上传中..." : isAnalyzing ? "分析中..." : isRestoring ? "恢复中..." : analyzeLabel}
+        {isPrimaryActionLoading ? <LoadingIndicator /> : null}
+        {isUploading ? "正在上传..." : isAnalyzing ? "正在分析..." : isRestoring ? "正在恢复..." : analyzeLabel}
       </button>
 
       <p className="image-generation-helper">当前平台选择仅影响工作台展示，暂不改变生成提示词。</p>

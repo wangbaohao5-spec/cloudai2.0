@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import type { UsageRecord } from "@/lib/usage";
 import { USAGE_TYPE_LABELS } from "@/lib/usage-limits";
 
@@ -37,9 +38,13 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
           ))}
         </div>
       ) : (
-        <div className="history-empty-state">
-          <p>暂无 AI 调用记录。完成一次 AI 请求后，这里会显示最新记录。</p>
-        </div>
+        <EmptyState
+          icon="📊"
+          title="还没有用量记录"
+          description="完成一次商品分析、文案生成或图片生成后，这里会显示最新调用记录。"
+          actionHref="/dashboard/products"
+          actionLabel="开始创作商品"
+        />
       )}
     </section>
   );

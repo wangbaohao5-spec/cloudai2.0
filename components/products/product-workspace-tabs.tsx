@@ -6,6 +6,7 @@ import { ProductContentPackage } from "@/components/products/product-content-pac
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useState } from "react";
@@ -29,13 +30,8 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: "export", label: "导出" },
 ];
 
-function ProductWorkspaceEmpty({ children, title }: { children: React.ReactNode; title: string }) {
-  return (
-    <div className="product-workspace-empty">
-      <strong>{title}</strong>
-      <p>{children}</p>
-    </div>
-  );
+function ProductWorkspaceEmpty({ actionLabel, description, icon, title }: { actionLabel?: string; description: string; icon: string; title: string }) {
+  return <EmptyState icon={icon} title={title} description={description} actionHref="/dashboard/products" actionLabel={actionLabel || "上传商品图"} />;
 }
 
 function CreationCenterState({
@@ -52,18 +48,20 @@ function CreationCenterState({
   type: "assets" | "export";
 }) {
   if (isCreationCenterLoading) {
-    return <ProductWorkspaceEmpty title="正在加载商品素材">CloudAI 正在刷新当前商品工作台。</ProductWorkspaceEmpty>;
+    return <ProductWorkspaceEmpty icon="⏳" title="正在加载商品素材" description="CloudAI 正在刷新当前商品工作台。" actionLabel="等待刷新" />;
   }
 
   if (creationCenterError) {
-    return <ProductWorkspaceEmpty title="工作台数据暂不可用">{creationCenterError}</ProductWorkspaceEmpty>;
+    return <ProductWorkspaceEmpty icon="!" title="工作台数据暂不可用" description={creationCenterError} actionLabel="重新进入工作台" />;
   }
 
   if (!creationCenterData) {
     return (
-      <ProductWorkspaceEmpty title={type === "assets" ? "暂无素材" : "暂无可导出内容"}>
-        上传并分析商品后即可使用此区域。
-      </ProductWorkspaceEmpty>
+      <ProductWorkspaceEmpty
+        icon={type === "assets" ? "🖼" : "📦"}
+        title={type === "assets" ? "还没有素材" : "还没有可导出内容"}
+        description="上传并分析商品后，即可在这里整理当前商品的素材。"
+      />
     );
   }
 

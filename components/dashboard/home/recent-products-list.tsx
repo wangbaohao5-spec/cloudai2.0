@@ -1,4 +1,5 @@
 import type { ProductHomeCard } from "@/lib/dashboard-home";
+import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 
 type RecentProductsListProps = {
@@ -47,12 +48,13 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
           ))}
         </div>
       ) : (
-        <div className="dashboard-home-empty">
-          <p>完成一次商品分析后，最近商品会出现在这里，方便你继续生成文案、图片和素材包。</p>
-          <Link className="button primary" href="/dashboard/products">
-            进入商品工作台
-          </Link>
-        </div>
+        <EmptyState
+          icon="📦"
+          title="还没有商品"
+          description="上传第一张商品图开始创作，最近分析过的商品会出现在这里。"
+          actionHref="/dashboard/products"
+          actionLabel="进入商品工作台"
+        />
       )}
     </section>
   );

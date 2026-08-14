@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
 import { useMemo, useState } from "react";
@@ -115,17 +116,21 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
 }
 
 export function ProductContentPackage({ data }: ProductContentPackageProps) {
-  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const markdown = useMemo(() => buildProductPackageMarkdown(data), [data]);
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "商品";
   const copywritingCount = data.copywriting.length;
   const imageCount = Number(Boolean(data.originalAsset)) + data.imageEdits.length + data.sceneImages.length;
 
+  function showFeedback(message: string, tone: "error" | "success" = "success") {
+    setFeedback({ message, tone });
+    window.setTimeout(() => setFeedback(null), 2200);
+  }
+
   async function handleCopy() {
     await navigator.clipboard.writeText(markdown);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2200);
+    showFeedback("复制成功");
   }
 
   function handleDownload() {
@@ -141,10 +146,12 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    showFeedback("下载成功");
   }
 
   return (
     <section className="product-content-package">
+      {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="product-creation-section-header">
         <div>
           <strong>商品素材包</strong>
@@ -152,7 +159,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
         </div>
         <div className="product-content-package-actions">
           <button type="button" onClick={() => void handleCopy()}>
-            {copied ? "已复制" : "复制全部内容"}
+            复制全部内容
           </button>
           <button type="button" onClick={handleDownload}>
             下载 Markdown
@@ -168,7 +175,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
 
       <div className="product-content-preview">
         <button type="button" onClick={() => setIsPreviewOpen((current) => !current)}>
-          <span>{isPreviewOpen ? "▲" : "▼"}</span>
+          <span>{isPreviewOpen ? "▾" : "▸"}</span>
           查看素材包内容
         </button>
         {isPreviewOpen ? <pre>{markdown}</pre> : null}

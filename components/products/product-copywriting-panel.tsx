@@ -1,6 +1,8 @@
 "use client";
 
 import { CopywritingResult as CopywritingResultView } from "@/components/copywriting/copywriting-result";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import type { CopywritingResult } from "@/lib/types";
 import { useState } from "react";
@@ -12,7 +14,7 @@ type ProductCopywritingPanelProps = {
 
 const platformOptions = [
   { value: "taobao", label: "淘宝" },
-  { value: "amazon", label: "亚马逊" },
+  { value: "amazon", label: "Amazon" },
   { value: "tiktok", label: "TikTok Shop" },
 ];
 
@@ -32,23 +34,31 @@ const outputTargetOptions = [
 
 function buildCopywritingText(result: CopywritingResult) {
   return [
-    `商品标题：\n${result.title}`,
-    `核心卖点：\n${result.points.map((point) => `- ${point}`).join("\n")}`,
-    `详情描述：\n${result.description}`,
-    `短视频口播：\n${result.shortVideoScript}`,
+    `商品标题:\n${result.title}`,
+    `核心卖点:\n${result.points.map((point) => `- ${point}`).join("\n")}`,
+    `详情描述:\n${result.description}`,
+    `短视频脚本:\n${result.shortVideoScript}`,
   ].join("\n\n");
 }
 
 export function ProductCopywritingPanel({ analysisResult, onGenerated }: ProductCopywritingPanelProps) {
   const [copywritingError, setCopywritingError] = useState("");
   const [copywritingResult, setCopywritingResult] = useState<CopywritingResult | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [isCopywritingLoading, setIsCopywritingLoading] = useState(false);
+
+  function showFeedback(message: string, tone: "error" | "success" = "success") {
+    setFeedback({ message, tone });
+    window.setTimeout(() => setFeedback(null), 2200);
+  }
 
   async function handleGenerateCopywriting(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!analysisResult?.historyId) {
-      setCopywritingError("请先完成商品图片分析，再生成商品文案。");
+      const message = "请先完成商品图片分析，再生成商品文案。";
+      setCopywritingError(message);
+      showFeedback(message, "error");
       return;
     }
 
@@ -84,9 +94,12 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
 
       if (!data.warnings?.length) {
         onGenerated?.();
+        showFeedback("文案生成完成");
       }
     } catch (caughtError) {
-      setCopywritingError(caughtError instanceof Error ? caughtError.message : "基于商品分析生成文案失败，请稍后再试。");
+      const message = caughtError instanceof Error ? caughtError.message : "基于商品分析生成文案失败，请稍后再试。";
+      setCopywritingError(message);
+      showFeedback(message, "error");
     } finally {
       setIsCopywritingLoading(false);
     }
@@ -98,6 +111,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
     }
 
     await navigator.clipboard.writeText(buildCopywritingText(copywritingResult));
+    showFeedback("复制成功");
   }
 
   if (!analysisResult) {
@@ -112,6 +126,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
 
   return (
     <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
+      {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Next Step</p>
@@ -153,9 +168,16 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
           </select>
         </label>
         <button className="button primary" disabled={!analysisResult.historyId || isCopywritingLoading} type="submit">
-          {isCopywritingLoading ? "生成文案中..." : "基于分析生成商品文案"}
+          {isCopywritingLoading ? (
+            <>
+              <LoadingIndicator />
+              正在生成文案...
+            </>
+          ) : (
+            "基于分析生成商品文案"
+          )}
         </button>
-        <p className="image-generation-helper">将调用现有商品文案接口，并继续按 copywriting 类型记录 Usage 和 History。</p>
+        <p className="image-generation-helper">将调用现有商品文案接口，并继续记录 Usage 和 History。</p>
         {copywritingError ? <p className="image-generation-error">{copywritingError}</p> : null}
       </form>
 

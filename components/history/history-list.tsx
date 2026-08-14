@@ -1,6 +1,8 @@
 "use client";
 
 import { HistoryItem } from "@/components/history/history-item";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { HistoryRecord } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 
@@ -125,11 +127,19 @@ export function HistoryList() {
         ))}
       </div>
 
-      {error ? <p className="history-empty-state">{error}</p> : null}
+      {error ? (
+        <EmptyState icon="!" title="历史记录暂时不可用" description={error} actionHref="/dashboard/products" actionLabel="去商品工作台" />
+      ) : null}
 
       {isLoading ? (
-        <div className="history-empty-state">
-          <p>正在加载历史记录...</p>
+        <div className="history-inline-skeleton" aria-label="正在加载历史记录">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <article className="workspace-skeleton-panel" key={index}>
+              <span className="skeleton-block skeleton-title" />
+              <span className="skeleton-block skeleton-line" />
+              <span className="skeleton-block skeleton-line medium" />
+            </article>
+          ))}
         </div>
       ) : filteredRecords.length ? (
         <>
@@ -140,19 +150,25 @@ export function HistoryList() {
           </div>
           {hasMore ? (
             <button className="button secondary" disabled={isLoadingMore || !nextCursor} type="button" onClick={() => void loadRecords(nextCursor)}>
-              {isLoadingMore ? "正在加载..." : "加载更多"}
+              {isLoadingMore ? (
+                <>
+                  <LoadingIndicator />
+                  正在加载...
+                </>
+              ) : (
+                "加载更多"
+              )}
             </button>
           ) : null}
         </>
       ) : (
-        <div className="history-empty-state">
-          <p>{records.length ? "当前筛选下暂无记录。" : "暂无历史记录。完成 AI 生成或商品分析后，会自动保存到这里。"}</p>
-          {hasMore ? (
-            <button className="button secondary" disabled={isLoadingMore || !nextCursor} type="button" onClick={() => void loadRecords(nextCursor)}>
-              {isLoadingMore ? "正在加载..." : "加载更多"}
-            </button>
-          ) : null}
-        </div>
+        <EmptyState
+          icon={records.length ? "🔎" : "🗂"}
+          title={records.length ? "当前筛选下没有记录" : "还没有历史记录"}
+          description={records.length ? "换一个类型筛选，或者继续生成新的商品素材。" : "完成一次商品分析、文案生成或图片生成后，记录会自动保存到这里。"}
+          actionHref="/dashboard/products"
+          actionLabel="进入商品工作台"
+        />
       )}
     </section>
   );

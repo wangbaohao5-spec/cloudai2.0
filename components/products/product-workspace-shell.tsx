@@ -2,6 +2,7 @@
 
 import { ProductWorkspaceRail } from "@/components/products/product-workspace-rail";
 import { ProductWorkspaceTabs } from "@/components/products/product-workspace-tabs";
+import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useEffect, useRef, useState } from "react";
@@ -63,6 +64,21 @@ export function ProductWorkspaceShell() {
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
   const [result, setResult] = useState<ProductAnalysisResponse | null>(null);
   const loadedCreationCenterRef = useRef<{ analysisHistoryId: string; refreshKey: number } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showToast(message: string, tone: "error" | "success" = "success") {
+    setFeedback({ message, tone });
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setFeedback(null);
+    }, 2400);
+  }
+
+  const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
 
   function updateAnalysisUrl(analysisHistoryId?: string) {
     const url = new URL(window.location.href);
@@ -143,6 +159,9 @@ export function ProductWorkspaceShell() {
 
     return () => {
       isMounted = false;
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
     };
   }, []);
 
@@ -231,8 +250,11 @@ export function ProductWorkspaceShell() {
 
       const data = (await response.json()) as UploadedAsset;
       setUploadedAsset(data);
+      showToast("商品图片已上传");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Product image upload failed. Please try again later.");
+      const message = caughtError instanceof Error ? caughtError.message : "Product image upload failed. Please try again later.";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setIsUploading(false);
     }
@@ -274,8 +296,11 @@ export function ProductWorkspaceShell() {
         updateAnalysisUrl(data.historyId);
         saveStoredAnalysisHistoryId(data.historyId);
       }
+      showToast("商品分析完成，可以继续生成素材");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Product image analysis failed. Please try again later.");
+      const message = caughtError instanceof Error ? caughtError.message : "Product image analysis failed. Please try again later.";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setIsAnalyzing(false);
     }
@@ -287,6 +312,7 @@ export function ProductWorkspaceShell() {
 
   return (
     <main className="dashboard-content">
+      {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <section className="product-workspace-shell">
         <ProductWorkspaceRail
           creationCenterData={creationCenterData}

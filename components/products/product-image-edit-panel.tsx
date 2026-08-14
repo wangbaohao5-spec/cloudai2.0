@@ -1,6 +1,8 @@
 "use client";
 
 import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
 import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -20,10 +22,16 @@ type ProductImageEditResult = {
 export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductImageEditPanelProps) {
   const defaultGoalId: ProductImageEditGoalId = "main-image";
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [goalId, setGoalId] = useState<ProductImageEditGoalId>(defaultGoalId);
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState(() => buildProductImageEditPrompt({ goalId: defaultGoalId }));
   const [result, setResult] = useState<ProductImageEditResult | null>(null);
+
+  function showFeedback(message: string, tone: "error" | "success" = "success") {
+    setFeedback({ message, tone });
+    window.setTimeout(() => setFeedback(null), 2200);
+  }
 
   function handleGoalChange(nextGoalId: ProductImageEditGoalId) {
     setGoalId(nextGoalId);
@@ -34,14 +42,18 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
     event.preventDefault();
 
     if (!analysisResult?.assetId) {
-      setError("请先完成商品图片分析，再优化商品原图。");
+      const message = "请先完成商品图片分析，再优化商品原图。";
+      setError(message);
+      showFeedback(message, "error");
       return;
     }
 
     const nextPrompt = prompt.trim();
 
     if (!nextPrompt) {
-      setError("请输入商品图片优化 Prompt。");
+      const message = "请输入商品图片优化 Prompt。";
+      setError(message);
+      showFeedback(message, "error");
       return;
     }
 
@@ -73,9 +85,12 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
 
       if (!data.warnings?.length) {
         onGenerated?.();
+        showFeedback("图片优化完成");
       }
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "商品图片优化失败，请稍后再试。");
+      const message = caughtError instanceof Error ? caughtError.message : "商品图片优化失败，请稍后再试。";
+      setError(message);
+      showFeedback(message, "error");
     } finally {
       setIsGenerating(false);
     }
@@ -93,6 +108,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
 
   return (
     <section className="product-scene-image-panel glass-card" id="product-image-edit-panel">
+      {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Image Workflow</p>
@@ -118,9 +134,16 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
         </label>
 
         <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
-          {isGenerating ? "优化商品原图中..." : "优化商品原图"}
+          {isGenerating ? (
+            <>
+              <LoadingIndicator />
+              正在优化图片...
+            </>
+          ) : (
+            "优化商品原图"
+          )}
         </button>
-        <p className="image-generation-helper">将调用现有图片编辑接口，并按 image-enhance 类型记录 Usage 和 History。</p>
+        <p className="image-generation-helper">将调用现有图片编辑接口，并继续记录 Usage 和 History。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}
       </form>
 
