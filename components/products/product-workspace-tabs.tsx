@@ -4,6 +4,7 @@ import { ProductAnalysisResult } from "@/components/products/product-analysis-re
 import { ProductAssetGallery } from "@/components/products/product-asset-gallery";
 import { ProductContentPackage } from "@/components/products/product-content-package";
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
+import { ProductDetailPagePanel } from "@/components/products/product-detail-page-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
@@ -20,7 +21,7 @@ type ProductWorkspaceTabsProps = {
   result: ProductAnalysisResponse | null;
 };
 
-type TabId = "analysis" | "assets" | "copywriting" | "images" | "scenes" | "export";
+type TabId = "analysis" | "assets" | "copywriting" | "detailPage" | "export" | "images" | "scenes";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "analysis", label: "分析" },
@@ -28,6 +29,7 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: "copywriting", label: "文案" },
   { id: "images", label: "图片" },
   { id: "scenes", label: "场景" },
+  { id: "detailPage", label: "详情页" },
   { id: "export", label: "导出" },
 ];
 
@@ -107,6 +109,7 @@ export function ProductWorkspaceTabs({
     copywriting: copywritingCount,
     images: imageEditCount,
     scenes: sceneImageCount,
+    detailPage: 0,
     export: creationCenterData ? 1 : 0,
   };
   const exportChecklist = [
@@ -153,7 +156,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-analysis"
         role="tabpanel"
       >
-        <ProductAnalysisResult analysis={result?.analysis || null} showFullAnalysisToggle={false} title={result?.title} />
+        <ProductAnalysisResult analysis={result?.analysis || null} defaultShowFullAnalysis showFullAnalysisToggle={false} title={result?.title} />
       </div>
 
       <div
@@ -243,6 +246,16 @@ export function ProductWorkspaceTabs({
           />
         ) : null}
         <ProductSceneImagePanel analysisResult={result} onGenerated={onGenerated} />
+      </div>
+
+      <div
+        aria-labelledby="product-workspace-tab-detailPage"
+        className="product-workspace-panel"
+        hidden={activeTab !== "detailPage"}
+        id="product-workspace-panel-detailPage"
+        role="tabpanel"
+      >
+        <ProductDetailPagePanel analysisResult={result} />
       </div>
 
       <div

@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type ProductAnalysisResultProps = {
   analysis: ProductImageAnalysis | null;
+  defaultShowFullAnalysis?: boolean;
   showFullAnalysisToggle?: boolean;
   title?: string;
 };
@@ -23,8 +24,8 @@ function DetailList({ items }: { items: string[] }) {
   );
 }
 
-export function ProductAnalysisResult({ analysis, showFullAnalysisToggle = true, title }: ProductAnalysisResultProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = false, showFullAnalysisToggle = true, title }: ProductAnalysisResultProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultShowFullAnalysis);
   const primaryName = analysis?.productNameSuggestions[0] || "暂无明确建议";
   const summaryPoints = analysis?.sellingPoints.slice(0, 3) || [];
 
@@ -64,7 +65,7 @@ export function ProductAnalysisResult({ analysis, showFullAnalysisToggle = true,
             </button>
           ) : null}
 
-          {showFullAnalysisToggle && isExpanded ? (
+          {isExpanded ? (
             <div className="product-analysis-grid">
               <section>
                 <strong>商品名称建议</strong>
