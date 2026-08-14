@@ -1,13 +1,14 @@
 "use client";
 
-import { ProductDetailPagePlanPreview } from "@/components/products/product-detail-page-plan-preview";
+import { ProductDetailPagePlanPreview, type DetailPageImageResult } from "@/components/products/product-detail-page-plan-preview";
 import { AiThinkingLoading } from "@/components/ui/loading";
-import type { ProductDetailPagePlan, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
+import type { ProductDetailPagePlan, ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductDetailPagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  onGenerated?: () => void;
 };
 
 const styleOptions: Array<{ description: string; label: string; value: ProductDetailPageStyle }> = [
@@ -17,9 +18,12 @@ const styleOptions: Array<{ description: string; label: string; value: ProductDe
   { value: "minimal", label: "极简高级", description: "文案克制、留白感强，适合高级视觉。" },
 ];
 
-export function ProductDetailPagePanel({ analysisResult }: ProductDetailPagePanelProps) {
+export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductDetailPagePanelProps) {
   const [error, setError] = useState("");
+  const [generatingPageIndex, setGeneratingPageIndex] = useState<number | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
+  const [pageErrors, setPageErrors] = useState<Record<number, string>>({});
+  const [pageResults, setPageResults] = useState<Record<number, DetailPageImageResult>>({});
   const [plan, setPlan] = useState<ProductDetailPagePlan | null>(null);
   const [style, setStyle] = useState<ProductDetailPageStyle>("ecommerce");
 
@@ -52,10 +56,65 @@ export function ProductDetailPagePanel({ analysisResult }: ProductDetailPagePane
       const data = (await response.json()) as ProductDetailPagePlan;
 
       setPlan({ pages: Array.isArray(data.pages) ? data.pages : [] });
+      setPageErrors({});
+      setPageResults({});
     } catch {
       setError("生成详情页规划失败，请稍后重试。");
     } finally {
       setIsPlanning(false);
+    }
+  }
+
+  async function handleGeneratePage(page: ProductDetailPagePlanPage) {
+    if (!analysisResult?.historyId) {
+      setPageErrors((current) => ({
+        ...current,
+        [page.pageIndex]: "请先完成商品分析，再生成详情页图片。",
+      }));
+      return;
+    }
+
+    setGeneratingPageIndex(page.pageIndex);
+    setPageErrors((current) => {
+      const next = { ...current };
+      delete next[page.pageIndex];
+      return next;
+    });
+
+    try {
+      const response = await fetch("/api/products/detail-page/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          analysisHistoryId: analysisResult.historyId,
+          page,
+          style,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
+        const isUnavailable = errorData?.error?.toLowerCase().includes("unavailable") || response.status === 503;
+
+        throw new Error(isUnavailable ? "图片生成模型当前繁忙，请稍后重试。" : "生成详情页图片失败，请稍后重试。");
+      }
+
+      const data = (await response.json()) as DetailPageImageResult;
+
+      setPageResults((current) => ({
+        ...current,
+        [page.pageIndex]: data,
+      }));
+      onGenerated?.();
+    } catch (caughtError) {
+      setPageErrors((current) => ({
+        ...current,
+        [page.pageIndex]: caughtError instanceof Error ? caughtError.message : "生成详情页图片失败，请稍后重试。",
+      }));
+    } finally {
+      setGeneratingPageIndex(null);
     }
   }
 
@@ -101,7 +160,7 @@ export function ProductDetailPagePanel({ analysisResult }: ProductDetailPagePane
         </fieldset>
       </div>
 
-      <button className="button primary" disabled={isPlanning} type="button" onClick={() => void handleGeneratePlan()}>
+      <button className="button primary" disabled={isPlanning || generatingPageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
         {isPlanning ? (
           <>
             <AiThinkingLoading size="sm" />
@@ -116,8 +175,14 @@ export function ProductDetailPagePanel({ analysisResult }: ProductDetailPagePane
 
       {plan ? (
         <>
-          <ProductDetailPagePlanPreview pages={plan.pages} />
-          <p className="product-detail-plan-note">当前为规划预览，后续将支持根据规划生成详情页图片。</p>
+          <ProductDetailPagePlanPreview
+            generatingPageIndex={generatingPageIndex}
+            pageErrors={pageErrors}
+            pageResults={pageResults}
+            pages={plan.pages}
+            onGeneratePage={(page) => void handleGeneratePage(page)}
+          />
+          <p className="product-detail-plan-note">当前为规划预览，已支持单张生成详情页图片；AI 生成图中文字可能需要人工检查。</p>
         </>
       ) : (
         <div className="product-detail-plan-placeholder">

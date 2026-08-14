@@ -255,7 +255,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-detailPage"
         role="tabpanel"
       >
-        <ProductDetailPagePanel analysisResult={result} />
+        <ProductDetailPagePanel analysisResult={result} onGenerated={onGenerated} />
       </div>
 
       <div
