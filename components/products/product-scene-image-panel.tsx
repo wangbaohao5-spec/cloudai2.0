@@ -179,7 +179,14 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
         </div>
 
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
-          {isGenerating ? <LongGenerationLoading label="正在生成场景图..." size="sm" /> : "生成商品营销场景图"}
+          {isGenerating ? (
+            <>
+              <LongGenerationLoading size="sm" />
+              正在生成场景图...
+            </>
+          ) : (
+            "生成商品营销场景图"
+          )}
         </button>
         <p className="image-generation-helper">将调用商品场景图接口，并继续记录 Usage 和 History。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}

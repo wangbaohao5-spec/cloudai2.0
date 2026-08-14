@@ -1,5 +1,6 @@
 "use client";
 
+import { LongGenerationLoading } from "@/components/ui/loading";
 import type { VideoGenerationResult } from "@/lib/ai/types";
 import { FormEvent, useState } from "react";
 
@@ -130,7 +131,14 @@ export default function VideoGenerationPage() {
               </select>
             </label>
             <button className="button primary" disabled={isLoading} type="submit">
-              {isLoading ? "生成中..." : "生成视频任务"}
+              {isLoading ? (
+                <>
+                  <LongGenerationLoading size="sm" />
+                  正在生成视频...
+                </>
+              ) : (
+                "生成视频任务"
+              )}
             </button>
             {lastInput ? (
               <button className="button secondary" disabled={isLoading} type="button" onClick={() => void submitVideoTask(lastInput)}>

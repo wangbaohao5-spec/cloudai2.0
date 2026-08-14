@@ -1,3 +1,4 @@
+import { LongGenerationLoading } from "@/components/ui/loading";
 import type { ImageGenerationFormData } from "@/lib/types";
 
 const platformOptions = [
@@ -83,14 +84,23 @@ export function ImageForm({ error, isLoading, onRegenerate, onSubmit, resultImag
         </select>
       </label>
       <button className="button primary" disabled={isLoading} type="submit">
-        {isLoading ? "生成中..." : "生成电商图片"}
+        {isLoading ? (
+          <>
+            <LongGenerationLoading size="sm" />
+            正在生成图片...
+          </>
+        ) : (
+          "生成电商图片"
+        )}
       </button>
       {resultImageUrl && onRegenerate ? (
         <button className="button secondary" disabled={isLoading} type="button" onClick={onRegenerate}>
           重新生成
         </button>
       ) : null}
-      <p className="image-generation-helper">{isLoading ? "CloudAI 正在调用通义万相生成图片..." : "系统会自动生成适合平台和用途的电商视觉 Prompt。"}</p>
+      <p className="image-generation-helper">
+        {isLoading ? "CloudAI 正在生成电商视觉，请保持页面打开。" : "系统会自动生成适合平台和用途的电商视觉 Prompt。"}
+      </p>
       <p className="image-generation-error" aria-live="polite">
         {error || "错误提示将在这里显示。"}
       </p>
