@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
-import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
 import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
@@ -134,14 +134,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
         </label>
 
         <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
-          {isGenerating ? (
-            <>
-              <LoadingIndicator />
-              正在优化图片...
-            </>
-          ) : (
-            "优化商品原图"
-          )}
+          {isGenerating ? <LongGenerationLoading label="正在优化图片..." size="sm" /> : "优化商品原图"}
         </button>
         <p className="image-generation-helper">将调用现有图片编辑接口，并继续记录 Usage 和 History。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}

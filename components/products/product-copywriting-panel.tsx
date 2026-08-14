@@ -1,7 +1,7 @@
 "use client";
 
 import { CopywritingResult as CopywritingResultView } from "@/components/copywriting/copywriting-result";
-import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { AiThinkingLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import type { CopywritingResult } from "@/lib/types";
@@ -168,14 +168,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
           </select>
         </label>
         <button className="button primary" disabled={!analysisResult.historyId || isCopywritingLoading} type="submit">
-          {isCopywritingLoading ? (
-            <>
-              <LoadingIndicator />
-              正在生成文案...
-            </>
-          ) : (
-            "基于分析生成商品文案"
-          )}
+          {isCopywritingLoading ? <AiThinkingLoading label="AI 正在组织文案..." size="sm" /> : "基于分析生成商品文案"}
         </button>
         <p className="image-generation-helper">将调用现有商品文案接口，并继续记录 Usage 和 History。</p>
         {copywritingError ? <p className="image-generation-error">{copywritingError}</p> : null}

@@ -2,7 +2,7 @@
 
 import { ProductCreationProgress } from "@/components/products/product-creation-progress";
 import { ProductCreationSummary } from "@/components/products/product-creation-summary";
-import { AiThinkingLoading } from "@/components/ui/ai-thinking-loading";
+import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -179,8 +179,8 @@ export function ProductWorkspaceRail({
       </div>
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>
-        {isAnalyzing ? <AiThinkingLoading /> : isPrimaryActionLoading ? <LoadingIndicator /> : null}
-        {isUploading ? "正在上传..." : isAnalyzing ? "正在分析..." : isRestoring ? "正在恢复..." : analyzeLabel}
+        {isAnalyzing ? <AiThinkingLoading label="AI 正在分析..." size="sm" /> : isPrimaryActionLoading ? <LoadingIndicator /> : null}
+        {isUploading ? "正在上传..." : isAnalyzing ? null : isRestoring ? "正在恢复..." : analyzeLabel}
       </button>
 
       <p className="image-generation-helper">当前平台选择仅影响工作台展示，暂不改变生成提示词。</p>

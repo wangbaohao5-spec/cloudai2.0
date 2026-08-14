@@ -1,5 +1,9 @@
-import { WorkspaceSkeleton } from "@/components/ui/workspace-skeleton";
+import { SystemLoading } from "@/components/ui/loading";
 
 export default function DashboardLoading() {
-  return <WorkspaceSkeleton variant="dashboard" />;
+  return (
+    <main className="dashboard-content">
+      <SystemLoading label="正在加载工作台..." description="CloudAI 正在整理最近商品、今日生成和快捷入口。" />
+    </main>
+  );
 }

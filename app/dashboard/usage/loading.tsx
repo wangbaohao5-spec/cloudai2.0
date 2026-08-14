@@ -1,5 +1,9 @@
-import { WorkspaceSkeleton } from "@/components/ui/workspace-skeleton";
+import { SystemLoading } from "@/components/ui/loading";
 
 export default function UsageLoading() {
-  return <WorkspaceSkeleton variant="usage" />;
+  return (
+    <main className="dashboard-content">
+      <SystemLoading label="正在加载用量数据..." description="正在汇总今日调用和最近记录。" />
+    </main>
+  );
 }

@@ -284,38 +284,6 @@ h3 {
   animation-delay: 240ms;
 }
 
-.ai-thinking-loading {
-  position: relative;
-  display: inline-grid;
-  grid-template-columns: repeat(3, 7px);
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 32px;
-  height: 16px;
-}
-
-.ai-thinking-loading span {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background:
-    linear-gradient(135deg, var(--primary-light), var(--primary), var(--accent));
-  animation: ai-thinking-node 1.15s cubic-bezier(0.45, 0, 0.25, 1) infinite;
-}
-
-.ai-thinking-loading span:nth-child(1) {
-  animation-delay: 0ms;
-}
-
-.ai-thinking-loading span:nth-child(2) {
-  animation-delay: 140ms;
-}
-
-.ai-thinking-loading span:nth-child(3) {
-  animation-delay: 280ms;
-}
-
 @keyframes loading-indicator-pulse {
   0%,
   80%,
@@ -330,7 +298,134 @@ h3 {
   }
 }
 
-@keyframes ai-thinking-node {
+.cloudai-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.cloudai-loading-sm {
+  gap: 8px;
+}
+
+.cloudai-loading-md,
+.cloudai-loading-lg {
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  padding: 16px 18px;
+  color: var(--text);
+  background: var(--workspace-surface);
+}
+
+.cloudai-loading-lg {
+  padding: 20px 22px;
+}
+
+.cloudai-loading-copy {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.cloudai-loading-copy > span {
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.cloudai-loading-copy small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.cloudai-loading-ai-orbit {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 7px);
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 32px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.cloudai-loading-ai-orbit span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary), var(--accent));
+  animation: cloudai-thinking-node 1.18s cubic-bezier(0.42, 0, 0.24, 1) infinite;
+}
+
+.cloudai-loading-ai-orbit span:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.cloudai-loading-ai-orbit span:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.cloudai-loading-long-track {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 38px;
+  height: 8px;
+  flex: 0 0 auto;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.cloudai-loading-long-track span {
+  position: absolute;
+  inset-block: 1px;
+  left: 2px;
+  width: 42%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary-light), var(--primary), var(--accent));
+  animation: cloudai-long-generation 1.45s ease-in-out infinite;
+}
+
+.cloudai-loading-system {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-height: 220px;
+  border: 1px solid var(--card-border);
+  border-radius: 28px;
+  padding: 28px;
+  background: var(--panel-gradient);
+  box-shadow: var(--shadow);
+}
+
+.cloudai-loading-system-mark {
+  position: relative;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  background: var(--workspace-surface);
+}
+
+.cloudai-loading-system-mark span {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--surface-hover);
+  border-top-color: var(--primary-light);
+  border-radius: 999px;
+  animation: cloudai-system-spin 900ms linear infinite;
+}
+
+@keyframes cloudai-thinking-node {
   0%,
   100% {
     opacity: 0.42;
@@ -345,6 +440,29 @@ h3 {
   68% {
     opacity: 0.72;
     transform: translate3d(0, 1px, 0) scale(0.92);
+  }
+}
+
+@keyframes cloudai-long-generation {
+  0% {
+    opacity: 0.55;
+    transform: translateX(-35%) scaleX(0.72);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(112%) scaleX(1.05);
+  }
+
+  100% {
+    opacity: 0.55;
+    transform: translateX(238%) scaleX(0.72);
+  }
+}
+
+@keyframes cloudai-system-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -1616,7 +1734,9 @@ h3 {
 
 @media (prefers-reduced-motion: reduce) {
   .loading-indicator span,
-  .ai-thinking-loading span,
+  .cloudai-loading-ai-orbit span,
+  .cloudai-loading-long-track span,
+  .cloudai-loading-system-mark span,
   .skeleton-block,
   .workspace-toast {
     animation: none;
