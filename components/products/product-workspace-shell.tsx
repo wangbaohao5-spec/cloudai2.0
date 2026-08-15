@@ -62,6 +62,7 @@ export function ProductWorkspaceShell() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
+  const [productSupplement, setProductSupplement] = useState("");
   const [result, setResult] = useState<ProductAnalysisResponse | null>(null);
   const loadedCreationCenterRef = useRef<{ analysisHistoryId: string; refreshKey: number } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -280,6 +281,7 @@ export function ProductWorkspaceShell() {
         },
         body: JSON.stringify({
           assetId: uploadedAsset.assetId,
+          productSupplement: productSupplement.trim() || undefined,
         }),
       });
 
@@ -321,9 +323,11 @@ export function ProductWorkspaceShell() {
           isRestoring={isRestoring}
           isUploading={isUploading}
           result={result}
+          productSupplement={productSupplement}
           uploadedAsset={uploadedAsset}
           onAnalyze={() => void handleAnalyze()}
           onFileChange={handleFileChange}
+          onProductSupplementChange={setProductSupplement}
         />
         <ProductWorkspaceTabs
           creationCenterData={creationCenterData}

@@ -1444,6 +1444,7 @@ h3 {
 .continue-product-card,
 .recent-product-card,
 .product-workspace-rail .product-upload-box,
+.product-workspace-rail .product-workspace-supplement,
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-platform-selector,
@@ -1466,6 +1467,7 @@ h3 {
 .continue-product-card:hover,
 .recent-product-card:hover,
 .product-workspace-rail .product-upload-box:hover,
+.product-workspace-rail .product-workspace-supplement:hover,
 .product-workspace-rail .product-workspace-pending-summary:hover,
 .product-workspace-rail .product-workspace-status:hover,
 .product-workspace-rail .product-platform-selector:hover,
@@ -1482,6 +1484,7 @@ h3 {
 }
 
 .product-workspace-rail .product-upload-box,
+.product-workspace-rail .product-workspace-supplement,
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-platform-selector,
@@ -2709,6 +2712,38 @@ h3 {
   margin: 0;
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.product-workspace-supplement {
+  display: grid;
+  gap: 12px;
+}
+
+.product-workspace-supplement label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 850;
+}
+
+.product-workspace-supplement label span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.product-workspace-supplement textarea {
+  min-height: 118px;
+  resize: vertical;
+}
+
+.product-workspace-supplement em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 750;
 }
 
 .product-workspace-status {

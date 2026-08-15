@@ -12,6 +12,7 @@ export const runtime = "nodejs";
 
 type ProductAnalyzeRequestBody = {
   assetId?: string;
+  productSupplement?: string;
 };
 
 function getAnalysisTitle(analysis: ProductAnalysisResponse["analysis"]) {
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ProductAnalyzeRequestBody;
     const assetId = body.assetId?.trim();
+    const productSupplement = body.productSupplement?.trim().slice(0, 2000) || "";
 
     if (!assetId) {
       return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
     });
 
     const imageUrl = await getFileUrl(asset.url, 30 * 60);
-    const analysis = await analyzeProductImageAsset(imageUrl);
+    const analysis = await analyzeProductImageAsset(imageUrl, productSupplement);
     const title = getAnalysisTitle(analysis);
     const historyResult = await settleTask(
       saveHistory({
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
         input: {
           assetId: asset.id,
           assetName: asset.name,
+          ...(productSupplement ? { productSupplement } : {}),
         },
         output: analysis,
       }),

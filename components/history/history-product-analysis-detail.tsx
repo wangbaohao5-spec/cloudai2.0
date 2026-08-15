@@ -43,6 +43,8 @@ function buildAnalysisText(result: ProductImageAnalysis) {
     `使用场景：\n${(result.scenes || []).map((item) => `- ${item}`).join("\n")}`,
     `视觉风格：\n${result.visualStyle || ""}`,
     `材质颜色：\n${[result.material, result.color].filter(Boolean).join(" / ")}`,
+    `规格容量：\n${[result.specifications, result.capacity].filter(Boolean).join(" / ")}`,
+    `多款式信息：\n${(result.variants || []).map((item) => `- ${item}`).join("\n")}`,
     `风险提示：\n${(result.risks || []).map((item) => `- ${item}`).join("\n")}`,
   ]
     .filter((section) => section.trim())
@@ -99,6 +101,14 @@ export function HistoryProductAnalysisDetail({ expanded, record }: HistoryProduc
           <section>
             <strong>材质颜色</strong>
             <p>{[analysis.material, analysis.color].filter(Boolean).join(" / ") || "图片中无法明确确认"}</p>
+          </section>
+          <section>
+            <strong>规格容量</strong>
+            <p>{[analysis.specifications, analysis.capacity].filter(Boolean).join(" / ") || "暂无明确结果"}</p>
+          </section>
+          <section>
+            <strong>多款式信息</strong>
+            <DetailList items={analysis.variants} />
           </section>
           <section>
             <strong>风险提示</strong>

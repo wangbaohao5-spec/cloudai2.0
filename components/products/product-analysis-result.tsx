@@ -87,6 +87,14 @@ export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = fals
                 <strong>材质 / 颜色</strong>
                 <p>{[analysis.material, analysis.color].filter(Boolean).join(" / ") || "图片中无法明确确认"}</p>
               </section>
+              <section>
+                <strong>规格 / 容量</strong>
+                <p>{[analysis.specifications, analysis.capacity].filter(Boolean).join(" / ") || "暂无明确结果"}</p>
+              </section>
+              <section>
+                <strong>多款式信息</strong>
+                <DetailList items={analysis.variants || []} />
+              </section>
               <section className="product-analysis-wide">
                 <strong>风险提示</strong>
                 <DetailList items={analysis.risks} />

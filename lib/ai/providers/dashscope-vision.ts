@@ -42,12 +42,16 @@ function normalizeAnalysis(value: Partial<ProductImageAnalysis>): ProductImageAn
     visualStyle: value.visualStyle || "待补充视觉风格",
     material: value.material || undefined,
     color: value.color || undefined,
+    specifications: value.specifications || undefined,
+    capacity: value.capacity || undefined,
+    variants: normalizeStringArray(value.variants),
     risks: normalizeStringArray(value.risks),
   };
 }
 
-export async function analyzeDashScopeProductImage(imageUrl: string): Promise<ProductImageAnalysis> {
+export async function analyzeDashScopeProductImage(imageUrl: string, productSupplement?: string): Promise<ProductImageAnalysis> {
   const apiKey = getRequiredEnv("DASHSCOPE_API_KEY");
+  const normalizedSupplement = productSupplement?.trim();
   const response = await fetch(DASHSCOPE_VISION_API_URL, {
     method: "POST",
     headers: {
@@ -60,7 +64,7 @@ export async function analyzeDashScopeProductImage(imageUrl: string): Promise<Pr
         {
           role: "system",
           content:
-            "你是专业电商商品图分析专家。你只能基于图片可见信息分析商品，不要编造容量、续航、认证、价格等图片中无法确认的参数。请严格返回 JSON。",
+            "你是专业电商商品图分析专家。请优先参考用户提供的商品补充信息，再结合图片可见信息分析商品。用户补充信息可用于型号、容量、材质、颜色、规格、适用人群、卖点和多款式判断；如果补充信息与图片明显冲突，请在 risks 中说明。不要编造容量、续航、认证、价格等无法从图片或用户补充信息确认的参数。请严格返回 JSON。",
         },
         {
           role: "user",
@@ -74,6 +78,9 @@ export async function analyzeDashScopeProductImage(imageUrl: string): Promise<Pr
             {
               type: "text",
               text: `请分析这张商品图片，并只返回 JSON，不要 Markdown。JSON 字段必须为：
+用户补充信息：
+${normalizedSupplement || "用户未提供补充信息，请仅基于图片可见信息分析。"}
+
 {
   "category": "商品类别",
   "productNameSuggestions": ["商品名称建议1", "商品名称建议2"],
@@ -82,8 +89,11 @@ export async function analyzeDashScopeProductImage(imageUrl: string): Promise<Pr
   "targetAudience": "目标用户",
   "scenes": ["使用场景"],
   "visualStyle": "图片视觉风格",
-  "material": "可见或可推测材质，无法确认则为空字符串",
+  "material": "可见或用户补充确认的材质，无法确认则为空字符串",
   "color": "主要颜色",
+  "specifications": "规格/尺寸/型号等信息，无法确认则为空字符串",
+  "capacity": "容量/净含量/件数等信息，无法确认则为空字符串",
+  "variants": ["多款式、多颜色、多规格信息；无法确认则返回空数组"],
   "risks": ["图片无法确认的信息或需要用户补充的信息"]
 }`,
             },
