@@ -30,6 +30,26 @@ function getOutputUrl(output: unknown) {
   return typeof url === "string" ? url : "";
 }
 
+function getObjectField(value: unknown, key: string) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function getStringField(value: unknown, key: string) {
+  const field = getObjectField(value, key);
+
+  return typeof field === "string" ? field : "";
+}
+
+function getNumberField(value: unknown, key: string) {
+  const field = getObjectField(value, key);
+
+  return typeof field === "number" && Number.isFinite(field) ? field : null;
+}
+
 function formatList(items?: string[]) {
   const visibleItems = items?.filter(Boolean) || [];
 
@@ -69,6 +89,42 @@ function buildImageAssetMarkdown(label: string, records: Array<{ title: string; 
   }
 
   return [`### ${label}`, ...records.map((record, index) => [`${index + 1}. ${record.title}`, record.url ? `   预览链接：${record.url}` : "   暂无预览链接"].join("\n"))].join("\n");
+}
+
+function buildDetailPageMarkdown(records: HistoryRecord[]) {
+  if (!records.length) {
+    return "";
+  }
+
+  return [
+    "",
+    "## 商品详情页图片",
+    "",
+    records
+      .map((record, index) => {
+        const page = getObjectField(record.output, "page");
+        const pageIndex = getNumberField(page, "pageIndex") ?? getNumberField(record.input, "pageIndex") ?? index + 1;
+        const sectionTitle = getStringField(page, "sectionTitle") || "详情页";
+        const headline = getStringField(page, "headline") || "暂无";
+        const subheadline = getStringField(page, "subheadline") || "暂无";
+        const sellingPoint = getStringField(page, "sellingPoint") || "暂无";
+        const visualDirection = getStringField(page, "visualDirection") || "暂无";
+        const bodyCopy = getStringField(page, "bodyCopy") || "暂无";
+        const imageUrl = getOutputUrl(record.output);
+
+        return [
+          `### 第 ${pageIndex} 张：${sectionTitle}`,
+          "",
+          `- 标题：${headline}`,
+          `- 副标题：${subheadline}`,
+          `- 核心卖点：${sellingPoint}`,
+          `- 画面建议：${visualDirection}`,
+          `- 正文文案：${bodyCopy}`,
+          `- 图片链接：${imageUrl || "暂无"}`,
+        ].join("\n");
+      })
+      .join("\n\n"),
+  ].join("\n");
 }
 
 function buildProductPackageMarkdown(data: ProductCreationCenterData) {
@@ -112,6 +168,7 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     buildImageAssetMarkdown("商品原图优化", imageEditAssets),
     "",
     buildImageAssetMarkdown("营销场景图", sceneImageAssets),
+    buildDetailPageMarkdown(data.detailPages),
   ].join("\n");
 }
 
@@ -121,7 +178,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
   const markdown = useMemo(() => buildProductPackageMarkdown(data), [data]);
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "商品";
   const copywritingCount = data.copywriting.length;
-  const imageCount = Number(Boolean(data.originalAsset)) + data.imageEdits.length + data.sceneImages.length;
+  const imageCount = Number(Boolean(data.originalAsset)) + data.imageEdits.length + data.sceneImages.length + data.detailPages.length;
 
   function showFeedback(message: string, tone: "error" | "success" = "success") {
     setFeedback({ message, tone });

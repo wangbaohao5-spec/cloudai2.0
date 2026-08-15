@@ -33,7 +33,12 @@ function getGeneratedCount(creationCenterData: ProductCreationCenterData | null)
     return 0;
   }
 
-  return creationCenterData.copywriting.length + creationCenterData.imageEdits.length + creationCenterData.sceneImages.length;
+  return (
+    creationCenterData.copywriting.length +
+    creationCenterData.imageEdits.length +
+    creationCenterData.sceneImages.length +
+    creationCenterData.detailPages.length
+  );
 }
 
 function getWorkspaceStatus({
@@ -140,6 +145,7 @@ export function ProductWorkspaceRail({
         <div className="product-workspace-progress-wrap">
           <ProductCreationProgress
             copywritingCount={creationCenterData.copywriting.length}
+            detailPageCount={creationCenterData.detailPages.length}
             imageEditCount={creationCenterData.imageEdits.length}
             sceneImageCount={creationCenterData.sceneImages.length}
           />

@@ -4,6 +4,7 @@ import type { ProductCreationCenterAsset } from "@/lib/product-creation-center";
 import type { HistoryRecord } from "@/lib/types";
 
 type ProductAssetGalleryProps = {
+  detailPages: HistoryRecord[];
   imageEdits: HistoryRecord[];
   originalAsset: ProductCreationCenterAsset | null;
   sceneImages: HistoryRecord[];
@@ -26,6 +27,38 @@ function getOutputUrl(output: unknown) {
   const url = value.imageUrl || value.url;
 
   return typeof url === "string" ? url : "";
+}
+
+function getObjectField(value: unknown, key: string) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function getStringField(value: unknown, key: string) {
+  const field = getObjectField(value, key);
+
+  return typeof field === "string" ? field : "";
+}
+
+function getNumberField(value: unknown, key: string) {
+  const field = getObjectField(value, key);
+
+  return typeof field === "number" && Number.isFinite(field) ? field : null;
+}
+
+function getDetailPageInfo(record: HistoryRecord) {
+  const page = getObjectField(record.output, "page");
+  const pageIndex = getNumberField(page, "pageIndex") ?? getNumberField(record.input, "pageIndex");
+  const sectionTitle = getStringField(page, "sectionTitle");
+  const headline = getStringField(page, "headline");
+
+  return {
+    label: pageIndex ? `第 ${pageIndex} 张` : "详情页",
+    title: [sectionTitle, headline].filter(Boolean).join(" · ") || record.title,
+  };
 }
 
 function AssetTile({ label, previewUrl, title, url }: { label: string; previewUrl?: string | null; title: string; url: string }) {
@@ -67,7 +100,7 @@ function AssetGroup({ assets, emptyText, title }: { assets: GalleryAsset[]; empt
   );
 }
 
-export function ProductAssetGallery({ imageEdits, originalAsset, sceneImages }: ProductAssetGalleryProps) {
+export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sceneImages }: ProductAssetGalleryProps) {
   const originalAssets = originalAsset
     ? [
         {
@@ -93,7 +126,18 @@ export function ProductAssetGallery({ imageEdits, originalAsset, sceneImages }: 
     title: record.title,
     url: getOutputUrl(record.output),
   }));
-  const totalAssets = originalAssets.length + imageEditAssets.length + sceneImageAssets.length;
+  const detailPageAssets = detailPages.map((record) => {
+    const detailPageInfo = getDetailPageInfo(record);
+
+    return {
+      id: record.id,
+      label: detailPageInfo.label,
+      previewUrl: record.previewUrl,
+      title: detailPageInfo.title,
+      url: getOutputUrl(record.output),
+    };
+  });
+  const totalAssets = originalAssets.length + imageEditAssets.length + sceneImageAssets.length + detailPageAssets.length;
 
   return (
     <div className="product-asset-gallery">
@@ -106,6 +150,7 @@ export function ProductAssetGallery({ imageEdits, originalAsset, sceneImages }: 
         <AssetGroup assets={originalAssets} emptyText="暂无原商品图。" title="原图" />
         <AssetGroup assets={imageEditAssets} emptyText="还没有生成原图优化结果。" title="优化图" />
         <AssetGroup assets={sceneImageAssets} emptyText="还没有生成营销场景图。" title="场景图" />
+        {detailPageAssets.length ? <AssetGroup assets={detailPageAssets} emptyText="" title="商品详情页" /> : null}
       </div>
     </div>
   );

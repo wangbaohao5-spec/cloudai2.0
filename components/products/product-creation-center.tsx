@@ -102,10 +102,20 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
   return (
     <section className="product-creation-center glass-card">
       <ProductCreationSummary analysis={data.analysis} originalAsset={data.originalAsset} product={data.product} />
-      <ProductCreationProgress copywritingCount={data.copywriting.length} imageEditCount={data.imageEdits.length} sceneImageCount={data.sceneImages.length} />
+      <ProductCreationProgress
+        copywritingCount={data.copywriting.length}
+        detailPageCount={data.detailPages.length}
+        imageEditCount={data.imageEdits.length}
+        sceneImageCount={data.sceneImages.length}
+      />
       <ProductCreationActions />
       <ProductContentPackage data={data} />
-      <ProductAssetGallery originalAsset={data.originalAsset} imageEdits={data.imageEdits} sceneImages={data.sceneImages} />
+      <ProductAssetGallery
+        detailPages={data.detailPages}
+        originalAsset={data.originalAsset}
+        imageEdits={data.imageEdits}
+        sceneImages={data.sceneImages}
+      />
     </section>
   );
 }

@@ -24,6 +24,7 @@ export type ProductCreationCenterData = {
   analysis: ProductImageAnalysis;
   originalAsset: ProductCreationCenterAsset | null;
   copywriting: HistoryRecord[];
+  detailPages: HistoryRecord[];
   imageEdits: HistoryRecord[];
   sceneImages: HistoryRecord[];
 };
@@ -40,6 +41,12 @@ function getStringField(value: unknown, key: string) {
   const field = getObjectField(value, key);
 
   return typeof field === "string" ? field : "";
+}
+
+function getNumberField(value: unknown, key: string) {
+  const field = getObjectField(value, key);
+
+  return typeof field === "number" && Number.isFinite(field) ? field : null;
 }
 
 function isCopywritingForAnalysis(record: HistoryRecord, analysisHistoryId: string) {
@@ -66,6 +73,33 @@ function isSceneImageForAnalysis(record: HistoryRecord, analysisHistoryId: strin
     getStringField(record.input, "source") === "product-scene-image" &&
     getStringField(record.input, "analysisHistoryId") === analysisHistoryId
   );
+}
+
+function isDetailPageForAnalysis(record: HistoryRecord, analysisHistoryId: string) {
+  return (
+    record.type === "image" &&
+    getStringField(record.input, "source") === "product-detail-page" &&
+    getStringField(record.input, "analysisHistoryId") === analysisHistoryId
+  );
+}
+
+function sortDetailPages(left: HistoryRecord, right: HistoryRecord) {
+  const leftPageIndex = getNumberField(left.input, "pageIndex");
+  const rightPageIndex = getNumberField(right.input, "pageIndex");
+
+  if (leftPageIndex !== null && rightPageIndex !== null && leftPageIndex !== rightPageIndex) {
+    return leftPageIndex - rightPageIndex;
+  }
+
+  if (leftPageIndex !== null && rightPageIndex === null) {
+    return -1;
+  }
+
+  if (leftPageIndex === null && rightPageIndex !== null) {
+    return 1;
+  }
+
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
 }
 
 export async function getProductCreationCenterData(userId: string, analysisHistoryId: string): Promise<ProductCreationCenterData> {
@@ -115,6 +149,7 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
     analysis: analysisRecord.output,
     originalAsset,
     copywriting: historyRecords.filter((record) => isCopywritingForAnalysis(record, analysisRecord.id)),
+    detailPages: historyRecords.filter((record) => isDetailPageForAnalysis(record, analysisRecord.id)).sort(sortDetailPages),
     imageEdits: historyRecords.filter((record) => isImageEditForAnalysis(record, analysisRecord.id, analysisRecord.assetId)),
     sceneImages: historyRecords.filter((record) => isSceneImageForAnalysis(record, analysisRecord.id)),
   };

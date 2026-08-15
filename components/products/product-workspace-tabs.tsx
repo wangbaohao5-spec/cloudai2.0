@@ -99,17 +99,18 @@ export function ProductWorkspaceTabs({
 }: ProductWorkspaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("analysis");
   const copywritingCount = creationCenterData?.copywriting.length || 0;
+  const detailPageCount = creationCenterData?.detailPages.length || 0;
   const imageEditCount = creationCenterData?.imageEdits.length || 0;
   const sceneImageCount = creationCenterData?.sceneImages.length || 0;
   const hasOriginalAsset = Boolean(creationCenterData?.originalAsset);
-  const generatedAssetCount = imageEditCount + sceneImageCount;
+  const generatedAssetCount = imageEditCount + sceneImageCount + detailPageCount;
   const tabCounts: Partial<Record<TabId, number>> = {
     analysis: result ? 1 : 0,
     assets: creationCenterData ? Number(hasOriginalAsset) + generatedAssetCount : 0,
     copywriting: copywritingCount,
     images: imageEditCount,
     scenes: sceneImageCount,
-    detailPage: 0,
+    detailPage: detailPageCount,
     export: creationCenterData ? 1 : 0,
   };
   const exportChecklist = [
@@ -191,7 +192,7 @@ export function ProductWorkspaceTabs({
                   ]}
                 />
               ) : null}
-              <ProductAssetGallery originalAsset={data.originalAsset} imageEdits={data.imageEdits} sceneImages={data.sceneImages} />
+              <ProductAssetGallery detailPages={data.detailPages} originalAsset={data.originalAsset} imageEdits={data.imageEdits} sceneImages={data.sceneImages} />
             </>
           )}
         </CreationCenterState>

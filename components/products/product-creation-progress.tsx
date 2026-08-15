@@ -2,6 +2,7 @@
 
 type ProductCreationProgressProps = {
   copywritingCount: number;
+  detailPageCount: number;
   imageEditCount: number;
   sceneImageCount: number;
 };
@@ -15,7 +16,7 @@ type ProgressItem = {
   description: string;
 };
 
-function buildProgressItems({ copywritingCount, imageEditCount, sceneImageCount }: ProductCreationProgressProps): ProgressItem[] {
+function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, sceneImageCount }: ProductCreationProgressProps): ProgressItem[] {
   return [
     {
       id: "analysis",
@@ -49,11 +50,19 @@ function buildProgressItems({ copywritingCount, imageEditCount, sceneImageCount 
       status: sceneImageCount > 0 ? `已生成 ${sceneImageCount} 张` : "待生成",
       description: sceneImageCount > 0 ? "营销场景图已进入当前商品资产" : "在场景 Tab 生成适合推广的营销场景图",
     },
+    {
+      id: "detail-pages",
+      label: "详情页",
+      count: detailPageCount,
+      done: detailPageCount > 0,
+      status: detailPageCount > 0 ? `已生成 ${detailPageCount} 张` : "待生成",
+      description: detailPageCount > 0 ? "商品详情页图片已进入素材区" : "在详情页 Tab 基于规划生成详情页图片",
+    },
   ];
 }
 
-export function ProductCreationProgress({ copywritingCount, imageEditCount, sceneImageCount }: ProductCreationProgressProps) {
-  const progressItems = buildProgressItems({ copywritingCount, imageEditCount, sceneImageCount });
+export function ProductCreationProgress({ copywritingCount, detailPageCount, imageEditCount, sceneImageCount }: ProductCreationProgressProps) {
+  const progressItems = buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, sceneImageCount });
   const completedCount = progressItems.filter((item) => item.done).length;
   const totalCount = progressItems.length;
 
