@@ -1,3 +1,4 @@
+import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import type { ProductImageAnalysis } from "@/lib/product-types";
 
 export type ProductScenePromptInput = {
@@ -33,6 +34,10 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
   const platformGuide = platformGuides[platform] || "适合通用电商平台，突出商品主体、使用场景和商业转化";
   const styleGuide = styleGuides[style] || style || "高质量电商商业摄影风格";
   const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以图片分析中可见材质和颜色为准";
+  const categoryStrategy = getProductCategoryVisualStrategy({
+    category: analysis.category,
+    productName,
+  });
 
   return [
     "高质量电商商品场景图",
@@ -47,6 +52,10 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
     `视觉风格：${styleGuide}`,
     `材质和颜色参考：${materialColor}`,
     `视觉分析参考：${analysis.visualStyle || "专业电商视觉"}`,
+    `类目策略：${categoryStrategy.categoryKey}`,
+    `类目场景建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
+    `类目保真规则：${categoryStrategy.fidelityRules.join(" ")}`,
+    `类目避免事项：${categoryStrategy.avoidRules.join(" ")}`,
     "产品主体突出，商业摄影灯光，真实材质，高清细节，构图整洁，适合电商营销使用",
     "不要添加文字，不要水印，不要 logo，不要生成无法从商品分析中确认的品牌或参数",
     "这是基于商品分析结果生成的营销场景图，不是原图精确复刻",
@@ -58,6 +67,10 @@ export function buildProductSceneEditPrompt({ analysis, scene, platform, style }
   const platformGuide = platformGuides[platform] || "适合通用电商平台，突出商品主体、使用场景和商业转化";
   const styleGuide = styleGuides[style] || style || "高质量电商商业摄影风格";
   const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以原图可见材质和颜色为准";
+  const categoryStrategy = getProductCategoryVisualStrategy({
+    category: analysis.category,
+    productName,
+  });
 
   return [
     "请基于用户上传的商品图片进行电商营销场景图编辑",
@@ -76,6 +89,10 @@ export function buildProductSceneEditPrompt({ analysis, scene, platform, style }
     `视觉风格：${styleGuide}`,
     `材质和颜色参考：${materialColor}`,
     `视觉分析参考：${analysis.visualStyle || "专业电商视觉"}`,
+    `类目策略：${categoryStrategy.categoryKey}`,
+    `类目场景建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
+    `类目保真规则：${categoryStrategy.fidelityRules.join(" ")}`,
+    `类目避免事项：${categoryStrategy.avoidRules.join(" ")}`,
     "生成高质量商业摄影效果，商品主体清晰突出，背景服务于营销表达，适合电商投放或上架使用",
     "不要生成文字，不要水印，不要额外 logo，不要添加不存在的功能、参数、配件或无法确认的品牌信息",
   ].join("，");

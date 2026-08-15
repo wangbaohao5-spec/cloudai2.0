@@ -1,3 +1,4 @@
+import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import type { ProductImageAnalysis } from "@/lib/product-types";
 
@@ -22,6 +23,10 @@ function joinList(items?: string[]) {
 export function buildProductDetailPageImagePrompt({ analysis, page, productTitle, style }: ProductDetailPageImagePromptInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
   const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以原商品图可见材质和颜色为准";
+  const categoryStrategy = getProductCategoryVisualStrategy({
+    category: analysis.category,
+    productName,
+  });
 
   return [
     "请基于用户上传的原商品图，生成一张电商商品详情页图片。",
@@ -38,6 +43,8 @@ export function buildProductDetailPageImagePrompt({ analysis, page, productTitle
     `材质和颜色参考：${materialColor}`,
     `视觉风格参考：${analysis.visualStyle || "专业电商视觉"}`,
     `详情页风格：${STYLE_GUIDES[style]}`,
+    `类目策略：${categoryStrategy.categoryKey}`,
+    `类目详情页建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
     "",
     "当前要生成的详情页规划：",
     `第 ${page.pageIndex} 张：${page.sectionTitle}`,

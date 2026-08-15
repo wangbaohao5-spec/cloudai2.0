@@ -1,3 +1,4 @@
+import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import type { ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
 
 type ProductVisualFidelityPromptInput = {
@@ -23,6 +24,11 @@ function compactList(...groups: Array<string[] | string | undefined>) {
 }
 
 export function buildProductVisualFidelityPrompt({ analysis, generationMode }: ProductVisualFidelityPromptInput) {
+  const productName = analysis.productNameSuggestions[0] || analysis.category || "";
+  const categoryStrategy = getProductCategoryVisualStrategy({
+    category: analysis.category,
+    productName,
+  });
   const colors = compactList(analysis.colors, analysis.color);
   const materials = compactList(analysis.materials, analysis.material);
   const specifications = compactList(analysis.specifications, analysis.capacity);
@@ -33,6 +39,7 @@ export function buildProductVisualFidelityPrompt({ analysis, generationMode }: P
   const usageScenes = compactList(analysis.detailPageHints?.usageScenes);
 
   const sharedContext = [
+    `Matched category strategy: ${categoryStrategy.categoryKey}.`,
     colors.length ? `Known product colors / lighting colors: ${joinList(colors)}.` : "",
     materials.length ? `Known product materials: ${joinList(materials)}.` : "",
     specifications.length ? `Known product specifications / capacity: ${joinList(specifications)}.` : "",
@@ -44,6 +51,21 @@ export function buildProductVisualFidelityPrompt({ analysis, generationMode }: P
     usageScenes.length ? `Relevant usage scenes: ${joinList(usageScenes)}.` : "",
     analysis.detailPageHints?.visualMood ? `Preferred visual mood: ${analysis.detailPageHints.visualMood}.` : "",
   ].filter(Boolean);
+
+  const categoryRules =
+    generationMode === "faithful"
+      ? [
+          "Category-specific fidelity rules:",
+          ...categoryStrategy.fidelityRules,
+          "Category-specific avoid rules:",
+          ...categoryStrategy.avoidRules,
+        ]
+      : [
+          "Category-specific consistency guidance:",
+          ...categoryStrategy.fidelityRules.map((rule) => `Respect this rule while allowing richer marketing presentation: ${rule}`),
+          "Category-specific avoid guidance:",
+          ...categoryStrategy.avoidRules,
+        ];
 
   const modeRules =
     generationMode === "faithful"
@@ -67,5 +89,5 @@ export function buildProductVisualFidelityPrompt({ analysis, generationMode }: P
           "Do not let props cover, replace, or visually merge with the product.",
         ];
 
-  return [...modeRules, ...sharedContext].join("\n");
+  return [...modeRules, ...categoryRules, ...sharedContext].join("\n");
 }
