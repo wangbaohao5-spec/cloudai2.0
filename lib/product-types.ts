@@ -8,9 +8,18 @@ export type ProductImageAnalysis = {
   visualStyle: string;
   material?: string;
   color?: string;
-  specifications?: string;
+  specifications?: string[];
   capacity?: string;
   variants?: string[];
+  materials?: string[];
+  colors?: string[];
+  mustKeepDetails?: string[];
+  avoidChanges?: string[];
+  detailPageHints?: {
+    usageScenes?: string[];
+    detailAngles?: string[];
+    visualMood?: string;
+  };
   risks: string[];
 };
 

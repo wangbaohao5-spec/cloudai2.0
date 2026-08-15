@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 
 type ProductAnalyzeRequestBody = {
   assetId?: string;
-  productSupplement?: string;
+  productHint?: string;
 };
 
 function getAnalysisTitle(analysis: ProductAnalysisResponse["analysis"]) {
@@ -29,10 +29,14 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ProductAnalyzeRequestBody;
     const assetId = body.assetId?.trim();
-    const productSupplement = body.productSupplement?.trim().slice(0, 2000) || "";
+    const productHint = typeof body.productHint === "string" ? body.productHint.trim() : "";
 
     if (!assetId) {
       return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
+    }
+
+    if (productHint.length > 1000) {
+      return NextResponse.json({ error: "商品补充信息过长，请精简到 1000 字以内。" }, { status: 400 });
     }
 
     const asset = await getAssetForUser(user.id, assetId);
@@ -48,7 +52,7 @@ export async function POST(request: Request) {
     });
 
     const imageUrl = await getFileUrl(asset.url, 30 * 60);
-    const analysis = await analyzeProductImageAsset(imageUrl, productSupplement);
+    const analysis = await analyzeProductImageAsset(imageUrl, productHint);
     const title = getAnalysisTitle(analysis);
     const historyResult = await settleTask(
       saveHistory({
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
         input: {
           assetId: asset.id,
           assetName: asset.name,
-          ...(productSupplement ? { productSupplement } : {}),
+          ...(productHint ? { productHint } : {}),
         },
         output: analysis,
       }),

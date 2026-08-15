@@ -24,6 +24,19 @@ function DetailList({ items }: { items: string[] }) {
   );
 }
 
+function compactItems(...groups: Array<string[] | string | undefined>) {
+  return groups
+    .flatMap((group) => {
+      if (!group) {
+        return [];
+      }
+
+      return Array.isArray(group) ? group : [group];
+    })
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = false, showFullAnalysisToggle = true, title }: ProductAnalysisResultProps) {
   const [isExpanded, setIsExpanded] = useState(defaultShowFullAnalysis);
   const primaryName = analysis?.productNameSuggestions[0] || "暂无明确建议";
@@ -85,15 +98,23 @@ export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = fals
               </section>
               <section>
                 <strong>材质 / 颜色</strong>
-                <p>{[analysis.material, analysis.color].filter(Boolean).join(" / ") || "图片中无法明确确认"}</p>
+                <DetailList items={compactItems(analysis.materials, analysis.material, analysis.colors, analysis.color)} />
               </section>
               <section>
                 <strong>规格 / 容量</strong>
-                <p>{[analysis.specifications, analysis.capacity].filter(Boolean).join(" / ") || "暂无明确结果"}</p>
+                <DetailList items={compactItems(analysis.specifications, analysis.capacity)} />
               </section>
               <section>
                 <strong>多款式信息</strong>
                 <DetailList items={analysis.variants || []} />
+              </section>
+              <section className="product-analysis-wide">
+                <strong>必须保留的细节</strong>
+                <DetailList items={analysis.mustKeepDetails || []} />
+              </section>
+              <section className="product-analysis-wide">
+                <strong>避免改动</strong>
+                <DetailList items={analysis.avoidChanges || []} />
               </section>
               <section className="product-analysis-wide">
                 <strong>风险提示</strong>

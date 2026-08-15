@@ -22,8 +22,8 @@ type ProductWorkspaceRailProps = {
   isUploading: boolean;
   onAnalyze: () => void;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onProductSupplementChange: (value: string) => void;
-  productSupplement: string;
+  onProductHintChange: (value: string) => void;
+  productHint: string;
   result: ProductAnalysisResponse | null;
   uploadedAsset: UploadedAsset | null;
 };
@@ -89,8 +89,8 @@ export function ProductWorkspaceRail({
   isUploading,
   onAnalyze,
   onFileChange,
-  onProductSupplementChange,
-  productSupplement,
+  onProductHintChange,
+  productHint,
   result,
   uploadedAsset,
 }: ProductWorkspaceRailProps) {
@@ -139,18 +139,18 @@ export function ProductWorkspaceRail({
 
       <section className="product-workspace-supplement" aria-label="商品补充信息">
         <label htmlFor="product-supplement">
-          商品补充信息
-          <span>可选。补充型号、容量、材质、颜色、规格、适用人群或卖点，AI 分析会优先参考。</span>
+          商品补充信息（可选）
+          <span>补充型号、规格、颜色、材质、卖点，或告诉 AI 哪些细节必须保留。</span>
         </label>
         <textarea
           id="product-supplement"
-          maxLength={2000}
-          placeholder="例如：500ml 玻璃瓶装，玫瑰香型，适合敏感肌；主打温和清洁、保湿不紧绷。"
-          rows={5}
-          value={productSupplement}
-          onChange={(event) => onProductSupplementChange(event.target.value)}
+          maxLength={1000}
+          placeholder="例如：这是一款粉蓝配色机械键盘，粉色背光，右下角卡通图案是键盘设计的一部分，请保留键盘整体布局、粉蓝配色、粉色灯光和卡通图案位置，不要把卡通人物改成漂浮装饰。主打可爱桌搭和柔和氛围感。"
+          rows={4}
+          value={productHint}
+          onChange={(event) => onProductHintChange(event.target.value)}
         />
-        <em>{productSupplement.trim().length ? `${productSupplement.trim().length}/2000` : "不填写也可以直接分析"}</em>
+        <em>{productHint.trim().length ? `${productHint.trim().length}/1000` : "不填写也可以直接分析"}</em>
       </section>
 
       <div className="product-workspace-status" aria-live="polite">
