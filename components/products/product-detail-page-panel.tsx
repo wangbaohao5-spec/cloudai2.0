@@ -3,7 +3,7 @@
 import { ProductDetailPagePlanPreview, type DetailPageImageResult } from "@/components/products/product-detail-page-plan-preview";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type { ProductDetailPagePlan, ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
-import type { ProductAnalysisResponse } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductDetailPagePanelProps = {
@@ -18,8 +18,22 @@ const styleOptions: Array<{ description: string; label: string; value: ProductDe
   { value: "minimal", label: "极简高级", description: "文案克制、留白感强，适合高级视觉。" },
 ];
 
+const generationModeOptions: Array<{ description: string; label: string; value: ProductVisualGenerationMode }> = [
+  {
+    value: "faithful",
+    label: "保真优化",
+    description: "更适合键盘、衣服、鞋、包、手机壳等带固定外观和图案的商品。",
+  },
+  {
+    value: "creative",
+    label: "营销创意",
+    description: "允许更强详情页氛围和视觉包装，但仍尽量保持商品主体一致。",
+  },
+];
+
 export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductDetailPagePanelProps) {
   const [error, setError] = useState("");
+  const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
   const [generatingPageIndex, setGeneratingPageIndex] = useState<number | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
   const [pageErrors, setPageErrors] = useState<Record<number, string>>({});
@@ -89,6 +103,7 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
         },
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
+          generationMode,
           page,
           style,
         }),
@@ -152,6 +167,25 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
             {styleOptions.map((option) => (
               <label className={style === option.value ? "active" : ""} key={option.value}>
                 <input checked={style === option.value} name="detailPageStyle" type="radio" value={option.value} onChange={() => setStyle(option.value)} />
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="product-visual-mode-selector">
+          <legend>生成模式</legend>
+          <div>
+            {generationModeOptions.map((option) => (
+              <label className={generationMode === option.value ? "active" : ""} key={option.value}>
+                <input
+                  checked={generationMode === option.value}
+                  name="detailPageGenerationMode"
+                  type="radio"
+                  value={option.value}
+                  onChange={() => setGenerationMode(option.value)}
+                />
                 <strong>{option.label}</strong>
                 <span>{option.description}</span>
               </label>

@@ -3,7 +3,7 @@
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
-import type { ProductAnalysisResponse } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductSceneImagePanelProps = {
@@ -32,6 +32,19 @@ const styleOptions = [
   { value: "lifestyle", label: "生活化" },
 ];
 
+const generationModeOptions: Array<{ description: string; label: string; value: ProductVisualGenerationMode }> = [
+  {
+    value: "faithful",
+    label: "保真优化",
+    description: "尽量保持商品外观、结构、颜色、图案和比例不变，只优化背景、光线和营销表现。",
+  },
+  {
+    value: "creative",
+    label: "营销创意",
+    description: "允许更强场景、道具和氛围，但商品主体仍会尽量保持一致。",
+  },
+];
+
 function getSceneName(sceneId: string) {
   return PRODUCT_VISUAL_SCENES.find((scene) => scene.id === sceneId)?.name || sceneId;
 }
@@ -43,6 +56,7 @@ function getOptionLabel(options: { value: string; label: string }[], value: stri
 export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductSceneImagePanelProps) {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
+  const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SceneImageResult | null>(null);
   const [selectedScene, setSelectedScene] = useState(PRODUCT_VISUAL_SCENES[0]?.id || "lifestyle");
@@ -78,6 +92,7 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
         },
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
+          generationMode,
           scene,
           platform,
           style,
@@ -177,6 +192,25 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
             </select>
           </label>
         </div>
+
+        <fieldset className="product-visual-mode-selector">
+          <legend>生成模式</legend>
+          <div>
+            {generationModeOptions.map((option) => (
+              <label className={generationMode === option.value ? "active" : ""} key={option.value}>
+                <input
+                  checked={generationMode === option.value}
+                  name="generationMode"
+                  type="radio"
+                  value={option.value}
+                  onChange={() => setGenerationMode(option.value)}
+                />
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
           {isGenerating ? (

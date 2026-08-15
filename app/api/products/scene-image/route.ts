@@ -1,10 +1,12 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
 import { buildProductSceneEditPrompt } from "@/lib/ai/product-scene-prompt-builder";
+import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
+import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
@@ -13,10 +15,17 @@ export const runtime = "nodejs";
 
 type ProductSceneImageRequestBody = {
   analysisHistoryId?: string;
+  generationMode?: string;
   scene?: string;
   platform?: string;
   style?: string;
 };
+
+const PRODUCT_VISUAL_GENERATION_MODES = ["faithful", "creative"] as const;
+
+function isProductVisualGenerationMode(value: string): value is ProductVisualGenerationMode {
+  return PRODUCT_VISUAL_GENERATION_MODES.includes(value as ProductVisualGenerationMode);
+}
 
 function getProductTitle(analysis: { productNameSuggestions?: string[]; category?: string }, scene: string) {
   const productName = analysis.productNameSuggestions?.[0] || analysis.category || "商品";
@@ -47,6 +56,7 @@ export async function POST(request: Request) {
     const scene = body.scene?.trim();
     const platform = body.platform?.trim() || "taobao";
     const style = body.style?.trim() || "lifestyle";
+    const generationMode = typeof body.generationMode === "string" ? body.generationMode.trim() || "faithful" : "faithful";
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -54,6 +64,10 @@ export async function POST(request: Request) {
 
     if (!scene) {
       return NextResponse.json({ error: "Scene is required." }, { status: 400 });
+    }
+
+    if (!isProductVisualGenerationMode(generationMode)) {
+      return NextResponse.json({ error: "生成模式无效，请重新选择。" }, { status: 400 });
     }
 
     const analysisRecord = await getHistoryRecordForUser(user.id, analysisHistoryId);
@@ -84,12 +98,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Product source asset is not an editable image." }, { status: 400 });
     }
 
-    const prompt = buildProductSceneEditPrompt({
-      analysis: analysisRecord.output,
-      scene,
-      platform,
-      style,
-    });
+    const prompt = [
+      buildProductSceneEditPrompt({
+        analysis: analysisRecord.output,
+        scene,
+        platform,
+        style,
+      }),
+      buildProductVisualFidelityPrompt({
+        analysis: analysisRecord.output,
+        generationMode,
+      }),
+    ].join("\n\n");
     const model = "gpt-image-2";
 
     await enforceUsageLimitAndRecord({
@@ -144,6 +164,9 @@ export async function POST(request: Request) {
           scene,
           platform,
           style,
+          generationMode,
+          mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
+          avoidChanges: analysisRecord.output.avoidChanges || [],
         },
         output,
       }),

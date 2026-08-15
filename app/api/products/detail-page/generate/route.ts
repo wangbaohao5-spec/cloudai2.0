@@ -1,11 +1,13 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
 import { buildProductDetailPageImagePrompt } from "@/lib/ai/product-detail-page-image-prompt-builder";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
+import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
+import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
@@ -14,11 +16,13 @@ export const runtime = "nodejs";
 
 type ProductDetailPageGenerateRequestBody = {
   analysisHistoryId?: string;
+  generationMode?: string;
   page?: Partial<ProductDetailPagePlanPage>;
   style?: string;
 };
 
 const DETAIL_PAGE_STYLES = ["brand-site", "ecommerce", "minimal", "xiaohongshu"] as const;
+const PRODUCT_VISUAL_GENERATION_MODES = ["faithful", "creative"] as const;
 const SECTION_TYPES = ["cta", "feature", "hero"] as const;
 
 function isDetailPageStyle(value: string): value is ProductDetailPageStyle {
@@ -27,6 +31,10 @@ function isDetailPageStyle(value: string): value is ProductDetailPageStyle {
 
 function isSectionType(value: string): value is ProductDetailPagePlanPage["sectionType"] {
   return SECTION_TYPES.includes(value as ProductDetailPagePlanPage["sectionType"]);
+}
+
+function isProductVisualGenerationMode(value: string): value is ProductVisualGenerationMode {
+  return PRODUCT_VISUAL_GENERATION_MODES.includes(value as ProductVisualGenerationMode);
 }
 
 function decodeBase64Image(b64Json: string) {
@@ -84,6 +92,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ProductDetailPageGenerateRequestBody;
     const analysisHistoryId = body.analysisHistoryId?.trim();
+    const generationMode = typeof body.generationMode === "string" ? body.generationMode.trim() || "faithful" : "faithful";
     const style = body.style?.trim() || "ecommerce";
     const page = normalizePage(body.page);
 
@@ -93,6 +102,10 @@ export async function POST(request: Request) {
 
     if (!isDetailPageStyle(style)) {
       return NextResponse.json({ error: "Unsupported detail page style." }, { status: 400 });
+    }
+
+    if (!isProductVisualGenerationMode(generationMode)) {
+      return NextResponse.json({ error: "生成模式无效，请重新选择。" }, { status: 400 });
     }
 
     if (!page) {
@@ -127,12 +140,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Product source asset is not an editable image." }, { status: 400 });
     }
 
-    const prompt = buildProductDetailPageImagePrompt({
-      analysis: analysisRecord.output,
-      page,
-      productTitle: analysisRecord.title,
-      style,
-    });
+    const prompt = [
+      buildProductDetailPageImagePrompt({
+        analysis: analysisRecord.output,
+        page,
+        productTitle: analysisRecord.title,
+        style,
+      }),
+      buildProductVisualFidelityPrompt({
+        analysis: analysisRecord.output,
+        generationMode,
+      }),
+    ].join("\n\n");
     const model = "gpt-image-2";
 
     await enforceUsageLimitAndRecord({
@@ -186,6 +205,9 @@ export async function POST(request: Request) {
           sourceAssetId: analysisRecord.assetId,
           pageIndex: page.pageIndex,
           style,
+          generationMode,
+          mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
+          avoidChanges: analysisRecord.output.avoidChanges || [],
           page,
         },
         output,

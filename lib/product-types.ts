@@ -1,3 +1,5 @@
+export type ProductVisualGenerationMode = "faithful" | "creative";
+
 export type ProductImageAnalysis = {
   category: string;
   productNameSuggestions: string[];
@@ -20,6 +22,7 @@ export type ProductImageAnalysis = {
     detailAngles?: string[];
     visualMood?: string;
   };
+  visualFidelityNotes?: string;
   risks: string[];
 };
 
