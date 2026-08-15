@@ -2,7 +2,12 @@
 
 import { ProductDetailPagePlanPreview, type DetailPageImageResult } from "@/components/products/product-detail-page-plan-preview";
 import { AiThinkingLoading } from "@/components/ui/loading";
-import type { ProductDetailPagePlan, ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
+import type {
+  ProductDetailPageCount,
+  ProductDetailPagePlan,
+  ProductDetailPagePlanPage,
+  ProductDetailPageStyle,
+} from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import type { ProductAnalysisResponse, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
@@ -16,6 +21,12 @@ const styleOptions: Array<{ description: string; label: string; value: ProductDe
   { value: "xiaohongshu", label: "小红书种草", description: "语气自然、有使用感，适合内容种草。" },
   { value: "brand-site", label: "品牌官网", description: "强调品牌感、质感和可信表达。" },
   { value: "minimal", label: "极简高级", description: "文案克制、留白感强，适合高级视觉。" },
+];
+
+const countOptions: Array<{ description: string; label: string; value: ProductDetailPageCount }> = [
+  { value: 3, label: "3 张", description: "适合快速生成首图、卖点图、CTA。" },
+  { value: 5, label: "5 张", description: "适合补充场景图和细节图。" },
+  { value: 8, label: "8 张", description: "适合完整商品详情页结构。" },
 ];
 
 const generationModeOptions: Array<{ description: string; label: string; value: ProductVisualGenerationMode }> = [
@@ -32,6 +43,7 @@ const generationModeOptions: Array<{ description: string; label: string; value: 
 ];
 
 export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductDetailPagePanelProps) {
+  const [count, setCount] = useState<ProductDetailPageCount>(3);
   const [error, setError] = useState("");
   const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
   const [generatingPageIndex, setGeneratingPageIndex] = useState<number | null>(null);
@@ -40,6 +52,13 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
   const [pageResults, setPageResults] = useState<Record<number, DetailPageImageResult>>({});
   const [plan, setPlan] = useState<ProductDetailPagePlan | null>(null);
   const [style, setStyle] = useState<ProductDetailPageStyle>("ecommerce");
+
+  function handleCountChange(nextCount: ProductDetailPageCount) {
+    setCount(nextCount);
+    setPlan(null);
+    setPageErrors({});
+    setPageResults({});
+  }
 
   async function handleGeneratePlan() {
     if (!analysisResult?.historyId) {
@@ -58,7 +77,7 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
         },
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
-          count: 3,
+          count,
           style,
         }),
       });
@@ -155,11 +174,18 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
       </div>
 
       <div className="product-detail-page-settings">
-        <div className="product-detail-page-fixed-count">
-          <span>数量</span>
-          <strong>3 张</strong>
-          <p>MVP 固定生成 3 张结构规划，暂不开放 5/8 张。</p>
-        </div>
+        <fieldset>
+          <legend>详情页数量</legend>
+          <div className="product-detail-count-grid">
+            {countOptions.map((option) => (
+              <label className={count === option.value ? "active" : ""} key={option.value}>
+                <input checked={count === option.value} name="detailPageCount" type="radio" value={option.value} onChange={() => handleCountChange(option.value)} />
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <fieldset>
           <legend>风格</legend>
@@ -221,7 +247,7 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
       ) : (
         <div className="product-detail-plan-placeholder">
           <strong>规划结果会显示在这里</strong>
-          <p>生成后将展示首屏卖点、核心内容和购买理由 3 张详情页规划卡片。</p>
+          <p>生成后将展示 {count} 张详情页规划卡片，可选择其中任意一张单独生成图片。</p>
         </div>
       )}
     </section>

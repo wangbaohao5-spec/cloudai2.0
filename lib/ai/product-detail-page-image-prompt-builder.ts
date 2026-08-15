@@ -20,6 +20,20 @@ function joinList(items?: string[]) {
   return items?.filter(Boolean).join("、") || "暂无明确结果";
 }
 
+const SECTION_VISUAL_GUIDES: Partial<Record<ProductDetailPagePlanPage["sectionType"], string>> = {
+  comparison: "Use a clear comparison-style layout, only comparing verified features or benefits from the analysis. Do not invent competitor claims.",
+  "detail-closeup": "Create a close-up detail view that highlights one important product part, texture, structure, or design detail.",
+  "flat-lay": "Use a clean flat-lay composition that shows the product shape, color, pattern, and styling context clearly.",
+  "four-grid-detail": "Create a 2x2 detail collage within one image, showing four verified product details without changing the product design.",
+  "material-detail": "Highlight material texture, surface finish, fabric/metal/wood/plastic feel, or product texture in a premium close-up.",
+  "model-wearing": "Show a model wearing or using the product when appropriate for the category, while keeping the product appearance accurate.",
+  "multi-color": "Show color or variant information only if variants/colors are available in the analysis. Do not invent unavailable colors.",
+  "selling-point": "Create a strong selling-point visual with one clear benefit and a concise supporting visual metaphor.",
+  specification: "Present verified specifications, structure, size, capacity, or component details in a clean product-detail layout.",
+  trust: "Create a trust-building visual using verified quality cues only. Do not invent certifications, awards, medical claims, or platform authorization.",
+  "usage-scene": "Create a realistic usage scene that shows how the product fits into the user's life or work context.",
+};
+
 export function buildProductDetailPageImagePrompt({ analysis, page, productTitle, style }: ProductDetailPageImagePromptInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
   const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以原商品图可见材质和颜色为准";
@@ -45,6 +59,7 @@ export function buildProductDetailPageImagePrompt({ analysis, page, productTitle
     `详情页风格：${STYLE_GUIDES[style]}`,
     `类目策略：${categoryStrategy.categoryKey}`,
     `类目详情页建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
+    `当前页面类型视觉要求：${SECTION_VISUAL_GUIDES[page.sectionType] || "根据当前页面标题和卖点生成清晰、专业的详情页单屏视觉。"}`,
     "",
     "当前要生成的详情页规划：",
     `第 ${page.pageIndex} 张：${page.sectionTitle}`,

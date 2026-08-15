@@ -22,10 +22,21 @@ type ProductDetailPagePlanPreviewProps = {
 };
 
 const SECTION_TYPE_LABELS = {
+  comparison: "对比说明",
   cta: "购买理由",
+  "detail-closeup": "细节特写",
   feature: "核心内容",
+  "flat-lay": "平铺展示",
+  "four-grid-detail": "四宫格细节",
   hero: "首屏卖点",
-} satisfies Record<ProductDetailPagePlanPage["sectionType"], string>;
+  "material-detail": "材质细节",
+  "model-wearing": "上身展示",
+  "multi-color": "多色展示",
+  "selling-point": "核心卖点",
+  specification: "规格说明",
+  trust: "信任背书",
+  "usage-scene": "使用场景",
+} satisfies Partial<Record<ProductDetailPagePlanPage["sectionType"], string>>;
 
 export function ProductDetailPagePlanPreview({
   generatingPageIndex = null,
@@ -49,7 +60,7 @@ export function ProductDetailPagePlanPreview({
           <article className="product-detail-plan-card" key={`${page.pageIndex}-${page.sectionTitle}`}>
             <div className="product-detail-plan-card-header">
               <span>第 {page.pageIndex} 张</span>
-              <em>{SECTION_TYPE_LABELS[page.sectionType]}</em>
+              <em>{SECTION_TYPE_LABELS[page.sectionType] || page.sectionType}</em>
             </div>
             <h3>{page.sectionTitle}</h3>
             <dl>

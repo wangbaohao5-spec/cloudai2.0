@@ -23,7 +23,22 @@ type ProductDetailPageGenerateRequestBody = {
 
 const DETAIL_PAGE_STYLES = ["brand-site", "ecommerce", "minimal", "xiaohongshu"] as const;
 const PRODUCT_VISUAL_GENERATION_MODES = ["faithful", "creative"] as const;
-const SECTION_TYPES = ["cta", "feature", "hero"] as const;
+const SECTION_TYPES = [
+  "comparison",
+  "cta",
+  "detail-closeup",
+  "feature",
+  "flat-lay",
+  "four-grid-detail",
+  "hero",
+  "material-detail",
+  "model-wearing",
+  "multi-color",
+  "selling-point",
+  "specification",
+  "trust",
+  "usage-scene",
+] as const;
 
 function isDetailPageStyle(value: string): value is ProductDetailPageStyle {
   return DETAIL_PAGE_STYLES.includes(value as ProductDetailPageStyle);
@@ -55,7 +70,7 @@ function normalizePage(page: ProductDetailPageGenerateRequestBody["page"]): Prod
   const pageIndex = Number(page.pageIndex);
   const sectionType = normalizeText(page.sectionType);
 
-  if (!Number.isInteger(pageIndex) || pageIndex < 1 || pageIndex > 3 || !isSectionType(sectionType)) {
+  if (!Number.isInteger(pageIndex) || pageIndex < 1 || pageIndex > 8 || !isSectionType(sectionType)) {
     return null;
   }
 

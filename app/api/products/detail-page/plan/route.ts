@@ -1,8 +1,10 @@
 import { generateAIResponse } from "@/lib/ai/deepseek";
 import {
   buildProductDetailPagePlanPrompt,
+  type ProductDetailPageCount,
   type ProductDetailPagePlan,
   type ProductDetailPagePlanPage,
+  type ProductDetailPageSectionType,
   type ProductDetailPageStyle,
 } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import { jsonError } from "@/lib/api-errors";
@@ -20,9 +22,34 @@ type ProductDetailPagePlanRequestBody = {
 };
 
 const DETAIL_PAGE_STYLES = ["brand-site", "ecommerce", "minimal", "xiaohongshu"] as const;
+const DETAIL_PAGE_COUNTS = [3, 5, 8] as const;
+const SECTION_TYPES = [
+  "comparison",
+  "cta",
+  "detail-closeup",
+  "feature",
+  "flat-lay",
+  "four-grid-detail",
+  "hero",
+  "material-detail",
+  "model-wearing",
+  "multi-color",
+  "selling-point",
+  "specification",
+  "trust",
+  "usage-scene",
+] as const;
 
 function isDetailPageStyle(value: string): value is ProductDetailPageStyle {
   return DETAIL_PAGE_STYLES.includes(value as ProductDetailPageStyle);
+}
+
+function isDetailPageCount(value: number): value is ProductDetailPageCount {
+  return DETAIL_PAGE_COUNTS.includes(value as ProductDetailPageCount);
+}
+
+function isSectionType(value: string): value is ProductDetailPageSectionType {
+  return SECTION_TYPES.includes(value as ProductDetailPageSectionType);
 }
 
 function parseJsonResponse(response: string) {
@@ -40,15 +67,39 @@ function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function normalizePlanPage(value: unknown, index: number): ProductDetailPagePlanPage {
+function getFallbackSectionType(index: number, count: ProductDetailPageCount): ProductDetailPageSectionType {
+  if (index === 0) {
+    return "hero";
+  }
+
+  if (index === count - 1) {
+    return "cta";
+  }
+
+  if (count === 3) {
+    return "selling-point";
+  }
+
+  if (count === 5) {
+    return (["selling-point", "usage-scene", "detail-closeup"] as ProductDetailPageSectionType[])[index - 1] || "selling-point";
+  }
+
+  return (
+    (["selling-point", "usage-scene", "detail-closeup", "four-grid-detail", "material-detail", "specification"] as ProductDetailPageSectionType[])[index - 1] ||
+    "selling-point"
+  );
+}
+
+function normalizePlanPage(value: unknown, index: number, count: ProductDetailPageCount): ProductDetailPagePlanPage {
   const page = value && typeof value === "object" ? (value as Partial<ProductDetailPagePlanPage>) : {};
-  const pageIndex = Number(page.pageIndex) || index + 1;
-  const sectionType = pageIndex === 1 ? "hero" : pageIndex === 3 ? "cta" : "feature";
+  const pageIndex = index + 1;
+  const sectionType = normalizeText(page.sectionType);
+  const normalizedSectionType = isSectionType(sectionType) ? sectionType : getFallbackSectionType(index, count);
 
   return {
     pageIndex,
-    sectionType,
-    sectionTitle: normalizeText(page.sectionTitle) || (pageIndex === 1 ? "首屏卖点" : pageIndex === 2 ? "核心功能" : "购买理由"),
+    sectionType: normalizedSectionType,
+    sectionTitle: normalizeText(page.sectionTitle) || (pageIndex === 1 ? "首屏卖点" : pageIndex === count ? "购买理由" : "详情页模块"),
     headline: normalizeText(page.headline),
     subheadline: normalizeText(page.subheadline),
     sellingPoint: normalizeText(page.sellingPoint),
@@ -58,11 +109,11 @@ function normalizePlanPage(value: unknown, index: number): ProductDetailPagePlan
   };
 }
 
-function normalizePlan(plan: ProductDetailPagePlan): ProductDetailPagePlan {
-  const pages = Array.isArray(plan.pages) ? plan.pages.slice(0, 3).map(normalizePlanPage) : [];
+function normalizePlan(plan: ProductDetailPagePlan, count: ProductDetailPageCount): ProductDetailPagePlan {
+  const pages = Array.isArray(plan.pages) ? plan.pages.slice(0, count).map((page, index) => normalizePlanPage(page, index, count)) : [];
 
-  if (pages.length !== 3) {
-    throw new Error("Detail page plan must include exactly 3 pages.");
+  if (pages.length !== count) {
+    throw new Error(`Detail page plan must include exactly ${count} pages.`);
   }
 
   return { pages };
@@ -79,14 +130,14 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ProductDetailPagePlanRequestBody;
     const analysisHistoryId = body.analysisHistoryId?.trim();
     const style = body.style?.trim() || "ecommerce";
-    const count = body.count || 3;
+    const count = Number(body.count || 3);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
     }
 
-    if (count !== 3) {
-      return NextResponse.json({ error: "MVP only supports 3 detail pages." }, { status: 400 });
+    if (!isDetailPageCount(count)) {
+      return NextResponse.json({ error: "详情页数量无效，请选择 3、5 或 8 张。" }, { status: 400 });
     }
 
     if (!isDetailPageStyle(style)) {
@@ -116,7 +167,7 @@ export async function POST(request: Request) {
     const prompt = buildProductDetailPagePlanPrompt({
       analysis: analysisRecord.output,
       copywritingRecords,
-      count: 3,
+      count,
       productTitle: analysisRecord.title,
       style,
     });
@@ -130,10 +181,10 @@ export async function POST(request: Request) {
       ],
       { jsonMode: true, temperature: 0.62 },
     );
-    const plan = normalizePlan(parseJsonResponse(response));
+    const plan = normalizePlan(parseJsonResponse(response), count);
 
     return NextResponse.json({
-      count: 3,
+      count,
       style,
       ...plan,
     });
