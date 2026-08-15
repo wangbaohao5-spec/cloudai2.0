@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
@@ -25,6 +26,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [goalId, setGoalId] = useState<ProductImageEditGoalId>(defaultGoalId);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lightboxImageUrl, setLightboxImageUrl] = useState("");
   const [prompt, setPrompt] = useState(() => buildProductImageEditPrompt({ goalId: defaultGoalId }));
   const [result, setResult] = useState<ProductImageEditResult | null>(null);
 
@@ -150,8 +152,10 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
       {result ? (
         <div className="product-scene-image-result">
           <div className="product-scene-image-preview">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt="商品原图优化结果" src={result.imageUrl} />
+            <button className="product-image-preview-button" type="button" aria-label="放大查看商品原图优化结果" onClick={() => setLightboxImageUrl(result.imageUrl)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt="商品原图优化结果" src={result.imageUrl} />
+            </button>
           </div>
           <dl>
             <div>
@@ -164,6 +168,10 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
             </div>
           </dl>
         </div>
+      ) : null}
+
+      {lightboxImageUrl ? (
+        <ImageLightbox alt="商品原图优化结果" imageUrl={lightboxImageUrl} title="商品原图优化结果" onClose={() => setLightboxImageUrl("")} />
       ) : null}
     </section>
   );

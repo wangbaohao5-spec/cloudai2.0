@@ -1,5 +1,9 @@
+"use client";
+
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import type { ProductDetailPagePlanPage } from "@/lib/ai/product-detail-page-plan-prompt-builder";
+import { useState } from "react";
 
 export type DetailPageImageResult = {
   assetId: string;
@@ -45,6 +49,8 @@ export function ProductDetailPagePlanPreview({
   pageResults = {},
   pages,
 }: ProductDetailPagePlanPreviewProps) {
+  const [lightboxImage, setLightboxImage] = useState<{ alt: string; title: string; url: string } | null>(null);
+
   if (!pages.length) {
     return null;
   }
@@ -90,10 +96,23 @@ export function ProductDetailPagePlanPreview({
             {result ? (
               <div className="product-detail-generated-preview">
                 <div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt={`第 ${page.pageIndex} 张详情页生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
+                  <button
+                    className="product-image-preview-button"
+                    type="button"
+                    aria-label={`放大查看第 ${page.pageIndex} 张详情页生成结果`}
+                    onClick={() =>
+                      setLightboxImage({
+                        alt: `第 ${page.pageIndex} 张详情页生成结果`,
+                        title: `第 ${page.pageIndex} 张详情页 · ${page.sectionTitle}`,
+                        url: result.imageUrl,
+                      })
+                    }
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img alt={`第 ${page.pageIndex} 张详情页生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
+                  </button>
                 </div>
-                <span>已生成详情页图片</span>
+                <span>已生成详情页图片，点击图片查看大图</span>
               </div>
             ) : null}
 
@@ -117,6 +136,9 @@ export function ProductDetailPagePlanPreview({
           </article>
         );
       })}
+      {lightboxImage ? (
+        <ImageLightbox alt={lightboxImage.alt} imageUrl={lightboxImage.url} title={lightboxImage.title} onClose={() => setLightboxImage(null)} />
+      ) : null}
     </div>
   );
 }

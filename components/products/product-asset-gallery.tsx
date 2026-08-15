@@ -2,6 +2,8 @@
 
 import type { ProductCreationCenterAsset } from "@/lib/product-creation-center";
 import type { HistoryRecord } from "@/lib/types";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { useState } from "react";
 
 type ProductAssetGalleryProps = {
   detailPages: HistoryRecord[];
@@ -14,6 +16,12 @@ type GalleryAsset = {
   id: string;
   label: string;
   previewUrl?: string | null;
+  title: string;
+  url: string;
+};
+
+type SelectedImage = {
+  alt: string;
   title: string;
   url: string;
 };
@@ -61,15 +69,35 @@ function getDetailPageInfo(record: HistoryRecord) {
   };
 }
 
-function AssetTile({ label, previewUrl, title, url }: { label: string; previewUrl?: string | null; title: string; url: string }) {
+function AssetTile({
+  label,
+  onPreview,
+  previewUrl,
+  title,
+  url,
+}: {
+  label: string;
+  onPreview: (image: SelectedImage) => void;
+  previewUrl?: string | null;
+  title: string;
+  url: string;
+}) {
   const displayUrl = previewUrl || url;
+  const lightboxUrl = url || displayUrl;
 
   return (
     <article className="product-asset-tile">
       <div>
         {displayUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img alt={title} decoding="async" loading="lazy" src={displayUrl} />
+          <button
+            className="product-image-preview-button product-asset-preview-button"
+            type="button"
+            aria-label={`放大查看${title}`}
+            onClick={() => onPreview({ alt: title, title: `${label} · ${title}`, url: lightboxUrl })}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt={title} decoding="async" loading="lazy" src={displayUrl} />
+          </button>
         ) : (
           <span>暂无预览</span>
         )}
@@ -80,7 +108,17 @@ function AssetTile({ label, previewUrl, title, url }: { label: string; previewUr
   );
 }
 
-function AssetGroup({ assets, emptyText, title }: { assets: GalleryAsset[]; emptyText: string; title: string }) {
+function AssetGroup({
+  assets,
+  emptyText,
+  onPreview,
+  title,
+}: {
+  assets: GalleryAsset[];
+  emptyText: string;
+  onPreview: (image: SelectedImage) => void;
+  title: string;
+}) {
   return (
     <section className="product-asset-group">
       <div className="product-asset-group-header">
@@ -90,7 +128,7 @@ function AssetGroup({ assets, emptyText, title }: { assets: GalleryAsset[]; empt
       {assets.length ? (
         <div className="product-asset-grid">
           {assets.map((asset) => (
-            <AssetTile key={asset.id} label={asset.label} previewUrl={asset.previewUrl} title={asset.title} url={asset.url} />
+            <AssetTile key={asset.id} label={asset.label} onPreview={onPreview} previewUrl={asset.previewUrl} title={asset.title} url={asset.url} />
           ))}
         </div>
       ) : (
@@ -101,6 +139,7 @@ function AssetGroup({ assets, emptyText, title }: { assets: GalleryAsset[]; empt
 }
 
 export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sceneImages }: ProductAssetGalleryProps) {
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const originalAssets = originalAsset
     ? [
         {
@@ -147,11 +186,13 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
       </div>
 
       <div className="product-asset-groups">
-        <AssetGroup assets={originalAssets} emptyText="暂无原商品图。" title="原图" />
-        <AssetGroup assets={imageEditAssets} emptyText="还没有生成原图优化结果。" title="优化图" />
-        <AssetGroup assets={sceneImageAssets} emptyText="还没有生成营销场景图。" title="场景图" />
-        {detailPageAssets.length ? <AssetGroup assets={detailPageAssets} emptyText="" title="商品详情页" /> : null}
+        <AssetGroup assets={originalAssets} emptyText="暂无原商品图。" onPreview={setSelectedImage} title="原图" />
+        <AssetGroup assets={imageEditAssets} emptyText="还没有生成原图优化结果。" onPreview={setSelectedImage} title="优化图" />
+        <AssetGroup assets={sceneImageAssets} emptyText="还没有生成营销场景图。" onPreview={setSelectedImage} title="场景图" />
+        {detailPageAssets.length ? <AssetGroup assets={detailPageAssets} emptyText="" onPreview={setSelectedImage} title="商品详情页" /> : null}
       </div>
+
+      {selectedImage ? <ImageLightbox alt={selectedImage.alt} imageUrl={selectedImage.url} title={selectedImage.title} onClose={() => setSelectedImage(null)} /> : null}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
@@ -58,6 +59,7 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lightboxImageUrl, setLightboxImageUrl] = useState("");
   const [result, setResult] = useState<SceneImageResult | null>(null);
   const [selectedScene, setSelectedScene] = useState(PRODUCT_VISUAL_SCENES[0]?.id || "lifestyle");
 
@@ -229,8 +231,15 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
       {result ? (
         <div className="product-scene-image-result">
           <div className="product-scene-image-preview">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt={`${getSceneName(result.scene)}生成结果`} src={result.imageUrl} />
+            <button
+              className="product-image-preview-button"
+              type="button"
+              aria-label={`放大查看${getSceneName(result.scene)}生成结果`}
+              onClick={() => setLightboxImageUrl(result.imageUrl)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt={`${getSceneName(result.scene)}生成结果`} src={result.imageUrl} />
+            </button>
           </div>
           <dl>
             <div>
@@ -247,6 +256,15 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
             </div>
           </dl>
         </div>
+      ) : null}
+
+      {lightboxImageUrl ? (
+        <ImageLightbox
+          alt={result ? `${getSceneName(result.scene)}生成结果` : "商品营销场景图"}
+          imageUrl={lightboxImageUrl}
+          title={result ? `${getSceneName(result.scene)}生成结果` : "商品营销场景图"}
+          onClose={() => setLightboxImageUrl("")}
+        />
       ) : null}
     </section>
   );
