@@ -1,4 +1,5 @@
-import type { ProductImageAnalysis } from "@/lib/product-types";
+import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
+import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
 
 export type ProductDetailPageStyle = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
@@ -23,6 +24,7 @@ export type ProductDetailPagePlanInput = {
   analysis: ProductImageAnalysis;
   copywritingRecords: HistoryRecord[];
   count: ProductDetailPageCount;
+  generationBrief?: ProductGenerationBrief | null;
   productTitle: string;
   style: ProductDetailPageStyle;
 };
@@ -149,8 +151,9 @@ function formatCopywritingRecords(records: HistoryRecord[]) {
   return snippets || "当前还没有生成商品文案，请基于商品分析自行规划自然文案。";
 }
 
-export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords, count, productTitle, style }: ProductDetailPagePlanInput) {
+export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords, count, generationBrief, productTitle, style }: ProductDetailPagePlanInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
+  const generationBriefPrompt = buildProductGenerationBriefPrompt(generationBrief);
 
   return [
     `你是专业电商详情页策划，请基于商品分析和已有文案，规划 ${count} 张商品详情页图片的图文结构。`,
@@ -179,6 +182,7 @@ export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords,
     "允许 sectionType：hero、selling-point、usage-scene、detail-closeup、four-grid-detail、material-detail、model-wearing、flat-lay、multi-color、specification、comparison、trust、cta。",
     getPageStructureGuide(count),
     getCategoryPlanningGuide(analysis),
+    generationBriefPrompt,
     "每页作用必须不同，headline / sellingPoint / visualDirection 不要重复。",
     "不要把同一个卖点硬拆成很多重复页面。卖点不足时，自动补充使用场景、细节特写、四宫格细节、佩戴/上身/使用效果、多色/多规格展示、总结 CTA。",
     "不要夸大功效，不要生成虚假参数，不要编造认证、销量、价格、品牌授权或医学功效。",

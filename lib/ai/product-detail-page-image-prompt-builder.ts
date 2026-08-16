@@ -1,9 +1,11 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
+import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
-import type { ProductImageAnalysis } from "@/lib/product-types";
+import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
 
 type ProductDetailPageImagePromptInput = {
   analysis: ProductImageAnalysis;
+  generationBrief?: ProductGenerationBrief | null;
   page: ProductDetailPagePlanPage;
   productTitle: string;
   style: ProductDetailPageStyle;
@@ -34,9 +36,10 @@ const SECTION_VISUAL_GUIDES: Partial<Record<ProductDetailPagePlanPage["sectionTy
   "usage-scene": "Create a realistic usage scene that shows how the product fits into the user's life or work context.",
 };
 
-export function buildProductDetailPageImagePrompt({ analysis, page, productTitle, style }: ProductDetailPageImagePromptInput) {
+export function buildProductDetailPageImagePrompt({ analysis, generationBrief, page, productTitle, style }: ProductDetailPageImagePromptInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
   const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以原商品图可见材质和颜色为准";
+  const generationBriefPrompt = buildProductGenerationBriefPrompt(generationBrief);
   const categoryStrategy = getProductCategoryVisualStrategy({
     category: analysis.category,
     productName,
@@ -60,6 +63,7 @@ export function buildProductDetailPageImagePrompt({ analysis, page, productTitle
     `类目策略：${categoryStrategy.categoryKey}`,
     `类目详情页建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
     `当前页面类型视觉要求：${SECTION_VISUAL_GUIDES[page.sectionType] || "根据当前页面标题和卖点生成清晰、专业的详情页单屏视觉。"}`,
+    generationBriefPrompt,
     "",
     "当前要生成的详情页规划：",
     `第 ${page.pageIndex} 张：${page.sectionTitle}`,

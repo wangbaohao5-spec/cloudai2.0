@@ -6,6 +6,7 @@ import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
+import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
@@ -17,6 +18,7 @@ export const runtime = "nodejs";
 type ProductDetailPageGenerateRequestBody = {
   analysisHistoryId?: string;
   generationMode?: string;
+  generationBrief?: unknown;
   page?: Partial<ProductDetailPagePlanPage>;
   style?: string;
 };
@@ -110,6 +112,7 @@ export async function POST(request: Request) {
     const generationMode = typeof body.generationMode === "string" ? body.generationMode.trim() || "faithful" : "faithful";
     const style = body.style?.trim() || "ecommerce";
     const page = normalizePage(body.page);
+    const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -158,6 +161,7 @@ export async function POST(request: Request) {
     const prompt = [
       buildProductDetailPageImagePrompt({
         analysis: analysisRecord.output,
+        generationBrief,
         page,
         productTitle: analysisRecord.title,
         style,
@@ -221,6 +225,7 @@ export async function POST(request: Request) {
           pageIndex: page.pageIndex,
           style,
           generationMode,
+          ...(generationBrief ? { generationBrief } : {}),
           mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
           avoidChanges: analysisRecord.output.avoidChanges || [],
           page,

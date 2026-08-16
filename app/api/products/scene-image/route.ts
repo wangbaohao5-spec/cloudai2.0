@@ -1,10 +1,12 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
+import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import { buildProductSceneEditPrompt } from "@/lib/ai/product-scene-prompt-builder";
 import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
+import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
@@ -16,6 +18,7 @@ export const runtime = "nodejs";
 type ProductSceneImageRequestBody = {
   analysisHistoryId?: string;
   generationMode?: string;
+  generationBrief?: unknown;
   scene?: string;
   platform?: string;
   style?: string;
@@ -57,6 +60,7 @@ export async function POST(request: Request) {
     const platform = body.platform?.trim() || "taobao";
     const style = body.style?.trim() || "lifestyle";
     const generationMode = typeof body.generationMode === "string" ? body.generationMode.trim() || "faithful" : "faithful";
+    const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -105,6 +109,7 @@ export async function POST(request: Request) {
         platform,
         style,
       }),
+      buildProductGenerationBriefPrompt(generationBrief),
       buildProductVisualFidelityPrompt({
         analysis: analysisRecord.output,
         generationMode,
@@ -165,6 +170,7 @@ export async function POST(request: Request) {
           platform,
           style,
           generationMode,
+          ...(generationBrief ? { generationBrief } : {}),
           mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
           avoidChanges: analysisRecord.output.avoidChanges || [],
         },

@@ -10,7 +10,7 @@ import { ProductImageEditPanel } from "@/components/products/product-image-edit-
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
-import type { ProductAnalysisResponse } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductGenerationBrief } from "@/lib/product-types";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -99,6 +99,7 @@ export function ProductWorkspaceTabs({
   result,
 }: ProductWorkspaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("analysis");
+  const [generationBrief, setGenerationBrief] = useState<ProductGenerationBrief | null>(null);
   const copywritingCount = creationCenterData?.copywriting.length || 0;
   const detailPageCount = creationCenterData?.detailPages.length || 0;
   const imageEditCount = creationCenterData?.imageEdits.length || 0;
@@ -159,7 +160,7 @@ export function ProductWorkspaceTabs({
         role="tabpanel"
       >
         <ProductAnalysisResult analysis={result?.analysis || null} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result?.title} />
-        <ProductGenerationBriefEditor analysis={result?.analysis || null} analysisHistoryId={result?.historyId} />
+        <ProductGenerationBriefEditor analysis={result?.analysis || null} analysisHistoryId={result?.historyId} onBriefChange={setGenerationBrief} />
       </div>
 
       <div
@@ -248,7 +249,7 @@ export function ProductWorkspaceTabs({
             actions={[{ label: "生成场景图", onClick: () => scrollToPanel("product-scene-image-panel"), tone: "primary" }]}
           />
         ) : null}
-        <ProductSceneImagePanel analysisResult={result} onGenerated={onGenerated} />
+        <ProductSceneImagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
       </div>
 
       <div
@@ -258,7 +259,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-detailPage"
         role="tabpanel"
       >
-        <ProductDetailPagePanel analysisResult={result} onGenerated={onGenerated} />
+        <ProductDetailPagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
       </div>
 
       <div

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
+import { getProductGenerationBriefFromSession, getProductGenerationBriefSessionKey } from "@/lib/product-generation-brief";
 import { useEffect, useMemo, useState } from "react";
 
 type ProductGenerationBriefProps = {
@@ -60,10 +61,6 @@ function itemsToLines(items: string[]) {
   return items.join("\n");
 }
 
-function getStorageKey(analysisHistoryId?: string) {
-  return analysisHistoryId ? `cloudai:products:generation-brief:${analysisHistoryId}` : "";
-}
-
 function buildBriefFromAnalysis(analysis: ProductImageAnalysis | null): ProductGenerationBrief {
   if (!analysis) {
     return {
@@ -90,53 +87,23 @@ function buildBriefFromAnalysis(analysis: ProductImageAnalysis | null): ProductG
   };
 }
 
-function normalizeStoredBrief(value: unknown, fallback: ProductGenerationBrief): ProductGenerationBrief {
-  if (!isRecord(value)) {
-    return fallback;
-  }
-
-  return {
-    avoidChanges: uniqueItems(compactItems(value.avoidChanges)),
-    coreSellingPoints: uniqueItems(compactItems(value.coreSellingPoints)),
-    extraRequirements: getStringField(value, ["extraRequirements"]),
-    mustKeepDetails: uniqueItems(compactItems(value.mustKeepDetails)),
-    productName: getStringField(value, ["productName"]),
-    styleRequirements: getStringField(value, ["styleRequirements"]),
-    targetAudience: getStringField(value, ["targetAudience"]),
-    usageScenarios: uniqueItems(compactItems(value.usageScenarios)),
-  };
-}
-
-function parseStoredBrief(rawValue: string | null, fallback: ProductGenerationBrief) {
-  if (!rawValue) {
-    return fallback;
-  }
-
-  try {
-    return normalizeStoredBrief(JSON.parse(rawValue), fallback);
-  } catch {
-    return fallback;
-  }
-}
-
 export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBriefChange }: ProductGenerationBriefProps) {
   const aiBrief = useMemo(() => buildBriefFromAnalysis(analysis), [analysis]);
-  const storageKey = getStorageKey(analysisHistoryId);
+  const storageKey = getProductGenerationBriefSessionKey(analysisHistoryId);
   const [brief, setBrief] = useState<ProductGenerationBrief>(aiBrief);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const nextBrief = storageKey ? parseStoredBrief(window.sessionStorage.getItem(storageKey), aiBrief) : aiBrief;
+    const nextBrief = getProductGenerationBriefFromSession(analysisHistoryId) || aiBrief;
 
     setBrief(nextBrief);
     setStatus("");
     onBriefChange?.(nextBrief);
-  }, [aiBrief, onBriefChange, storageKey]);
+  }, [aiBrief, analysisHistoryId, onBriefChange]);
 
   function updateBrief(nextBrief: ProductGenerationBrief) {
     setBrief(nextBrief);
     setStatus("");
-    onBriefChange?.(nextBrief);
   }
 
   function handleSave() {
@@ -146,6 +113,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
     }
 
     window.sessionStorage.setItem(storageKey, JSON.stringify(brief));
+    onBriefChange?.(brief);
     setStatus("已保存");
   }
 
@@ -156,6 +124,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
       window.sessionStorage.setItem(storageKey, JSON.stringify(aiBrief));
     }
 
+    onBriefChange?.(aiBrief);
     setStatus("已重置为 AI 分析结果");
   }
 

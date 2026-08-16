@@ -5,11 +5,12 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
-import type { ProductAnalysisResponse, ProductVisualGenerationMode } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductSceneImagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  generationBrief?: ProductGenerationBrief | null;
   onGenerated?: () => void;
 };
 
@@ -55,7 +56,7 @@ function getOptionLabel(options: { value: string; label: string }[], value: stri
   return options.find((option) => option.value === value)?.label || value;
 }
 
-export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductSceneImagePanelProps) {
+export function ProductSceneImagePanel({ analysisResult, generationBrief, onGenerated }: ProductSceneImagePanelProps) {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
@@ -96,6 +97,7 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
           generationMode,
+          generationBrief: generationBrief || undefined,
           scene,
           platform,
           style,
