@@ -1,6 +1,5 @@
 "use client";
 
-import { CopywritingResult as CopywritingResultView } from "@/components/copywriting/copywriting-result";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -32,18 +31,240 @@ const outputTargetOptions = [
   { value: "ad-copy", label: "社交媒体文案" },
 ];
 
-function buildCopywritingText(result: CopywritingResult) {
+type CopywritingSectionData = {
+  adCopy: string;
+  description: string;
+  points: string[];
+  rawText: string;
+  socialPost: string;
+  title: string;
+  videoScript: string;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function getStringField(value: unknown, keys: string[]) {
+  if (!isRecord(value)) {
+    return "";
+  }
+
+  for (const key of keys) {
+    const field = value[key];
+
+    if (typeof field === "string" && field.trim()) {
+      return field.trim();
+    }
+  }
+
+  return "";
+}
+
+function getStringArrayField(value: unknown, keys: string[]) {
+  if (!isRecord(value)) {
+    return [];
+  }
+
+  for (const key of keys) {
+    const field = value[key];
+
+    if (Array.isArray(field)) {
+      const items = field.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean);
+
+      if (items.length) {
+        return items;
+      }
+    }
+  }
+
+  return [];
+}
+
+function normalizeCopywritingResult(result: unknown): CopywritingSectionData {
+  if (typeof result === "string") {
+    return {
+      adCopy: "",
+      description: "",
+      points: [],
+      rawText: result.trim(),
+      socialPost: "",
+      title: "",
+      videoScript: "",
+    };
+  }
+
+  return {
+    adCopy: getStringField(result, ["adCopy", "adText", "marketingCopy"]),
+    description: getStringField(result, ["description", "productDescription", "detailDescription"]),
+    points: getStringArrayField(result, ["points", "sellingPoints", "bulletPoints", "highlights"]),
+    rawText: getStringField(result, ["text", "content", "fullText"]),
+    socialPost: getStringField(result, ["socialPost", "socialCopy", "xiaohongshuCopy", "tiktokCopy", "instagramCopy"]),
+    title: getStringField(result, ["title", "productTitle", "headline"]),
+    videoScript: getStringField(result, ["shortVideoScript", "videoScript", "script"]),
+  };
+}
+
+function buildCopywritingText(result: unknown) {
+  const sections = normalizeCopywritingResult(result);
+
+  if (sections.rawText && !sections.title && !sections.points.length && !sections.description && !sections.socialPost && !sections.adCopy && !sections.videoScript) {
+    return sections.rawText;
+  }
+
   return [
-    `商品标题:\n${result.title}`,
-    `核心卖点:\n${result.points.map((point) => `- ${point}`).join("\n")}`,
-    `详情描述:\n${result.description}`,
-    `短视频脚本:\n${result.shortVideoScript}`,
-  ].join("\n\n");
+    sections.title ? `商品标题：\n${sections.title}` : "",
+    sections.points.length ? `核心卖点：\n${sections.points.map((point, index) => `${index + 1}. ${point}`).join("\n")}` : "",
+    sections.description ? `商品描述：\n${sections.description}` : "",
+    sections.socialPost ? `平台文案：\n${sections.socialPost}` : "",
+    sections.adCopy ? `营销文案：\n${sections.adCopy}` : "",
+    sections.videoScript ? `短视频脚本：\n${sections.videoScript}` : "",
+    sections.rawText ? `完整文案：\n${sections.rawText}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function CopyButton({
+  copiedKey,
+  copyKey,
+  label,
+  onCopy,
+  text,
+}: {
+  copiedKey: string;
+  copyKey: string;
+  label: string;
+  onCopy: (text: string, key: string) => void;
+  text: string;
+}) {
+  return (
+    <button className="copywriting-copy-button" type="button" onClick={() => onCopy(text, copyKey)}>
+      {copiedKey === copyKey ? "已复制" : label}
+    </button>
+  );
+}
+
+function ProductCopywritingResultSections({
+  copiedKey,
+  onCopy,
+  result,
+}: {
+  copiedKey: string;
+  onCopy: (text: string, key: string) => void;
+  result: CopywritingResult | string | Record<string, unknown>;
+}) {
+  const sections = normalizeCopywritingResult(result);
+  const allText = buildCopywritingText(result);
+  const hasStructuredContent = Boolean(
+    sections.title || sections.points.length || sections.description || sections.socialPost || sections.adCopy || sections.videoScript,
+  );
+
+  if (!hasStructuredContent && sections.rawText) {
+    return (
+      <article className="copywriting-section-card">
+        <div className="copywriting-section-header">
+          <div>
+            <strong>完整文案</strong>
+            <span>旧格式或纯文本结果</span>
+          </div>
+          <CopyButton copiedKey={copiedKey} copyKey="raw" label="复制文案" text={sections.rawText} onCopy={onCopy} />
+        </div>
+        <p className="copywriting-block">{sections.rawText}</p>
+      </article>
+    );
+  }
+
+  return (
+    <div className="copywriting-section-list">
+      <div className="copywriting-result-toolbar">
+        <div>
+          <strong>分段文案</strong>
+          <span>按上架、详情页和内容平台场景单独复制</span>
+        </div>
+        {allText ? <CopyButton copiedKey={copiedKey} copyKey="all" label="复制全部" text={allText} onCopy={onCopy} /> : null}
+      </div>
+
+      {sections.title ? (
+        <article className="copywriting-section-card">
+          <div className="copywriting-section-header">
+            <div>
+              <strong>商品标题</strong>
+              <span>适合复制到商品上架后台</span>
+            </div>
+            <CopyButton copiedKey={copiedKey} copyKey="title" label="复制标题" text={sections.title} onCopy={onCopy} />
+          </div>
+          <h3>{sections.title}</h3>
+        </article>
+      ) : null}
+
+      {sections.points.length ? (
+        <article className="copywriting-section-card">
+          <div className="copywriting-section-header">
+            <div>
+              <strong>核心卖点</strong>
+              <span>适合详情页图、主图角标和卖点区</span>
+            </div>
+            <CopyButton copiedKey={copiedKey} copyKey="points" label="复制全部卖点" text={sections.points.map((point, index) => `${index + 1}. ${point}`).join("\n")} onCopy={onCopy} />
+          </div>
+          <ul className="copywriting-bullet-list">
+            {sections.points.map((point, index) => (
+              <li key={`${index}-${point}`}>
+                <span>{point}</span>
+                <CopyButton copiedKey={copiedKey} copyKey={`point-${index}`} label="复制" text={point} onCopy={onCopy} />
+              </li>
+            ))}
+          </ul>
+        </article>
+      ) : null}
+
+      {sections.description ? (
+        <article className="copywriting-section-card">
+          <div className="copywriting-section-header">
+            <div>
+              <strong>商品描述</strong>
+              <span>适合商品详情、店铺介绍和素材包正文</span>
+            </div>
+            <CopyButton copiedKey={copiedKey} copyKey="description" label="复制描述" text={sections.description} onCopy={onCopy} />
+          </div>
+          <p className="copywriting-block">{sections.description}</p>
+        </article>
+      ) : null}
+
+      {sections.socialPost || sections.adCopy ? (
+        <article className="copywriting-section-card">
+          <div className="copywriting-section-header">
+            <div>
+              <strong>平台文案</strong>
+              <span>适合小红书、抖音或广告投放素材</span>
+            </div>
+            <CopyButton copiedKey={copiedKey} copyKey="social" label="复制文案" text={[sections.socialPost, sections.adCopy].filter(Boolean).join("\n\n")} onCopy={onCopy} />
+          </div>
+          {sections.socialPost ? <p className="copywriting-block">{sections.socialPost}</p> : null}
+          {sections.adCopy ? <p className="copywriting-block">{sections.adCopy}</p> : null}
+        </article>
+      ) : null}
+
+      {sections.videoScript ? (
+        <article className="copywriting-section-card">
+          <div className="copywriting-section-header">
+            <div>
+              <strong>短视频脚本</strong>
+              <span>适合口播、拍摄脚本和剪辑提词</span>
+            </div>
+            <CopyButton copiedKey={copiedKey} copyKey="video-script" label="复制脚本" text={sections.videoScript} onCopy={onCopy} />
+          </div>
+          <p className="copywriting-block">{sections.videoScript}</p>
+        </article>
+      ) : null}
+    </div>
+  );
 }
 
 export function ProductCopywritingPanel({ analysisResult, onGenerated }: ProductCopywritingPanelProps) {
   const [copywritingError, setCopywritingError] = useState("");
   const [copywritingResult, setCopywritingResult] = useState<CopywritingResult | null>(null);
+  const [copiedKey, setCopiedKey] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [isCopywritingLoading, setIsCopywritingLoading] = useState(false);
 
@@ -105,13 +326,23 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
     }
   }
 
-  async function handleCopyCopywriting() {
-    if (!copywritingResult) {
+  async function handleCopyText(text: string, key: string) {
+    if (!text.trim()) {
       return;
     }
 
-    await navigator.clipboard.writeText(buildCopywritingText(copywritingResult));
-    showFeedback("复制成功");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      showFeedback("复制成功");
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === key ? "" : current));
+      }, 1600);
+    } catch {
+      const message = "复制失败，请手动选择文本复制。";
+      setCopywritingError(message);
+      showFeedback(message, "error");
+    }
   }
 
   if (!analysisResult) {
@@ -183,10 +414,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
 
       {copywritingResult ? (
         <div className="product-copywriting-result">
-          <CopywritingResultView result={copywritingResult} />
-          <button className="button secondary" type="button" onClick={() => void handleCopyCopywriting()}>
-            复制文案结果
-          </button>
+          <ProductCopywritingResultSections copiedKey={copiedKey} result={copywritingResult} onCopy={(text, key) => void handleCopyText(text, key)} />
         </div>
       ) : null}
     </section>
