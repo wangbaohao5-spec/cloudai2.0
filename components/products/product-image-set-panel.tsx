@@ -1,7 +1,6 @@
 "use client";
 
 import { ProductImageSetPlanPreview, type ProductImageSetImageResult } from "@/components/products/product-image-set-plan-preview";
-import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
@@ -294,15 +293,17 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         <>
           {imageSetCostEstimate ? (
             <div className="product-image-set-batch-toolbar">
-              <ProductGenerationCostHint
-                imageCount={imageSetCostEstimate.imageCount}
-                label={`当前规划共 ${plan.images.length} 张，已生成 ${generatedCount} 张`}
-                description={
-                  remainingImages.length
-                    ? `本次将生成 ${remainingImages.length} 张图片，${imageSetCostEstimate.label}。已生成的图片不会重复生成。`
-                    : "整套图片已经生成完成，可在素材中查看和下载。"
-                }
-              />
+              <div className="product-image-set-summary-copy">
+                <p>商品套图 · {plan.images.length} 张</p>
+                <strong>
+                  已生成 {generatedCount} / {plan.images.length} 张
+                </strong>
+                <span>
+                  {remainingImages.length
+                    ? `本次将生成 ${remainingImages.length} 张，预计消耗 ${imageSetCostEstimate.imageCount} 张图片额度。已生成的图片不会重复生成。`
+                    : "整套图片已经生成完成，可在素材中查看和下载。"}
+                </span>
+              </div>
               <button className="button primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>
                 {isGeneratingSet
                   ? `正在生成 ${Math.min(batchProgress.completed + 1, batchProgress.total)} / ${batchProgress.total}...`

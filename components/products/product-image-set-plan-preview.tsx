@@ -58,6 +58,10 @@ function DetailList({ items }: { items: string[] }) {
   );
 }
 
+function getImageTypeLabel(imageType: ProductImageSetPlanImage["imageType"]) {
+  return IMAGE_TYPE_LABELS[imageType] || "商品图";
+}
+
 export function ProductImageSetPlanPreview({
   generatingImageIndex = null,
   imageErrors = {},
@@ -78,15 +82,56 @@ export function ProductImageSetPlanPreview({
         const isGenerating = generatingImageIndex === image.imageIndex;
         const result = imageResults[image.imageIndex];
         const error = imageErrors[image.imageIndex];
+        const imageTypeLabel = getImageTypeLabel(image.imageType);
 
         return (
           <article className="product-image-set-plan-card" key={`${image.imageIndex}-${image.title}`}>
             <div className="product-image-set-plan-card-header">
               <span>第 {image.imageIndex} 张</span>
-              <em>{IMAGE_TYPE_LABELS[image.imageType] || image.imageType}</em>
+              <em>{imageTypeLabel}</em>
+              <i>{image.suggestedGenerationMode === "creative" ? "创意" : "保真"}</i>
             </div>
 
-            <h3>{image.title}</h3>
+            <div className={`product-image-set-card-media ${result ? "has-image" : ""}`.trim()}>
+              <span className="product-image-set-card-badge">{imageTypeLabel}</span>
+              {result ? (
+                <>
+                  <button
+                    className="product-image-preview-button"
+                    type="button"
+                    aria-label={`放大查看第 ${image.imageIndex} 张套图生成结果`}
+                    onClick={() =>
+                      setLightboxImage({
+                        alt: `第 ${image.imageIndex} 张套图生成结果`,
+                        title: `第 ${image.imageIndex} 张套图 · ${image.title}`,
+                        url: result.imageUrl,
+                      })
+                    }
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img alt={`第 ${image.imageIndex} 张套图生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
+                  </button>
+                  <div className="product-image-set-card-download">
+                    <ImageDownloadButton
+                      filename={buildImageDownloadFilename("image-set", [String(image.imageIndex).padStart(2, "0"), image.imageType])}
+                      imageUrl={result.imageUrl}
+                      label="下载"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="product-image-set-card-placeholder">
+                  {isGenerating ? <LongGenerationLoading size="md" /> : <span>{String(image.imageIndex).padStart(2, "0")}</span>}
+                  <strong>{isGenerating ? "正在生成这张图..." : imageTypeLabel}</strong>
+                  <p>{image.visualDirection || image.goal || "生成后将在这里显示图片预览。"}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="product-image-set-card-body">
+              <h3>{image.title}</h3>
+              <p>{image.keyMessage || image.headline || image.goal || "暂无核心信息"}</p>
+            </div>
 
             <dl>
               <div>
@@ -121,36 +166,6 @@ export function ProductImageSetPlanPreview({
                 <DetailList items={image.avoid} />
               </section>
             </div>
-
-            {result ? (
-              <div className="product-image-set-generated-preview">
-                <div>
-                  <button
-                    className="product-image-preview-button"
-                    type="button"
-                    aria-label={`放大查看第 ${image.imageIndex} 张套图生成结果`}
-                    onClick={() =>
-                      setLightboxImage({
-                        alt: `第 ${image.imageIndex} 张套图生成结果`,
-                        title: `第 ${image.imageIndex} 张套图 · ${image.title}`,
-                        url: result.imageUrl,
-                      })
-                    }
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img alt={`第 ${image.imageIndex} 张套图生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
-                  </button>
-                </div>
-                <span>已生成套图图片，点击图片查看大图</span>
-                <div className="product-preview-actions">
-                  <ImageDownloadButton
-                    filename={buildImageDownloadFilename("image-set", [String(image.imageIndex).padStart(2, "0"), image.imageType])}
-                    imageUrl={result.imageUrl}
-                  />
-                </div>
-                <small>当前显示的是最近一次生成结果，历史记录会保留之前版本。</small>
-              </div>
-            ) : null}
 
             {error ? <p className="image-generation-error">{error}</p> : null}
 
