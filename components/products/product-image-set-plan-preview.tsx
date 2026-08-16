@@ -1,9 +1,30 @@
 "use client";
 
+import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { LongGenerationLoading } from "@/components/ui/loading";
 import type { ProductImageSetPlan, ProductImageSetPlanImage } from "@/lib/ai/product-image-set-plan-prompt-builder";
+import { useState } from "react";
 
 type ProductImageSetPlanPreviewProps = {
+  generatingImageIndex?: number | null;
+  imageErrors?: Record<number, string>;
+  imageResults?: Record<number, ProductImageSetImageResult>;
+  onGenerateImage?: (image: ProductImageSetPlanImage) => void;
   plan: ProductImageSetPlan | null;
+};
+
+export type ProductImageSetImageResult = {
+  assetId: string;
+  historyId?: string;
+  image: ProductImageSetPlanImage;
+  imageUrl: string;
+  prompt: string;
+  purpose: ProductImageSetPlan["purpose"];
+  status: "success";
+  storagePath: string;
+  type: "商品套图";
+  warnings?: string[];
 };
 
 const IMAGE_TYPE_LABELS: Partial<Record<ProductImageSetPlanImage["imageType"], string>> = {
@@ -35,64 +56,122 @@ function DetailList({ items }: { items: string[] }) {
   );
 }
 
-export function ProductImageSetPlanPreview({ plan }: ProductImageSetPlanPreviewProps) {
+export function ProductImageSetPlanPreview({
+  generatingImageIndex = null,
+  imageErrors = {},
+  imageResults = {},
+  onGenerateImage,
+  plan,
+}: ProductImageSetPlanPreviewProps) {
+  const [lightboxImage, setLightboxImage] = useState<{ alt: string; title: string; url: string } | null>(null);
+
   if (!plan?.images.length) {
     return null;
   }
 
   return (
     <div className="product-image-set-plan-preview" aria-label="商品套图规划预览">
-      {plan.images.map((image) => (
-        <article className="product-image-set-plan-card" key={`${image.imageIndex}-${image.title}`}>
-          <div className="product-image-set-plan-card-header">
-            <span>第 {image.imageIndex} 张</span>
-            <em>{IMAGE_TYPE_LABELS[image.imageType] || image.imageType}</em>
-          </div>
+      {plan.images.map((image) => {
+        const isGenerating = generatingImageIndex === image.imageIndex;
+        const result = imageResults[image.imageIndex];
+        const error = imageErrors[image.imageIndex];
 
-          <h3>{image.title}</h3>
+        return (
+          <article className="product-image-set-plan-card" key={`${image.imageIndex}-${image.title}`}>
+            <div className="product-image-set-plan-card-header">
+              <span>第 {image.imageIndex} 张</span>
+              <em>{IMAGE_TYPE_LABELS[image.imageType] || image.imageType}</em>
+            </div>
 
-          <dl>
-            <div>
-              <dt>目标</dt>
-              <dd>{image.goal || "暂无"}</dd>
-            </div>
-            <div>
-              <dt>核心文案</dt>
-              <dd>{image.headline || image.keyMessage || "暂无"}</dd>
-            </div>
-            <div>
-              <dt>副标题</dt>
-              <dd>{image.subheadline || "暂无"}</dd>
-            </div>
-            <div>
-              <dt>画面建议</dt>
-              <dd>{image.visualDirection || "暂无"}</dd>
-            </div>
-          </dl>
+            <h3>{image.title}</h3>
 
-          <div className="product-image-set-plan-lists">
-            <section>
-              <strong>必要元素</strong>
-              <DetailList items={image.requiredElements} />
-            </section>
-            <section>
-              <strong>必须保留</strong>
-              <DetailList items={image.mustKeep} />
-            </section>
-            <section>
-              <strong>避免改动</strong>
-              <DetailList items={image.avoid} />
-            </section>
-          </div>
+            <dl>
+              <div>
+                <dt>目标</dt>
+                <dd>{image.goal || "暂无"}</dd>
+              </div>
+              <div>
+                <dt>核心文案</dt>
+                <dd>{image.headline || image.keyMessage || "暂无"}</dd>
+              </div>
+              <div>
+                <dt>副标题</dt>
+                <dd>{image.subheadline || "暂无"}</dd>
+              </div>
+              <div>
+                <dt>画面建议</dt>
+                <dd>{image.visualDirection || "暂无"}</dd>
+              </div>
+            </dl>
 
-          <div className="product-image-set-plan-footer">
-            <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
-            <button className="button secondary" type="button" disabled>
-              后续支持生成
-            </button>
-          </div>
-        </article>
-      ))}
+            <div className="product-image-set-plan-lists">
+              <section>
+                <strong>必要元素</strong>
+                <DetailList items={image.requiredElements} />
+              </section>
+              <section>
+                <strong>必须保留</strong>
+                <DetailList items={image.mustKeep} />
+              </section>
+              <section>
+                <strong>避免改动</strong>
+                <DetailList items={image.avoid} />
+              </section>
+            </div>
+
+            {result ? (
+              <div className="product-image-set-generated-preview">
+                <div>
+                  <button
+                    className="product-image-preview-button"
+                    type="button"
+                    aria-label={`放大查看第 ${image.imageIndex} 张套图生成结果`}
+                    onClick={() =>
+                      setLightboxImage({
+                        alt: `第 ${image.imageIndex} 张套图生成结果`,
+                        title: `第 ${image.imageIndex} 张套图 · ${image.title}`,
+                        url: result.imageUrl,
+                      })
+                    }
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img alt={`第 ${image.imageIndex} 张套图生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
+                  </button>
+                </div>
+                <span>已生成套图图片，点击图片查看大图</span>
+                <div className="product-preview-actions">
+                  <ImageDownloadButton
+                    filename={buildImageDownloadFilename("image-set", [String(image.imageIndex).padStart(2, "0"), image.imageType])}
+                    imageUrl={result.imageUrl}
+                  />
+                </div>
+                <small>当前显示的是最近一次生成结果，历史记录会保留之前版本。</small>
+              </div>
+            ) : null}
+
+            {error ? <p className="image-generation-error">{error}</p> : null}
+
+            <div className="product-image-set-plan-footer">
+              <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
+              <button className="button secondary" type="button" disabled={isGenerating} onClick={() => onGenerateImage?.(image)}>
+                {isGenerating ? (
+                  <>
+                    <LongGenerationLoading size="sm" />
+                    正在生成...
+                  </>
+                ) : result ? (
+                  "重新生成这张图"
+                ) : (
+                  "生成这张图"
+                )}
+              </button>
+            </div>
+          </article>
+        );
+      })}
+      {lightboxImage ? (
+        <ImageLightbox alt={lightboxImage.alt} imageUrl={lightboxImage.url} title={lightboxImage.title} onClose={() => setLightboxImage(null)} />
+      ) : null}
     </div>
   );
 }

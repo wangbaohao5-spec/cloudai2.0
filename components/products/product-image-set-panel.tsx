@@ -1,14 +1,15 @@
 "use client";
 
-import { ProductImageSetPlanPreview } from "@/components/products/product-image-set-plan-preview";
+import { ProductImageSetPlanPreview, type ProductImageSetImageResult } from "@/components/products/product-image-set-plan-preview";
 import { AiThinkingLoading } from "@/components/ui/loading";
-import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
+import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import type { ProductAnalysisResponse, ProductGenerationBrief } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductImageSetPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
+  onGenerated?: () => void;
 };
 
 const purposeOptions: Array<{ description: string; label: string; value: ProductImageSetPurpose }> = [
@@ -41,12 +42,22 @@ const countOptions: Array<{ description: string; label: string; value: ProductIm
   { value: 8, label: "8 张", description: "完整详情页 / Listing 结构" },
 ];
 
-export function ProductImageSetPanel({ analysisResult, generationBrief }: ProductImageSetPanelProps) {
+export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetCount>(7);
   const [error, setError] = useState("");
+  const [generatingImageIndex, setGeneratingImageIndex] = useState<number | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<number, string>>({});
+  const [imageResults, setImageResults] = useState<Record<number, ProductImageSetImageResult>>({});
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<ProductImageSetPlan | null>(null);
   const [purpose, setPurpose] = useState<ProductImageSetPurpose>("detail-page");
+
+  function handleCountChange(nextCount: ProductImageSetCount) {
+    setCount(nextCount);
+    setPlan(null);
+    setImageErrors({});
+    setImageResults({});
+  }
 
   async function handleGeneratePlan() {
     if (!analysisResult?.historyId) {
@@ -82,10 +93,78 @@ export function ProductImageSetPanel({ analysisResult, generationBrief }: Produc
         images: Array.isArray(data.images) ? data.images : [],
         purpose: data.purpose,
       });
+      setImageErrors({});
+      setImageResults({});
     } catch {
       setError("生成套图规划失败，请稍后重试。");
     } finally {
       setIsPlanning(false);
+    }
+  }
+
+  async function handleGenerateImage(image: ProductImageSetPlanImage) {
+    if (!analysisResult?.historyId) {
+      setImageErrors((current) => ({
+        ...current,
+        [image.imageIndex]: "请先完成商品分析，再生成套图图片。",
+      }));
+      return;
+    }
+
+    const isRegeneration = Boolean(imageResults[image.imageIndex]);
+
+    setGeneratingImageIndex(image.imageIndex);
+    setImageErrors((current) => {
+      const next = { ...current };
+      delete next[image.imageIndex];
+      return next;
+    });
+
+    try {
+      const response = await fetch("/api/products/image-set/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          analysisHistoryId: analysisResult.historyId,
+          count,
+          generationBrief: generationBrief || undefined,
+          generationMode: image.suggestedGenerationMode || "faithful",
+          image,
+          purpose,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
+        const isUnavailable = errorData?.error?.toLowerCase().includes("unavailable") || response.status === 503;
+
+        throw new Error(isUnavailable ? "图片生成模型当前繁忙，请稍后重试。" : "生成这张套图失败，请稍后重试。");
+      }
+
+      const data = (await response.json()) as ProductImageSetImageResult;
+
+      setImageResults((current) => ({
+        ...current,
+        [image.imageIndex]: data,
+      }));
+      onGenerated?.();
+    } catch (caughtError) {
+      const fallbackMessage = isRegeneration ? "重新生成失败，请稍后重试。" : "生成这张套图失败，请稍后重试。";
+      const message =
+        caughtError instanceof Error && caughtError.message.includes("繁忙")
+          ? caughtError.message
+          : caughtError instanceof Error && !isRegeneration
+            ? caughtError.message
+            : fallbackMessage;
+
+      setImageErrors((current) => ({
+        ...current,
+        [image.imageIndex]: message,
+      }));
+    } finally {
+      setGeneratingImageIndex(null);
     }
   }
 
@@ -129,7 +208,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief }: Produc
           <div className="product-image-set-count-grid">
             {countOptions.map((option) => (
               <label className={count === option.value ? "active" : ""} key={option.value}>
-                <input checked={count === option.value} name="imageSetCount" type="radio" value={option.value} onChange={() => setCount(option.value)} />
+                <input checked={count === option.value} name="imageSetCount" type="radio" value={option.value} onChange={() => handleCountChange(option.value)} />
                 <strong>{option.label}</strong>
                 <span>{option.description}</span>
               </label>
@@ -138,7 +217,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief }: Produc
         </fieldset>
       </div>
 
-      <button className="button primary" disabled={isPlanning} type="button" onClick={() => void handleGeneratePlan()}>
+      <button className="button primary" disabled={isPlanning || generatingImageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
         {isPlanning ? (
           <>
             <AiThinkingLoading size="sm" />
@@ -153,8 +232,14 @@ export function ProductImageSetPanel({ analysisResult, generationBrief }: Produc
 
       {plan ? (
         <>
-          <ProductImageSetPlanPreview plan={plan} />
-          <p className="product-image-set-note">当前仅为套图结构规划，后续将支持按单张或整套生成图片。</p>
+          <ProductImageSetPlanPreview
+            generatingImageIndex={generatingImageIndex}
+            imageErrors={imageErrors}
+            imageResults={imageResults}
+            plan={plan}
+            onGenerateImage={(image) => void handleGenerateImage(image)}
+          />
+          <p className="product-image-set-note">当前支持按单张生成套图图片；批量生成整套会在后续版本开放。</p>
         </>
       ) : (
         <div className="product-image-set-placeholder">

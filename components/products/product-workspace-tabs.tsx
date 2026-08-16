@@ -271,7 +271,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-imageSet"
         role="tabpanel"
       >
-        <ProductImageSetPanel analysisResult={result} generationBrief={generationBrief} />
+        <ProductImageSetPanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
       </div>
 
       <div
