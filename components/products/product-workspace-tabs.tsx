@@ -157,7 +157,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-analysis"
         role="tabpanel"
       >
-        <ProductAnalysisResult analysis={result?.analysis || null} defaultShowFullAnalysis showFullAnalysisToggle={false} title={result?.title} />
+        <ProductAnalysisResult analysis={result?.analysis || null} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result?.title} />
       </div>
 
       <div

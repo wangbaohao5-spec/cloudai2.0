@@ -6,6 +6,7 @@ import { useState } from "react";
 type ProductAnalysisResultProps = {
   analysis: ProductImageAnalysis | null;
   defaultShowFullAnalysis?: boolean;
+  showEnhancedFields?: boolean;
   showFullAnalysisToggle?: boolean;
   title?: string;
 };
@@ -37,7 +38,154 @@ function compactItems(...groups: Array<string[] | string | undefined>) {
     .filter(Boolean);
 }
 
-export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = false, showFullAnalysisToggle = true, title }: ProductAnalysisResultProps) {
+function compactUnknownItems(...groups: unknown[]) {
+  return groups
+    .flatMap((group) => {
+      if (!group) {
+        return [];
+      }
+
+      return Array.isArray(group) ? group : [group];
+    })
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function hasEnhancedFields(analysis: ProductImageAnalysis) {
+  const detailPageHints = analysis.detailPageHints;
+
+  return Boolean(
+    compactUnknownItems(analysis.specifications, analysis.capacity, analysis.colors, analysis.color, analysis.variants, analysis.materials, analysis.material).length ||
+      compactUnknownItems(analysis.mustKeepDetails, analysis.avoidChanges).length ||
+      compactUnknownItems(detailPageHints?.usageScenes, detailPageHints?.detailAngles, detailPageHints?.visualMood, analysis.visualFidelityNotes).length,
+  );
+}
+
+function ChipList({ items }: { items: string[] }) {
+  if (!items.length) {
+    return null;
+  }
+
+  return (
+    <div className="product-analysis-chip-list">
+      {items.map((item, index) => (
+        <span className="product-analysis-chip" key={`${item}-${index}`}>
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function NoteList({ items }: { items: string[] }) {
+  if (!items.length) {
+    return null;
+  }
+
+  return (
+    <ul className="product-analysis-note-list">
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function ProductAnalysisEnhancedFields({ analysis }: { analysis: ProductImageAnalysis }) {
+  const specifications = compactUnknownItems(analysis.specifications, analysis.capacity);
+  const colorsAndVariants = compactUnknownItems(analysis.colors, analysis.color, analysis.variants);
+  const materials = compactUnknownItems(analysis.materials, analysis.material);
+  const mustKeepDetails = compactUnknownItems(analysis.mustKeepDetails);
+  const avoidChanges = compactUnknownItems(analysis.avoidChanges);
+  const usageScenes = compactUnknownItems(analysis.detailPageHints?.usageScenes);
+  const detailAngles = compactUnknownItems(analysis.detailPageHints?.detailAngles);
+  const visualMood = compactUnknownItems(analysis.detailPageHints?.visualMood, analysis.visualFidelityNotes);
+
+  if (!hasEnhancedFields(analysis)) {
+    return null;
+  }
+
+  return (
+    <div className="product-analysis-extra">
+      <div className="product-analysis-extra-header">
+        <strong>商品理解与生成约束</strong>
+        <span>这些信息会帮助后续图片、场景图和详情页生成保持商品一致性。</span>
+      </div>
+
+      <div className="product-analysis-extra-grid">
+        {specifications.length ? (
+          <section className="product-analysis-extra-card">
+            <strong>商品规格</strong>
+            <ChipList items={specifications} />
+          </section>
+        ) : null}
+
+        {colorsAndVariants.length ? (
+          <section className="product-analysis-extra-card">
+            <strong>颜色 / 款式</strong>
+            <ChipList items={colorsAndVariants} />
+          </section>
+        ) : null}
+
+        {materials.length ? (
+          <section className="product-analysis-extra-card">
+            <strong>材质</strong>
+            <ChipList items={materials} />
+          </section>
+        ) : null}
+
+        {mustKeepDetails.length ? (
+          <section className="product-analysis-extra-card product-analysis-extra-card-wide">
+            <strong>必须保留</strong>
+            <p>后续生成图片时会尽量保持这些商品细节不变。</p>
+            <NoteList items={mustKeepDetails} />
+          </section>
+        ) : null}
+
+        {avoidChanges.length ? (
+          <section className="product-analysis-extra-card product-analysis-extra-card-wide">
+            <strong>避免改动</strong>
+            <p>后续生成图片时会避免改变这些结构、颜色或图案。</p>
+            <NoteList items={avoidChanges} />
+          </section>
+        ) : null}
+
+        {usageScenes.length || detailAngles.length || visualMood.length ? (
+          <section className="product-analysis-extra-card product-analysis-extra-card-wide">
+            <strong>适合的详情页方向</strong>
+            {usageScenes.length ? (
+              <div>
+                <span>使用场景</span>
+                <ChipList items={usageScenes} />
+              </div>
+            ) : null}
+            {detailAngles.length ? (
+              <div>
+                <span>细节角度</span>
+                <ChipList items={detailAngles} />
+              </div>
+            ) : null}
+            {visualMood.length ? (
+              <div>
+                <span>视觉氛围</span>
+                <ChipList items={visualMood} />
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function ProductAnalysisResult({
+  analysis,
+  defaultShowFullAnalysis = false,
+  showEnhancedFields = false,
+  showFullAnalysisToggle = true,
+  title,
+}: ProductAnalysisResultProps) {
   const [isExpanded, setIsExpanded] = useState(defaultShowFullAnalysis);
   const primaryName = analysis?.productNameSuggestions[0] || "暂无明确建议";
   const summaryPoints = analysis?.sellingPoints.slice(0, 3) || [];
@@ -72,6 +220,8 @@ export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = fals
             </section>
           </div>
 
+          {showEnhancedFields ? <ProductAnalysisEnhancedFields analysis={analysis} /> : null}
+
           {showFullAnalysisToggle ? (
             <button className="product-analysis-toggle" type="button" onClick={() => setIsExpanded((current) => !current)}>
               {isExpanded ? "收起完整分析" : "查看完整分析"}
@@ -96,26 +246,30 @@ export function ProductAnalysisResult({ analysis, defaultShowFullAnalysis = fals
                 <strong>视觉风格</strong>
                 <p>{analysis.visualStyle}</p>
               </section>
-              <section>
-                <strong>材质 / 颜色</strong>
-                <DetailList items={compactItems(analysis.materials, analysis.material, analysis.colors, analysis.color)} />
-              </section>
-              <section>
-                <strong>规格 / 容量</strong>
-                <DetailList items={compactItems(analysis.specifications, analysis.capacity)} />
-              </section>
-              <section>
-                <strong>多款式信息</strong>
-                <DetailList items={analysis.variants || []} />
-              </section>
-              <section className="product-analysis-wide">
-                <strong>必须保留的细节</strong>
-                <DetailList items={analysis.mustKeepDetails || []} />
-              </section>
-              <section className="product-analysis-wide">
-                <strong>避免改动</strong>
-                <DetailList items={analysis.avoidChanges || []} />
-              </section>
+              {!showEnhancedFields ? (
+                <>
+                  <section>
+                    <strong>材质 / 颜色</strong>
+                    <DetailList items={compactItems(analysis.materials, analysis.material, analysis.colors, analysis.color)} />
+                  </section>
+                  <section>
+                    <strong>规格 / 容量</strong>
+                    <DetailList items={compactItems(analysis.specifications, analysis.capacity)} />
+                  </section>
+                  <section>
+                    <strong>多款式信息</strong>
+                    <DetailList items={analysis.variants || []} />
+                  </section>
+                  <section className="product-analysis-wide">
+                    <strong>必须保留的细节</strong>
+                    <DetailList items={analysis.mustKeepDetails || []} />
+                  </section>
+                  <section className="product-analysis-wide">
+                    <strong>避免改动</strong>
+                    <DetailList items={analysis.avoidChanges || []} />
+                  </section>
+                </>
+              ) : null}
               <section className="product-analysis-wide">
                 <strong>风险提示</strong>
                 <DetailList items={analysis.risks} />

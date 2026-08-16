@@ -4433,6 +4433,90 @@ h3 {
   padding-left: 20px;
 }
 
+.product-analysis-extra {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 20px;
+  padding: 16px;
+  background: var(--workspace-panel);
+}
+
+.product-analysis-extra-header {
+  display: grid;
+  gap: 4px;
+}
+
+.product-analysis-extra-header strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.product-analysis-extra-header span,
+.product-analysis-extra-card p,
+.product-analysis-extra-card > div > span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.product-analysis-extra-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.product-analysis-extra-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 13px;
+  background: var(--workspace-surface);
+}
+
+.product-analysis-extra-card-wide {
+  grid-column: span 3;
+}
+
+.product-analysis-extra-card strong {
+  color: var(--accent);
+  font-size: 0.88rem;
+}
+
+.product-analysis-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-analysis-chip {
+  display: inline-flex;
+  max-width: 100%;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.product-analysis-note-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  line-height: 1.62;
+}
+
 .product-next-actions {
   display: flex;
   align-items: center;
@@ -5724,6 +5808,7 @@ h3 {
   .product-creation-summary,
   .product-creation-progress-grid,
   .product-creation-action-grid,
+  .product-analysis-extra-grid,
   .product-analysis-summary-grid,
   .product-analysis-grid,
   .product-detail-count-grid,
@@ -5765,6 +5850,10 @@ h3 {
 
   .product-workspace-empty-actions .button {
     width: 100%;
+  }
+
+  .product-analysis-extra-card-wide {
+    grid-column: auto;
   }
 
   .product-detail-style-grid,
