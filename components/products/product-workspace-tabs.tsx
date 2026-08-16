@@ -5,6 +5,7 @@ import { ProductAssetGallery } from "@/components/products/product-asset-gallery
 import { ProductContentPackage } from "@/components/products/product-content-package";
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductDetailPagePanel } from "@/components/products/product-detail-page-panel";
+import { ProductGenerationBriefEditor } from "@/components/products/product-generation-brief";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
@@ -158,6 +159,7 @@ export function ProductWorkspaceTabs({
         role="tabpanel"
       >
         <ProductAnalysisResult analysis={result?.analysis || null} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result?.title} />
+        <ProductGenerationBriefEditor analysis={result?.analysis || null} analysisHistoryId={result?.historyId} />
       </div>
 
       <div

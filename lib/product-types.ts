@@ -1,5 +1,16 @@
 export type ProductVisualGenerationMode = "faithful" | "creative";
 
+export type ProductGenerationBrief = {
+  productName: string;
+  coreSellingPoints: string[];
+  targetAudience: string;
+  usageScenarios: string[];
+  styleRequirements: string;
+  mustKeepDetails: string[];
+  avoidChanges: string[];
+  extraRequirements: string;
+};
+
 export type ProductImageAnalysis = {
   category: string;
   productNameSuggestions: string[];
