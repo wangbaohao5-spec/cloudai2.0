@@ -58,6 +58,52 @@ export async function recordUsage(record: UsageRecordInput) {
   });
 }
 
+export async function enforceUsageLimit(record: UsageRecordInput) {
+  const now = new Date();
+  const rules = USAGE_LIMITS[record.type];
+
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${record.userId}), hashtext(${record.type}))`;
+
+    for (const rule of rules) {
+      const windowStart = new Date(now.getTime() - rule.windowSeconds * 1000);
+      const count = await tx.usageRecord.count({
+        where: {
+          userId: record.userId,
+          type: record.type,
+          createdAt: {
+            gte: windowStart,
+          },
+        },
+      });
+
+      if (count >= rule.max) {
+        const oldestRecordInWindow = await tx.usageRecord.findFirst({
+          where: {
+            userId: record.userId,
+            type: record.type,
+            createdAt: {
+              gte: windowStart,
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        });
+        const oldestCreatedAt = oldestRecordInWindow?.createdAt || now;
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil((oldestCreatedAt.getTime() + rule.windowSeconds * 1000 - now.getTime()) / 1000),
+        );
+
+        throw new ApiError(getRateLimitMessage(record.type, retryAfterSeconds, rule.windowSeconds), 429, {
+          "Retry-After": String(retryAfterSeconds),
+        });
+      }
+    }
+  });
+}
+
 export async function enforceUsageLimitAndRecord(record: UsageRecordInput) {
   const now = new Date();
   const rules = USAGE_LIMITS[record.type];

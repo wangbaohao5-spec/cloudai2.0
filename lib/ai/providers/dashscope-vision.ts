@@ -3,6 +3,7 @@ import { getOptionalEnv, getRequiredEnv } from "@/lib/server-env";
 
 const DASHSCOPE_VISION_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 const DASHSCOPE_VISION_MODEL = getOptionalEnv("DASHSCOPE_VISION_MODEL") || "qwen-vl-plus";
+const PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE = "商品图片分析服务暂时不可用，请稍后重试。";
 
 type DashScopeVisionResponse = {
   choices?: Array<{
@@ -72,35 +73,70 @@ function normalizeAnalysis(value: Partial<ProductImageAnalysis>): ProductImageAn
   };
 }
 
+function getErrorCauseDetails(error: unknown) {
+  const cause = error instanceof Error ? error.cause : undefined;
+
+  if (!cause || typeof cause !== "object") {
+    return {};
+  }
+
+  const causeRecord = cause as {
+    code?: unknown;
+    errno?: unknown;
+    hostname?: unknown;
+    message?: unknown;
+    syscall?: unknown;
+  };
+
+  return {
+    causeMessage: typeof causeRecord.message === "string" ? causeRecord.message : undefined,
+    causeCode: typeof causeRecord.code === "string" ? causeRecord.code : undefined,
+    causeErrno: typeof causeRecord.errno === "number" || typeof causeRecord.errno === "string" ? causeRecord.errno : undefined,
+    causeSyscall: typeof causeRecord.syscall === "string" ? causeRecord.syscall : undefined,
+    causeHostname: typeof causeRecord.hostname === "string" ? causeRecord.hostname : undefined,
+  };
+}
+
+function truncateLogBody(value: unknown) {
+  try {
+    return JSON.stringify(value).slice(0, 1200);
+  } catch {
+    return "[unserializable response body]";
+  }
+}
+
 export async function analyzeDashScopeProductImage(imageUrl: string, productHint?: string): Promise<ProductImageAnalysis> {
   const apiKey = getRequiredEnv("DASHSCOPE_API_KEY");
   const normalizedProductHint = productHint?.trim();
-  const response = await fetch(DASHSCOPE_VISION_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: DASHSCOPE_VISION_MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            "你是专业电商商品图分析专家。分析优先级是：用户补充信息 > 图片视觉识别 > AI 合理推测。请优先参考用户提供的商品补充信息，再结合图片可见信息分析商品；如果用户补充信息与图片视觉存在冲突，优先相信用户补充信息，但不要完全忽略图片，并在 risks 中说明。用户补充信息中提到的型号、规格、容量、材质、颜色、卖点应优先进入分析结果。用户补充信息中提到必须保留的 Logo、图案、卡通元素、印花、配色、灯光、版型、布局等，必须标记为商品关键外观细节，不要当成可随意变化的背景装饰。不要虚构用户没有提供的认证、销量、价格、医学功效或平台授权。请严格返回 JSON。",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: {
-                url: imageUrl,
+  let response: Response;
+
+  try {
+    response = await fetch(DASHSCOPE_VISION_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: DASHSCOPE_VISION_MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "你是专业电商商品图分析专家。分析优先级是：用户补充信息 > 图片视觉识别 > AI 合理推测。请优先参考用户提供的商品补充信息，再结合图片可见信息分析商品；如果用户补充信息与图片视觉存在冲突，优先相信用户补充信息，但不要完全忽略图片，并在 risks 中说明。用户补充信息中提到的型号、规格、容量、材质、颜色、卖点应优先进入分析结果。用户补充信息中提到必须保留的 Logo、图案、卡通元素、印花、配色、灯光、版型、布局等，必须标记为商品关键外观细节，不要当成可随意变化的背景装饰。不要虚构用户没有提供的认证、销量、价格、医学功效或平台授权。请严格返回 JSON。",
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl,
+                },
               },
-            },
-            {
-              type: "text",
-              text: `请分析这张商品图片，并只返回 JSON，不要 Markdown。JSON 字段必须为：
+              {
+                type: "text",
+                text: `请分析这张商品图片，并只返回 JSON，不要 Markdown。JSON 字段必须为：
 用户补充信息：
 ${normalizedProductHint || "用户未提供补充信息，请仅基于图片可见信息分析。"}
 
@@ -128,23 +164,42 @@ ${normalizedProductHint || "用户未提供补充信息，请仅基于图片可�
   },
   "risks": ["图片无法确认的信息或需要用户补充的信息"]
 }`,
-            },
-          ],
+              },
+            ],
+          },
+        ],
+        temperature: 0.2,
+        response_format: {
+          type: "json_object",
         },
-      ],
-      temperature: 0.2,
-      response_format: {
-        type: "json_object",
-      },
-    }),
-  });
-  const data = (await response.json()) as DashScopeVisionResponse;
+      }),
+    });
+  } catch (error) {
+    console.error("[dashscope-vision] fetch failed", {
+      endpoint: DASHSCOPE_VISION_API_URL,
+      model: DASHSCOPE_VISION_MODEL,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      ...getErrorCauseDetails(error),
+    });
 
-  if (!response.ok) {
-    throw new Error(data.error?.message || "DashScope vision request failed.");
+    throw new Error(PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE);
   }
 
-  const content = data.choices?.[0]?.message?.content;
+  const data = (await response.json().catch(() => null)) as DashScopeVisionResponse | null;
+
+  if (!response.ok) {
+    console.error("[dashscope-vision] http error", {
+      endpoint: DASHSCOPE_VISION_API_URL,
+      model: DASHSCOPE_VISION_MODEL,
+      status: response.status,
+      statusText: response.statusText,
+      responseBody: truncateLogBody(data),
+    });
+
+    throw new Error(PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE);
+  }
+
+  const content = data?.choices?.[0]?.message?.content;
 
   if (!content) {
     throw new Error("DashScope vision returned an empty response.");

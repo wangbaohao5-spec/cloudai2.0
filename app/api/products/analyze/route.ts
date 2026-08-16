@@ -1,14 +1,16 @@
 import { analyzeProductImageAsset } from "@/lib/ai/product-analysis";
 import { getAssetForUser } from "@/lib/assets";
-import { jsonError, settleTask } from "@/lib/api-errors";
+import { ApiError, jsonError, settleTask } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { saveHistory } from "@/lib/history";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { getFileUrl } from "@/lib/storage";
-import { enforceUsageLimitAndRecord } from "@/lib/usage";
+import { enforceUsageLimit, recordUsage } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+const PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE = "商品图片分析服务暂时不可用，请稍后重试。";
+const PRODUCT_ANALYSIS_FALLBACK_MESSAGE = "商品分析失败，请稍后重试。";
 
 type ProductAnalyzeRequestBody = {
   assetId?: string;
@@ -17,6 +19,30 @@ type ProductAnalyzeRequestBody = {
 
 function getAnalysisTitle(analysis: ProductAnalysisResponse["analysis"]) {
   return analysis.productNameSuggestions[0] || analysis.category || "商品图片分析";
+}
+
+function getErrorCauseDetails(error: unknown) {
+  const cause = error instanceof Error ? error.cause : undefined;
+
+  if (!cause || typeof cause !== "object") {
+    return {};
+  }
+
+  const causeRecord = cause as {
+    code?: unknown;
+    errno?: unknown;
+    hostname?: unknown;
+    message?: unknown;
+    syscall?: unknown;
+  };
+
+  return {
+    causeMessage: typeof causeRecord.message === "string" ? causeRecord.message : undefined,
+    causeCode: typeof causeRecord.code === "string" ? causeRecord.code : undefined,
+    causeErrno: typeof causeRecord.errno === "number" || typeof causeRecord.errno === "string" ? causeRecord.errno : undefined,
+    causeSyscall: typeof causeRecord.syscall === "string" ? causeRecord.syscall : undefined,
+    causeHostname: typeof causeRecord.hostname === "string" ? causeRecord.hostname : undefined,
+  };
 }
 
 export async function POST(request: Request) {
@@ -45,7 +71,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Product image asset not found." }, { status: 404 });
     }
 
-    await enforceUsageLimitAndRecord({
+    await enforceUsageLimit({
       userId: user.id,
       type: "product-analysis",
       model: "dashscope-vision",
@@ -54,21 +80,30 @@ export async function POST(request: Request) {
     const imageUrl = await getFileUrl(asset.url, 30 * 60);
     const analysis = await analyzeProductImageAsset(imageUrl, productHint);
     const title = getAnalysisTitle(analysis);
-    const historyResult = await settleTask(
-      saveHistory({
-        userId: user.id,
-        assetId: asset.id,
-        type: "product-analysis",
-        title,
-        input: {
+    const [historyResult, usageResult] = await Promise.all([
+      settleTask(
+        saveHistory({
+          userId: user.id,
           assetId: asset.id,
-          assetName: asset.name,
-          ...(productHint ? { productHint } : {}),
-        },
-        output: analysis,
-      }),
-    );
-    const warnings = [historyResult.error].filter((warning): warning is string => Boolean(warning));
+          type: "product-analysis",
+          title,
+          input: {
+            assetId: asset.id,
+            assetName: asset.name,
+            ...(productHint ? { productHint } : {}),
+          },
+          output: analysis,
+        }),
+      ),
+      settleTask(
+        recordUsage({
+          userId: user.id,
+          type: "product-analysis",
+          model: "dashscope-vision",
+        }),
+      ),
+    ]);
+    const warnings = [historyResult.error, usageResult.error].filter((warning): warning is string => Boolean(warning));
 
     return NextResponse.json({
       assetId: asset.id,
@@ -78,6 +113,17 @@ export async function POST(request: Request) {
       warnings: warnings.length ? warnings : undefined,
     } satisfies ProductAnalysisResponse);
   } catch (error) {
-    return jsonError(error, "Product image analysis failed.");
+    if (error instanceof ApiError) {
+      return jsonError(error, PRODUCT_ANALYSIS_FALLBACK_MESSAGE);
+    }
+
+    console.error("[product-analysis] failed", {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      ...getErrorCauseDetails(error),
+    });
+
+    const message = error instanceof Error && error.message === PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE ? error.message : PRODUCT_ANALYSIS_FALLBACK_MESSAGE;
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
