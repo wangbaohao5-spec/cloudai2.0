@@ -113,6 +113,7 @@ export function ProductDetailPagePlanPreview({
                   </button>
                 </div>
                 <span>已生成详情页图片，点击图片查看大图</span>
+                <small>当前显示的是最近一次生成结果，历史记录会保留之前版本。</small>
               </div>
             ) : null}
 
@@ -126,7 +127,7 @@ export function ProductDetailPagePlanPreview({
                     正在生成...
                   </>
                 ) : result ? (
-                  "重新生成这张详情图"
+                  "重新生成这一页"
                 ) : (
                   "生成这张详情图"
                 )}

@@ -107,6 +107,8 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
       return;
     }
 
+    const isRegeneration = Boolean(pageResults[page.pageIndex]);
+
     setGeneratingPageIndex(page.pageIndex);
     setPageErrors((current) => {
       const next = { ...current };
@@ -143,9 +145,11 @@ export function ProductDetailPagePanel({ analysisResult, onGenerated }: ProductD
       }));
       onGenerated?.();
     } catch (caughtError) {
+      const fallbackMessage = isRegeneration ? "重新生成失败，请稍后重试。" : "生成详情页图片失败，请稍后重试。";
+
       setPageErrors((current) => ({
         ...current,
-        [page.pageIndex]: caughtError instanceof Error ? caughtError.message : "生成详情页图片失败，请稍后重试。",
+        [page.pageIndex]: caughtError instanceof Error && !isRegeneration ? caughtError.message : fallbackMessage,
       }));
     } finally {
       setGeneratingPageIndex(null);

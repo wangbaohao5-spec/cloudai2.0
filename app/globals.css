@@ -3340,6 +3340,7 @@ h3 {
 }
 
 .product-detail-generated-preview span,
+.product-detail-generated-preview small,
 .product-detail-plan-card-actions small {
   color: var(--muted);
   font-size: 0.78rem;
