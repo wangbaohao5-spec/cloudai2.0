@@ -7,6 +7,7 @@ import { ProductCopywritingPanel } from "@/components/products/product-copywriti
 import { ProductDetailPagePanel } from "@/components/products/product-detail-page-panel";
 import { ProductGenerationBriefEditor } from "@/components/products/product-generation-brief";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
+import { ProductImageSetPanel } from "@/components/products/product-image-set-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
@@ -22,7 +23,7 @@ type ProductWorkspaceTabsProps = {
   result: ProductAnalysisResponse | null;
 };
 
-type TabId = "analysis" | "assets" | "copywriting" | "detailPage" | "export" | "images" | "scenes";
+type TabId = "analysis" | "assets" | "copywriting" | "detailPage" | "export" | "imageSet" | "images" | "scenes";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "analysis", label: "分析" },
@@ -31,6 +32,7 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: "images", label: "图片" },
   { id: "scenes", label: "场景" },
   { id: "detailPage", label: "详情页" },
+  { id: "imageSet", label: "套图" },
   { id: "export", label: "导出" },
 ];
 
@@ -260,6 +262,16 @@ export function ProductWorkspaceTabs({
         role="tabpanel"
       >
         <ProductDetailPagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
+      </div>
+
+      <div
+        aria-labelledby="product-workspace-tab-imageSet"
+        className="product-workspace-panel"
+        hidden={activeTab !== "imageSet"}
+        id="product-workspace-panel-imageSet"
+        role="tabpanel"
+      >
+        <ProductImageSetPanel analysisResult={result} generationBrief={generationBrief} />
       </div>
 
       <div
