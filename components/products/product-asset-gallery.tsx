@@ -122,7 +122,7 @@ function AssetTile({
 
   return (
     <article className="product-asset-tile">
-      <div>
+      <div className="product-asset-media">
         {displayUrl ? (
           <button
             className="product-image-preview-button product-asset-preview-button"
@@ -136,14 +136,14 @@ function AssetTile({
         ) : (
           <span>暂无预览</span>
         )}
+        {lightboxUrl ? (
+          <div className="product-asset-download" onClick={(event) => event.stopPropagation()}>
+            <ImageDownloadButton className="product-asset-download-button" filename={downloadFilename} imageUrl={lightboxUrl} label="下载" />
+          </div>
+        ) : null}
       </div>
       <strong>{label}</strong>
       <p>{title}</p>
-      {lightboxUrl ? (
-        <div className="product-asset-tile-actions">
-          <ImageDownloadButton filename={downloadFilename} imageUrl={lightboxUrl} label="下载" />
-        </div>
-      ) : null}
     </article>
   );
 }
