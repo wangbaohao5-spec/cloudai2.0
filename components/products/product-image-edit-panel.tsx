@@ -5,6 +5,7 @@ import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
 import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -136,6 +137,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
           />
         </label>
 
+        <ProductGenerationCostHint compact label="生成优化图将消耗 1 张图片额度" description="生成前请确认优化 Prompt 和商品保真要求。" />
         <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
           {isGenerating ? (
             <>

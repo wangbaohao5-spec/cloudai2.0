@@ -1,8 +1,10 @@
 "use client";
 
 import { ProductImageSetPlanPreview, type ProductImageSetImageResult } from "@/components/products/product-image-set-plan-preview";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
+import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
 import type { ProductAnalysisResponse, ProductGenerationBrief } from "@/lib/product-types";
 import { useState } from "react";
 
@@ -51,6 +53,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<ProductImageSetPlan | null>(null);
   const [purpose, setPurpose] = useState<ProductImageSetPurpose>("detail-page");
+  const imageSetCostEstimate = plan ? getImageSetCostEstimate(plan.count) : null;
 
   function handleCountChange(nextCount: ProductImageSetCount) {
     setCount(nextCount);
@@ -232,6 +235,13 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
 
       {plan ? (
         <>
+          {imageSetCostEstimate ? (
+            <ProductGenerationCostHint
+              imageCount={imageSetCostEstimate.imageCount}
+              label={`当前规划共 ${imageSetCostEstimate.imageCount} 张`}
+              description={`若未来一键生成整套，${imageSetCostEstimate.label}。${imageSetCostEstimate.description}`}
+            />
+          ) : null}
           <ProductImageSetPlanPreview
             generatingImageIndex={generatingImageIndex}
             imageErrors={imageErrors}

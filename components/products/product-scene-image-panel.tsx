@@ -4,6 +4,7 @@ import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
@@ -217,6 +218,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, onGene
           </div>
         </fieldset>
 
+        <ProductGenerationCostHint compact label="生成场景图将消耗 1 张图片额度" description="生成前请确认场景、平台、风格和保真模式。" />
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
           {isGenerating ? (
             <>

@@ -3,6 +3,7 @@
 import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import type { ProductDetailPagePlanPage } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import { useState } from "react";
 
@@ -127,6 +128,7 @@ export function ProductDetailPagePlanPreview({
             {error ? <p className="image-generation-error">{error}</p> : null}
 
             <div className="product-detail-plan-card-actions">
+              <ProductGenerationCostHint compact label="生成这张详情图将消耗 1 张图片额度" description="生成前请确认页面文案、保真模式和商品细节要求。" />
               <button className="button secondary" disabled={isGenerating} type="button" onClick={() => onGeneratePage?.(page)}>
                 {isGenerating ? (
                   <>

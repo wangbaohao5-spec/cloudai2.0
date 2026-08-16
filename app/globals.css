@@ -3030,6 +3030,56 @@ h3 {
   margin-top: 2px;
 }
 
+.product-generation-cost-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--workspace-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: var(--muted);
+  background: var(--workspace-surface);
+  line-height: 1.5;
+}
+
+.product-generation-cost-hint.compact {
+  padding: 10px 12px;
+}
+
+.product-generation-cost-hint > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  font-size: 0.76rem;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.product-generation-cost-hint div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.product-generation-cost-hint strong {
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.product-generation-cost-hint p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .product-detail-page-panel,
 .product-image-set-panel {
   display: grid;
@@ -3363,6 +3413,10 @@ h3 {
   background: var(--badge-bg);
   font-size: 0.76rem;
   font-weight: 900;
+}
+
+.product-image-set-plan-footer .product-generation-cost-hint {
+  flex: 1 0 100%;
 }
 
 .product-detail-plan-card > p {

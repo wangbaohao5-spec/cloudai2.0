@@ -3,6 +3,7 @@
 import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import type { ProductImageSetPlan, ProductImageSetPlanImage } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { useState } from "react";
 
@@ -152,6 +153,7 @@ export function ProductImageSetPlanPreview({
             {error ? <p className="image-generation-error">{error}</p> : null}
 
             <div className="product-image-set-plan-footer">
+              <ProductGenerationCostHint compact label="生成这张套图将消耗 1 张图片额度" description="生成前请确认画面建议、必须保留和避免改动内容。" />
               <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
               <button className="button secondary" type="button" disabled={isGenerating} onClick={() => onGenerateImage?.(image)}>
                 {isGenerating ? (
