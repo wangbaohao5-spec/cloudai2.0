@@ -92,8 +92,8 @@ export function ProductImageSetPlanPreview({
               <i>{image.suggestedGenerationMode === "creative" ? "创意" : "保真"}</i>
             </div>
 
-            <div className={`product-image-set-card-media ${result ? "has-image" : ""}`.trim()}>
-              <span className="product-image-set-card-badge">{imageTypeLabel}</span>
+            <div className={`product-image-set-card__media product-image-set-card-media ${result ? "has-image" : "is-placeholder"}`}>
+              <span className="product-image-set-card__badge product-image-set-card-badge">{imageTypeLabel}</span>
               {result ? (
                 <>
                   <button
@@ -111,9 +111,9 @@ export function ProductImageSetPlanPreview({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img alt={`第 ${image.imageIndex} 张套图生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
                   </button>
-                  <div className="product-image-set-card-download" onClick={(event) => event.stopPropagation()}>
+                  <div className="product-image-set-card__download product-image-set-card-download" onClick={(event) => event.stopPropagation()}>
                     <ImageDownloadButton
-                      className="product-image-set-card-download-button"
+                      className="product-image-set-card__download-button product-image-set-card-download-button"
                       filename={buildImageDownloadFilename("image-set", [String(image.imageIndex).padStart(2, "0"), image.imageType])}
                       imageUrl={result.imageUrl}
                       label="下载"
@@ -121,7 +121,7 @@ export function ProductImageSetPlanPreview({
                   </div>
                 </>
               ) : (
-                <div className="product-image-set-card-placeholder">
+                <div className="product-image-set-card__placeholder product-image-set-card-placeholder">
                   {isGenerating ? <LongGenerationLoading size="md" /> : <span>{String(image.imageIndex).padStart(2, "0")}</span>}
                   <strong>{isGenerating ? "正在生成这张图..." : imageTypeLabel}</strong>
                   <p>{image.visualDirection || image.goal || "生成后将在这里显示图片预览。"}</p>
@@ -129,7 +129,7 @@ export function ProductImageSetPlanPreview({
               )}
             </div>
 
-            <div className="product-image-set-card-body">
+            <div className="product-image-set-card__body product-image-set-card-body">
               <h3>{image.title}</h3>
               <p>{image.keyMessage || image.headline || image.goal || "暂无核心信息"}</p>
             </div>

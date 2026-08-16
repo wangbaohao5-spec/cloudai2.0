@@ -3341,6 +3341,7 @@ h3 {
   font-size: 1.08rem;
 }
 
+.product-image-set-card__media,
 .product-image-set-card-media {
   position: relative;
   display: grid;
@@ -3351,21 +3352,31 @@ h3 {
   aspect-ratio: 4 / 3;
 }
 
+.product-image-set-card__media.has-image,
 .product-image-set-card-media.has-image {
+  position: relative;
   display: block;
   min-height: 0;
+  height: auto;
+  padding: 0;
   background: var(--workspace-surface);
   aspect-ratio: auto;
 }
 
-.product-image-set-card-media .product-image-preview-button {
-  min-height: 0;
-}
-
+.product-image-set-card__media.has-image .product-image-preview-button,
 .product-image-set-card-media.has-image .product-image-preview-button {
+  display: block;
+  min-height: 0;
   height: auto;
+  place-items: initial;
 }
 
+.product-image-set-card__media.has-image .product-image-preview-button img,
+.product-image-set-card-media.has-image .product-image-preview-button img {
+  max-height: none;
+}
+
+.product-image-set-card__media img,
 .product-image-set-card-media img {
   display: block;
   max-width: 100%;
@@ -3374,10 +3385,15 @@ h3 {
   object-fit: contain;
 }
 
+.product-image-set-card__media.is-placeholder,
+.product-image-set-card-media.is-placeholder,
 .product-image-set-card-media:not(.has-image) {
+  display: grid;
   min-height: 220px;
+  place-items: center;
 }
 
+.product-image-set-card__badge,
 .product-image-set-card-badge {
   position: absolute;
   z-index: 2;
@@ -3396,24 +3412,38 @@ h3 {
   box-shadow: var(--shadow);
 }
 
+.product-image-set-card__download,
 .product-image-set-card-download {
   position: absolute;
-  z-index: 3;
-  top: 10px;
-  right: 10px;
+  z-index: 5;
+  right: 12px;
+  bottom: 12px;
   display: inline-flex;
-  max-width: calc(100% - 20px);
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 24px);
   pointer-events: auto;
 }
 
-.product-image-set-card-download .image-download-control {
-  position: relative;
-  display: inline-flex;
-  width: auto;
-  min-width: 0;
-  flex-wrap: nowrap;
+.product-image-set-card__download {
+  margin: 0;
+  padding: 0;
 }
 
+.product-image-set-card__download .image-download-control,
+.product-image-set-card-download .image-download-control {
+  position: static;
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  flex-wrap: nowrap;
+  margin: 0;
+  padding: 0;
+}
+
+.product-image-set-card__download .product-image-set-card__download-button,
 .product-image-set-card-download .product-image-set-card-download-button {
   min-height: 34px;
   border-color: var(--workspace-border);
@@ -3424,14 +3454,17 @@ h3 {
   backdrop-filter: blur(14px);
 }
 
+.product-image-set-card__download .product-image-set-card__download-button:hover:not(:disabled),
 .product-image-set-card-download .product-image-set-card-download-button:hover:not(:disabled) {
   background: var(--surface-hover);
 }
 
+.product-image-set-card__download .image-download-error,
 .product-image-set-card-download .image-download-error {
   position: absolute;
-  top: calc(100% + 6px);
   right: 0;
+  bottom: calc(100% + 6px);
+  top: auto;
   width: max-content;
   max-width: 220px;
   border: 1px solid var(--workspace-border);
@@ -3695,6 +3728,38 @@ h3 {
   width: auto;
   height: auto;
   object-fit: contain;
+}
+
+.product-image-set-generated-preview {
+  position: relative;
+  display: block;
+  gap: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.product-image-set-generated-preview > div {
+  display: block;
+  min-height: 0;
+  max-height: none;
+  place-items: initial;
+  border: 0;
+  background: transparent;
+}
+
+.product-image-set-generated-preview img {
+  width: 100%;
+  max-height: none;
+  height: auto;
+}
+
+.product-image-set-generated-preview .product-preview-actions {
+  position: absolute;
+  z-index: 5;
+  right: 12px;
+  bottom: 12px;
+  margin: 0;
 }
 
 .product-detail-generated-preview > span,
