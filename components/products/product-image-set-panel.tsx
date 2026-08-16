@@ -14,6 +14,12 @@ type ProductImageSetPanelProps = {
   onGenerated?: () => void;
 };
 
+type BatchProgress = {
+  completed: number;
+  failed: number;
+  total: number;
+};
+
 const purposeOptions: Array<{ description: string; label: string; value: ProductImageSetPurpose }> = [
   {
     value: "quick-listing",
@@ -50,16 +56,22 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   const [generatingImageIndex, setGeneratingImageIndex] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<number, string>>({});
   const [imageResults, setImageResults] = useState<Record<number, ProductImageSetImageResult>>({});
+  const [batchProgress, setBatchProgress] = useState<BatchProgress>({ completed: 0, failed: 0, total: 0 });
+  const [isGeneratingSet, setIsGeneratingSet] = useState(false);
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<ProductImageSetPlan | null>(null);
   const [purpose, setPurpose] = useState<ProductImageSetPurpose>("detail-page");
-  const imageSetCostEstimate = plan ? getImageSetCostEstimate(plan.count) : null;
+  const remainingImages = plan?.images.filter((image) => !imageResults[image.imageIndex]).sort((left, right) => left.imageIndex - right.imageIndex) || [];
+  const generatedCount = plan ? plan.images.length - remainingImages.length : 0;
+  const imageSetCostEstimate = plan ? getImageSetCostEstimate(remainingImages.length) : null;
+  const isFullSetGenerated = Boolean(plan?.images.length) && remainingImages.length === 0;
 
   function handleCountChange(nextCount: ProductImageSetCount) {
     setCount(nextCount);
     setPlan(null);
     setImageErrors({});
     setImageResults({});
+    setBatchProgress({ completed: 0, failed: 0, total: 0 });
   }
 
   async function handleGeneratePlan() {
@@ -98,6 +110,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
       });
       setImageErrors({});
       setImageResults({});
+      setBatchProgress({ completed: 0, failed: 0, total: 0 });
     } catch {
       setError("生成套图规划失败，请稍后重试。");
     } finally {
@@ -105,13 +118,21 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
     }
   }
 
-  async function handleGenerateImage(image: ProductImageSetPlanImage) {
+  async function generateOneImage({
+    failureMessage,
+    image,
+    refreshOnSuccess,
+  }: {
+    failureMessage?: string;
+    image: ProductImageSetPlanImage;
+    refreshOnSuccess: boolean;
+  }) {
     if (!analysisResult?.historyId) {
       setImageErrors((current) => ({
         ...current,
         [image.imageIndex]: "请先完成商品分析，再生成套图图片。",
       }));
-      return;
+      return false;
     }
 
     const isRegeneration = Boolean(imageResults[image.imageIndex]);
@@ -152,9 +173,12 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         ...current,
         [image.imageIndex]: data,
       }));
-      onGenerated?.();
+      if (refreshOnSuccess) {
+        onGenerated?.();
+      }
+      return true;
     } catch (caughtError) {
-      const fallbackMessage = isRegeneration ? "重新生成失败，请稍后重试。" : "生成这张套图失败，请稍后重试。";
+      const fallbackMessage = failureMessage || (isRegeneration ? "重新生成失败，请稍后重试。" : "生成这张套图失败，请稍后重试。");
       const message =
         caughtError instanceof Error && caughtError.message.includes("繁忙")
           ? caughtError.message
@@ -166,9 +190,42 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         ...current,
         [image.imageIndex]: message,
       }));
+      return false;
     } finally {
       setGeneratingImageIndex(null);
     }
+  }
+
+  async function handleGenerateImage(image: ProductImageSetPlanImage) {
+    await generateOneImage({ image, refreshOnSuccess: true });
+  }
+
+  async function handleGenerateFullSet() {
+    if (!plan || !remainingImages.length || isGeneratingSet) {
+      return;
+    }
+
+    setError("");
+    setIsGeneratingSet(true);
+    setBatchProgress({ completed: 0, failed: 0, total: remainingImages.length });
+
+    let failed = 0;
+    let completed = 0;
+
+    for (const image of remainingImages) {
+      const isSuccess = await generateOneImage({
+        failureMessage: "生成失败，请稍后重试。",
+        image,
+        refreshOnSuccess: false,
+      });
+
+      completed += 1;
+      failed += isSuccess ? 0 : 1;
+      setBatchProgress({ completed, failed, total: remainingImages.length });
+    }
+
+    setIsGeneratingSet(false);
+    onGenerated?.();
   }
 
   if (!analysisResult) {
@@ -220,7 +277,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         </fieldset>
       </div>
 
-      <button className="button primary" disabled={isPlanning || generatingImageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
+      <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet} type="button" onClick={() => void handleGeneratePlan()}>
         {isPlanning ? (
           <>
             <AiThinkingLoading size="sm" />
@@ -236,20 +293,48 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
       {plan ? (
         <>
           {imageSetCostEstimate ? (
-            <ProductGenerationCostHint
-              imageCount={imageSetCostEstimate.imageCount}
-              label={`当前规划共 ${imageSetCostEstimate.imageCount} 张`}
-              description={`若未来一键生成整套，${imageSetCostEstimate.label}。${imageSetCostEstimate.description}`}
-            />
+            <div className="product-image-set-batch-toolbar">
+              <ProductGenerationCostHint
+                imageCount={imageSetCostEstimate.imageCount}
+                label={`当前规划共 ${plan.images.length} 张，已生成 ${generatedCount} 张`}
+                description={
+                  remainingImages.length
+                    ? `本次将生成 ${remainingImages.length} 张图片，${imageSetCostEstimate.label}。已生成的图片不会重复生成。`
+                    : "整套图片已经生成完成，可在素材中查看和下载。"
+                }
+              />
+              <button className="button primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>
+                {isGeneratingSet
+                  ? `正在生成 ${Math.min(batchProgress.completed + 1, batchProgress.total)} / ${batchProgress.total}...`
+                  : isFullSetGenerated
+                    ? "整套已生成"
+                    : "生成整套"}
+              </button>
+            </div>
+          ) : null}
+          {batchProgress.total ? (
+            <div className={`product-image-set-batch-status ${batchProgress.completed === batchProgress.total ? "complete" : ""}`.trim()} aria-live="polite">
+              <strong>
+                已完成 {batchProgress.completed} / {batchProgress.total} 张
+              </strong>
+              <p>
+                {batchProgress.completed === batchProgress.total
+                  ? batchProgress.failed
+                    ? `${batchProgress.failed} 张生成失败，可稍后单独重新生成。`
+                    : "商品套图已生成完成，可在素材中查看和下载。"
+                  : "正在按规划顺序逐张生成，已生成图片会立即显示。"}
+              </p>
+            </div>
           ) : null}
           <ProductImageSetPlanPreview
             generatingImageIndex={generatingImageIndex}
             imageErrors={imageErrors}
             imageResults={imageResults}
+            isGenerationDisabled={isGeneratingSet}
             plan={plan}
             onGenerateImage={(image) => void handleGenerateImage(image)}
           />
-          <p className="product-image-set-note">当前支持按单张生成套图图片；批量生成整套会在后续版本开放。</p>
+          <p className="product-image-set-note">整套生成会按顺序逐张调用现有图片生成接口；失败项可稍后单独重新生成。</p>
         </>
       ) : (
         <div className="product-image-set-placeholder">

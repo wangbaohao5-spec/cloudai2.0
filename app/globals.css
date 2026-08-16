@@ -3419,6 +3419,44 @@ h3 {
   flex: 1 0 100%;
 }
 
+.product-image-set-batch-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.product-image-set-batch-toolbar .button {
+  min-width: 132px;
+  white-space: nowrap;
+}
+
+.product-image-set-batch-status {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--workspace-surface);
+}
+
+.product-image-set-batch-status strong {
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.product-image-set-batch-status p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.product-image-set-batch-status.complete {
+  border-color: var(--selected-border);
+  background: var(--surface-hover);
+}
+
 .product-detail-plan-card > p {
   margin: 0;
   border-top: 1px solid var(--workspace-border);
@@ -6135,6 +6173,14 @@ h3 {
   .product-image-set-purpose-grid,
   .product-image-set-plan-preview {
     grid-template-columns: 1fr;
+  }
+
+  .product-image-set-batch-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .product-image-set-batch-toolbar .button {
+    width: 100%;
   }
 
   .product-workspace-summary .product-creation-summary {

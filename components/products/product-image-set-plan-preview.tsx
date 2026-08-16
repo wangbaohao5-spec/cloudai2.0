@@ -11,6 +11,7 @@ type ProductImageSetPlanPreviewProps = {
   generatingImageIndex?: number | null;
   imageErrors?: Record<number, string>;
   imageResults?: Record<number, ProductImageSetImageResult>;
+  isGenerationDisabled?: boolean;
   onGenerateImage?: (image: ProductImageSetPlanImage) => void;
   plan: ProductImageSetPlan | null;
 };
@@ -61,6 +62,7 @@ export function ProductImageSetPlanPreview({
   generatingImageIndex = null,
   imageErrors = {},
   imageResults = {},
+  isGenerationDisabled = false,
   onGenerateImage,
   plan,
 }: ProductImageSetPlanPreviewProps) {
@@ -155,7 +157,7 @@ export function ProductImageSetPlanPreview({
             <div className="product-image-set-plan-footer">
               <ProductGenerationCostHint compact label="生成这张套图将消耗 1 张图片额度" description="生成前请确认画面建议、必须保留和避免改动内容。" />
               <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
-              <button className="button secondary" type="button" disabled={isGenerating} onClick={() => onGenerateImage?.(image)}>
+              <button className="button secondary" type="button" disabled={isGenerating || isGenerationDisabled} onClick={() => onGenerateImage?.(image)}>
                 {isGenerating ? (
                   <>
                     <LongGenerationLoading size="sm" />
