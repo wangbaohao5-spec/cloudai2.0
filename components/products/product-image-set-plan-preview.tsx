@@ -111,8 +111,9 @@ export function ProductImageSetPlanPreview({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img alt={`第 ${image.imageIndex} 张套图生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
                   </button>
-                  <div className="product-image-set-card-download">
+                  <div className="product-image-set-card-download" onClick={(event) => event.stopPropagation()}>
                     <ImageDownloadButton
+                      className="product-image-set-card-download-button"
                       filename={buildImageDownloadFilename("image-set", [String(image.imageIndex).padStart(2, "0"), image.imageType])}
                       imageUrl={result.imageUrl}
                       label="下载"

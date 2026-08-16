@@ -3390,17 +3390,46 @@ h3 {
 .product-image-set-card-download {
   position: absolute;
   z-index: 3;
+  top: 10px;
   right: 10px;
-  bottom: 10px;
+  display: inline-flex;
+  max-width: calc(100% - 20px);
+  pointer-events: auto;
 }
 
 .product-image-set-card-download .image-download-control {
-  display: block;
+  position: relative;
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
-.product-image-set-card-download .image-download-button {
+.product-image-set-card-download .product-image-set-card-download-button {
+  min-height: 34px;
+  border-color: var(--workspace-border);
+  padding: 7px 11px;
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  font-size: 0.76rem;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
+}
+
+.product-image-set-card-download .product-image-set-card-download-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.product-image-set-card-download .image-download-error {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  max-width: 220px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 12px;
+  padding: 7px 9px;
+  background: var(--card);
+  box-shadow: var(--shadow);
 }
 
 .product-image-set-card-placeholder {
