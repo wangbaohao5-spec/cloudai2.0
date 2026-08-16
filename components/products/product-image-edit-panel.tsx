@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
+import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
@@ -156,6 +157,9 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt="商品原图优化结果" src={result.imageUrl} />
             </button>
+          </div>
+          <div className="product-preview-actions">
+            <ImageDownloadButton filename={buildImageDownloadFilename("image-edit")} imageUrl={result.imageUrl} />
           </div>
           <dl>
             <div>

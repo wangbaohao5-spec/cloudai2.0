@@ -2,6 +2,7 @@
 
 import type { ProductCreationCenterAsset } from "@/lib/product-creation-center";
 import type { HistoryRecord } from "@/lib/types";
+import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useState } from "react";
 
@@ -13,6 +14,7 @@ type ProductAssetGalleryProps = {
 };
 
 type GalleryAsset = {
+  downloadFilename: string;
   id: string;
   label: string;
   previewUrl?: string | null;
@@ -71,11 +73,13 @@ function getDetailPageInfo(record: HistoryRecord) {
 
 function AssetTile({
   label,
+  downloadFilename,
   onPreview,
   previewUrl,
   title,
   url,
 }: {
+  downloadFilename: string;
   label: string;
   onPreview: (image: SelectedImage) => void;
   previewUrl?: string | null;
@@ -104,6 +108,11 @@ function AssetTile({
       </div>
       <strong>{label}</strong>
       <p>{title}</p>
+      {lightboxUrl ? (
+        <div className="product-asset-tile-actions">
+          <ImageDownloadButton filename={downloadFilename} imageUrl={lightboxUrl} label="下载" />
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -128,7 +137,15 @@ function AssetGroup({
       {assets.length ? (
         <div className="product-asset-grid">
           {assets.map((asset) => (
-            <AssetTile key={asset.id} label={asset.label} onPreview={onPreview} previewUrl={asset.previewUrl} title={asset.title} url={asset.url} />
+            <AssetTile
+              key={asset.id}
+              downloadFilename={asset.downloadFilename}
+              label={asset.label}
+              onPreview={onPreview}
+              previewUrl={asset.previewUrl}
+              title={asset.title}
+              url={asset.url}
+            />
           ))}
         </div>
       ) : (
@@ -143,6 +160,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
   const originalAssets = originalAsset
     ? [
         {
+          downloadFilename: buildImageDownloadFilename("original-product"),
           id: originalAsset.id,
           label: "原商品图",
           previewUrl: originalAsset.previewUrl,
@@ -152,6 +170,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
       ]
     : [];
   const imageEditAssets = imageEdits.map((record) => ({
+    downloadFilename: buildImageDownloadFilename("image-edit", [record.title]),
     id: record.id,
     label: "原图优化",
     previewUrl: record.previewUrl,
@@ -159,6 +178,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
     url: getOutputUrl(record.output),
   }));
   const sceneImageAssets = sceneImages.map((record) => ({
+    downloadFilename: buildImageDownloadFilename("scene-image", [record.title]),
     id: record.id,
     label: "营销场景图",
     previewUrl: record.previewUrl,
@@ -169,6 +189,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
     const detailPageInfo = getDetailPageInfo(record);
 
     return {
+      downloadFilename: buildImageDownloadFilename("detail-page", [detailPageInfo.label, detailPageInfo.title]),
       id: record.id,
       label: detailPageInfo.label,
       previewUrl: record.previewUrl,

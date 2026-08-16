@@ -1,5 +1,6 @@
 "use client";
 
+import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import type { ProductDetailPagePlanPage } from "@/lib/ai/product-detail-page-plan-prompt-builder";
@@ -113,6 +114,12 @@ export function ProductDetailPagePlanPreview({
                   </button>
                 </div>
                 <span>已生成详情页图片，点击图片查看大图</span>
+                <div className="product-preview-actions">
+                  <ImageDownloadButton
+                    filename={buildImageDownloadFilename("detail-page", [String(page.pageIndex).padStart(2, "0"), page.sectionType])}
+                    imageUrl={result.imageUrl}
+                  />
+                </div>
                 <small>当前显示的是最近一次生成结果，历史记录会保留之前版本。</small>
               </div>
             ) : null}

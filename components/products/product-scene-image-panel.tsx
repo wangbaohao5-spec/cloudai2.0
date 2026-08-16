@@ -1,5 +1,6 @@
 "use client";
 
+import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
@@ -240,6 +241,9 @@ export function ProductSceneImagePanel({ analysisResult, onGenerated }: ProductS
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt={`${getSceneName(result.scene)}生成结果`} src={result.imageUrl} />
             </button>
+          </div>
+          <div className="product-preview-actions">
+            <ImageDownloadButton filename={buildImageDownloadFilename("scene-image", [getSceneName(result.scene)])} imageUrl={result.imageUrl} />
           </div>
           <dl>
             <div>
