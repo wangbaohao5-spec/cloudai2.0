@@ -56,6 +56,12 @@ function formatList(items?: string[]) {
   return visibleItems.length ? visibleItems.map((item) => `- ${item}`).join("\n") : "- 暂无";
 }
 
+function formatInlineList(items?: string[]) {
+  const visibleItems = items?.filter(Boolean) || [];
+
+  return visibleItems.length ? visibleItems.join("、") : "暂无";
+}
+
 function sanitizeFileName(name: string) {
   return name.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() || "商品素材包";
 }
@@ -127,6 +133,66 @@ function buildDetailPageMarkdown(records: HistoryRecord[]) {
   ].join("\n");
 }
 
+const IMAGE_SET_TYPE_LABELS: Record<string, string> = {
+  "brand-story": "品牌故事图",
+  comparison: "对比图",
+  cta: "总结 / 购买理由图",
+  "detail-closeup": "商品细节图",
+  "four-grid-detail": "四宫格细节图",
+  hero: "首屏主视觉",
+  "model-wearing": "人物 / 模特图",
+  "multi-angle": "多角度图",
+  "selling-point": "核心卖点图",
+  "size-spec": "尺寸 / 参数图",
+  "usage-scene": "使用场景图",
+  "white-background": "白底主图",
+};
+
+function getStringArrayField(value: unknown, key: string) {
+  const field = getObjectField(value, key);
+
+  return Array.isArray(field) ? field.filter((item): item is string => typeof item === "string" && Boolean(item.trim())) : [];
+}
+
+function buildImageSetMarkdown(records: HistoryRecord[]) {
+  if (!records.length) {
+    return "";
+  }
+
+  return [
+    "",
+    "## 商品套图",
+    "",
+    records
+      .map((record, index) => {
+        const image = getObjectField(record.output, "image") || getObjectField(record.input, "image");
+        const imageIndex = getNumberField(record.input, "imageIndex") ?? getNumberField(image, "imageIndex") ?? index + 1;
+        const imageType = getStringField(record.input, "imageType") || getStringField(image, "imageType");
+        const imageTypeLabel = IMAGE_SET_TYPE_LABELS[imageType] || imageType || "套图";
+        const title = getStringField(image, "title") || record.title || "暂无";
+        const headline = getStringField(image, "headline");
+        const keyMessage = getStringField(image, "keyMessage");
+        const visualDirection = getStringField(image, "visualDirection") || "暂无";
+        const mustKeep = getStringArrayField(image, "mustKeep");
+        const avoid = getStringArrayField(image, "avoid");
+        const imageUrl = getOutputUrl(record.output);
+
+        return [
+          `### 第 ${imageIndex} 张：${imageTypeLabel}`,
+          "",
+          `- 图类型：${imageTypeLabel}`,
+          `- 标题：${title}`,
+          `- 核心信息：${headline || keyMessage || "暂无"}`,
+          `- 画面建议：${visualDirection}`,
+          `- 必须保留：${formatInlineList(mustKeep)}`,
+          `- 避免改动：${formatInlineList(avoid)}`,
+          `- 图片链接：${imageUrl || "暂无"}`,
+        ].join("\n");
+      })
+      .join("\n\n"),
+  ].join("\n");
+}
+
 function buildProductPackageMarkdown(data: ProductCreationCenterData) {
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "未命名商品";
   const originalAssets = data.originalAsset ? [{ title: data.originalAsset.name, url: data.originalAsset.url }] : [];
@@ -169,6 +235,7 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     "",
     buildImageAssetMarkdown("营销场景图", sceneImageAssets),
     buildDetailPageMarkdown(data.detailPages),
+    buildImageSetMarkdown(data.imageSetImages),
   ].join("\n");
 }
 
@@ -178,7 +245,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
   const markdown = useMemo(() => buildProductPackageMarkdown(data), [data]);
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "商品";
   const copywritingCount = data.copywriting.length;
-  const imageCount = Number(Boolean(data.originalAsset)) + data.imageEdits.length + data.sceneImages.length + data.detailPages.length;
+  const imageCount = Number(Boolean(data.originalAsset)) + data.imageEdits.length + data.sceneImages.length + data.detailPages.length + data.imageSetImages.length;
 
   function showFeedback(message: string, tone: "error" | "success" = "success") {
     setFeedback({ message, tone });

@@ -4,6 +4,7 @@ type ProductCreationProgressProps = {
   copywritingCount: number;
   detailPageCount: number;
   imageEditCount: number;
+  imageSetCount: number;
   sceneImageCount: number;
 };
 
@@ -16,7 +17,7 @@ type ProgressItem = {
   description: string;
 };
 
-function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, sceneImageCount }: ProductCreationProgressProps): ProgressItem[] {
+function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount }: ProductCreationProgressProps): ProgressItem[] {
   return [
     {
       id: "analysis",
@@ -58,11 +59,19 @@ function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount,
       status: detailPageCount > 0 ? `已生成 ${detailPageCount} 张` : "待生成",
       description: detailPageCount > 0 ? "商品详情页图片已进入素材区" : "在详情页 Tab 基于规划生成详情页图片",
     },
+    {
+      id: "image-set",
+      label: "套图",
+      count: imageSetCount,
+      done: imageSetCount > 0,
+      status: imageSetCount > 0 ? `已生成 ${imageSetCount} 张` : "待生成",
+      description: imageSetCount > 0 ? "商品套图图片已进入素材区" : "在套图 Tab 基于规划生成商品套图",
+    },
   ];
 }
 
-export function ProductCreationProgress({ copywritingCount, detailPageCount, imageEditCount, sceneImageCount }: ProductCreationProgressProps) {
-  const progressItems = buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, sceneImageCount });
+export function ProductCreationProgress({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount }: ProductCreationProgressProps) {
+  const progressItems = buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount });
   const completedCount = progressItems.filter((item) => item.done).length;
   const totalCount = progressItems.length;
 

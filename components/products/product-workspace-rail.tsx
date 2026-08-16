@@ -39,7 +39,8 @@ function getGeneratedCount(creationCenterData: ProductCreationCenterData | null)
     creationCenterData.copywriting.length +
     creationCenterData.imageEdits.length +
     creationCenterData.sceneImages.length +
-    creationCenterData.detailPages.length
+    creationCenterData.detailPages.length +
+    creationCenterData.imageSetImages.length
   );
 }
 
@@ -167,6 +168,7 @@ export function ProductWorkspaceRail({
             copywritingCount={creationCenterData.copywriting.length}
             detailPageCount={creationCenterData.detailPages.length}
             imageEditCount={creationCenterData.imageEdits.length}
+            imageSetCount={creationCenterData.imageSetImages.length}
             sceneImageCount={creationCenterData.sceneImages.length}
           />
         </div>

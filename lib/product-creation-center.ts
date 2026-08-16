@@ -26,6 +26,7 @@ export type ProductCreationCenterData = {
   copywriting: HistoryRecord[];
   detailPages: HistoryRecord[];
   imageEdits: HistoryRecord[];
+  imageSetImages: HistoryRecord[];
   sceneImages: HistoryRecord[];
 };
 
@@ -83,6 +84,14 @@ function isDetailPageForAnalysis(record: HistoryRecord, analysisHistoryId: strin
   );
 }
 
+function isImageSetImageForAnalysis(record: HistoryRecord, analysisHistoryId: string) {
+  return (
+    record.type === "image" &&
+    getStringField(record.input, "source") === "product-image-set" &&
+    getStringField(record.input, "analysisHistoryId") === analysisHistoryId
+  );
+}
+
 function sortDetailPages(left: HistoryRecord, right: HistoryRecord) {
   const leftPageIndex = getNumberField(left.input, "pageIndex");
   const rightPageIndex = getNumberField(right.input, "pageIndex");
@@ -96,6 +105,25 @@ function sortDetailPages(left: HistoryRecord, right: HistoryRecord) {
   }
 
   if (leftPageIndex === null && rightPageIndex !== null) {
+    return 1;
+  }
+
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+}
+
+function sortImageSetImages(left: HistoryRecord, right: HistoryRecord) {
+  const leftImageIndex = getNumberField(left.input, "imageIndex");
+  const rightImageIndex = getNumberField(right.input, "imageIndex");
+
+  if (leftImageIndex !== null && rightImageIndex !== null && leftImageIndex !== rightImageIndex) {
+    return leftImageIndex - rightImageIndex;
+  }
+
+  if (leftImageIndex !== null && rightImageIndex === null) {
+    return -1;
+  }
+
+  if (leftImageIndex === null && rightImageIndex !== null) {
     return 1;
   }
 
@@ -151,6 +179,7 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
     copywriting: historyRecords.filter((record) => isCopywritingForAnalysis(record, analysisRecord.id)),
     detailPages: historyRecords.filter((record) => isDetailPageForAnalysis(record, analysisRecord.id)).sort(sortDetailPages),
     imageEdits: historyRecords.filter((record) => isImageEditForAnalysis(record, analysisRecord.id, analysisRecord.assetId)),
+    imageSetImages: historyRecords.filter((record) => isImageSetImageForAnalysis(record, analysisRecord.id)).sort(sortImageSetImages),
     sceneImages: historyRecords.filter((record) => isSceneImageForAnalysis(record, analysisRecord.id)),
   };
 }

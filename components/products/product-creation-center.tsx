@@ -106,12 +106,14 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
         copywritingCount={data.copywriting.length}
         detailPageCount={data.detailPages.length}
         imageEditCount={data.imageEdits.length}
+        imageSetCount={data.imageSetImages.length}
         sceneImageCount={data.sceneImages.length}
       />
       <ProductCreationActions />
       <ProductContentPackage data={data} />
       <ProductAssetGallery
         detailPages={data.detailPages}
+        imageSetImages={data.imageSetImages}
         originalAsset={data.originalAsset}
         imageEdits={data.imageEdits}
         sceneImages={data.sceneImages}

@@ -9,6 +9,7 @@ import { useState } from "react";
 type ProductAssetGalleryProps = {
   detailPages: HistoryRecord[];
   imageEdits: HistoryRecord[];
+  imageSetImages: HistoryRecord[];
   originalAsset: ProductCreationCenterAsset | null;
   sceneImages: HistoryRecord[];
 };
@@ -68,6 +69,36 @@ function getDetailPageInfo(record: HistoryRecord) {
   return {
     label: pageIndex ? `第 ${pageIndex} 张` : "详情页",
     title: [sectionTitle, headline].filter(Boolean).join(" · ") || record.title,
+  };
+}
+
+const IMAGE_SET_TYPE_LABELS: Record<string, string> = {
+  "brand-story": "品牌故事图",
+  comparison: "对比图",
+  cta: "总结 / 购买理由图",
+  "detail-closeup": "商品细节图",
+  "four-grid-detail": "四宫格细节图",
+  hero: "首屏主视觉",
+  "model-wearing": "人物 / 模特图",
+  "multi-angle": "多角度图",
+  "selling-point": "核心卖点图",
+  "size-spec": "尺寸 / 参数图",
+  "usage-scene": "使用场景图",
+  "white-background": "白底主图",
+};
+
+function getImageSetInfo(record: HistoryRecord) {
+  const image = getObjectField(record.output, "image") || getObjectField(record.input, "image");
+  const imageIndex = getNumberField(record.input, "imageIndex") ?? getNumberField(image, "imageIndex");
+  const imageType = getStringField(record.input, "imageType") || getStringField(image, "imageType");
+  const title = getStringField(image, "title");
+  const headline = getStringField(image, "headline");
+  const keyMessage = getStringField(image, "keyMessage");
+  const typeLabel = IMAGE_SET_TYPE_LABELS[imageType] || imageType || "套图";
+
+  return {
+    label: imageIndex ? `第 ${imageIndex} 张` : "套图",
+    title: [typeLabel, title || headline || keyMessage].filter(Boolean).join(" · ") || record.title,
   };
 }
 
@@ -155,7 +186,7 @@ function AssetGroup({
   );
 }
 
-export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sceneImages }: ProductAssetGalleryProps) {
+export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, originalAsset, sceneImages }: ProductAssetGalleryProps) {
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const originalAssets = originalAsset
     ? [
@@ -197,7 +228,19 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
       url: getOutputUrl(record.output),
     };
   });
-  const totalAssets = originalAssets.length + imageEditAssets.length + sceneImageAssets.length + detailPageAssets.length;
+  const imageSetAssets = imageSetImages.map((record) => {
+    const imageSetInfo = getImageSetInfo(record);
+
+    return {
+      downloadFilename: buildImageDownloadFilename("image-set", [imageSetInfo.label, imageSetInfo.title]),
+      id: record.id,
+      label: imageSetInfo.label,
+      previewUrl: record.previewUrl,
+      title: imageSetInfo.title,
+      url: getOutputUrl(record.output),
+    };
+  });
+  const totalAssets = originalAssets.length + imageEditAssets.length + sceneImageAssets.length + detailPageAssets.length + imageSetAssets.length;
 
   return (
     <div className="product-asset-gallery">
@@ -211,6 +254,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, originalAsset, sc
         <AssetGroup assets={imageEditAssets} emptyText="还没有生成原图优化结果。" onPreview={setSelectedImage} title="优化图" />
         <AssetGroup assets={sceneImageAssets} emptyText="还没有生成营销场景图。" onPreview={setSelectedImage} title="场景图" />
         {detailPageAssets.length ? <AssetGroup assets={detailPageAssets} emptyText="" onPreview={setSelectedImage} title="商品详情页" /> : null}
+        {imageSetAssets.length ? <AssetGroup assets={imageSetAssets} emptyText="" onPreview={setSelectedImage} title="商品套图" /> : null}
       </div>
 
       {selectedImage ? <ImageLightbox alt={selectedImage.alt} imageUrl={selectedImage.url} title={selectedImage.title} onClose={() => setSelectedImage(null)} /> : null}
