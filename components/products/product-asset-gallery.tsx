@@ -18,6 +18,7 @@ type GalleryAsset = {
   downloadFilename: string;
   id: string;
   label: string;
+  meta?: string;
   previewUrl?: string | null;
   title: string;
   url: string;
@@ -98,6 +99,7 @@ function getImageSetInfo(record: HistoryRecord) {
 
   return {
     label: imageIndex ? `第 ${imageIndex} 张` : "套图",
+    meta: typeLabel,
     title: [typeLabel, title || headline || keyMessage].filter(Boolean).join(" · ") || record.title,
   };
 }
@@ -105,6 +107,7 @@ function getImageSetInfo(record: HistoryRecord) {
 function AssetTile({
   label,
   downloadFilename,
+  meta,
   onPreview,
   previewUrl,
   title,
@@ -112,6 +115,7 @@ function AssetTile({
 }: {
   downloadFilename: string;
   label: string;
+  meta?: string;
   onPreview: (image: SelectedImage) => void;
   previewUrl?: string | null;
   title: string;
@@ -121,7 +125,7 @@ function AssetTile({
   const lightboxUrl = url || displayUrl;
 
   return (
-    <article className="product-asset-tile">
+    <article className="product-asset-tile product-asset-card">
       <div className="product-asset-media">
         {displayUrl ? (
           <button
@@ -136,35 +140,47 @@ function AssetTile({
         ) : (
           <span>暂无预览</span>
         )}
+        <span className="product-asset-type-badge">{label}</span>
         {lightboxUrl ? (
           <div className="product-asset-download" onClick={(event) => event.stopPropagation()}>
             <ImageDownloadButton className="product-asset-download-button" filename={downloadFilename} imageUrl={lightboxUrl} label="下载" />
           </div>
         ) : null}
       </div>
-      <strong>{label}</strong>
-      <p>{title}</p>
+      <div className="product-asset-meta">
+        <strong>{label}</strong>
+        <p>{title}</p>
+        {meta ? <span>{meta}</span> : null}
+      </div>
     </article>
   );
 }
 
 function AssetGroup({
   assets,
+  description,
   emptyText,
+  notice,
   onPreview,
   title,
 }: {
   assets: GalleryAsset[];
+  description: string;
   emptyText: string;
+  notice?: string;
   onPreview: (image: SelectedImage) => void;
   title: string;
 }) {
   return (
-    <section className="product-asset-group">
-      <div className="product-asset-group-header">
-        <strong>{title}</strong>
-        <span>{assets.length}</span>
+    <section className="product-asset-group product-asset-section">
+      <div className="product-asset-group-header product-asset-section-header">
+        <div>
+          <strong>{title}</strong>
+          <p className="product-asset-section-description">{description}</p>
+        </div>
+        <span className="product-asset-section-count">{assets.length}</span>
       </div>
+      {notice ? <p className="product-asset-section-notice">{notice}</p> : null}
       {assets.length ? (
         <div className="product-asset-grid">
           {assets.map((asset) => (
@@ -172,6 +188,7 @@ function AssetGroup({
               key={asset.id}
               downloadFilename={asset.downloadFilename}
               label={asset.label}
+              meta={asset.meta}
               onPreview={onPreview}
               previewUrl={asset.previewUrl}
               title={asset.title}
@@ -237,6 +254,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
       label: imageSetInfo.label,
       previewUrl: record.previewUrl,
       title: imageSetInfo.title,
+      meta: imageSetInfo.meta,
       url: getOutputUrl(record.output),
     };
   });
@@ -245,16 +263,51 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
   return (
     <div className="product-asset-gallery">
       <div className="product-asset-gallery-header">
-        <strong>商品素材</strong>
-        <span>{totalAssets} 个素材</span>
+        <div>
+          <strong>商品素材库</strong>
+          <p>这里汇总当前商品生成的原图、优化图、场景图、详情页图和套图素材，可预览或下载单张图片。</p>
+        </div>
+        <span>{totalAssets ? `已生成 ${totalAssets} 张素材` : "等待素材生成"}</span>
       </div>
+      {!totalAssets ? <p className="product-asset-gallery-helper">上传并分析商品后，生成的图片会自动汇总到这里。</p> : null}
 
       <div className="product-asset-groups">
-        <AssetGroup assets={originalAssets} emptyText="暂无原商品图。" onPreview={setSelectedImage} title="原图" />
-        <AssetGroup assets={imageEditAssets} emptyText="还没有生成原图优化结果。" onPreview={setSelectedImage} title="优化图" />
-        <AssetGroup assets={sceneImageAssets} emptyText="还没有生成营销场景图。" onPreview={setSelectedImage} title="场景图" />
-        {detailPageAssets.length ? <AssetGroup assets={detailPageAssets} emptyText="" onPreview={setSelectedImage} title="商品详情页" /> : null}
-        {imageSetAssets.length ? <AssetGroup assets={imageSetAssets} emptyText="" onPreview={setSelectedImage} title="商品套图" /> : null}
+        <AssetGroup
+          assets={originalAssets}
+          description="商品分析和生成任务的基础图片。"
+          emptyText="暂无原商品图。"
+          onPreview={setSelectedImage}
+          title="原商品图"
+        />
+        <AssetGroup
+          assets={imageEditAssets}
+          description="用于保留商品主体的基础美化与电商展示。"
+          emptyText="暂无优化图，可前往「图片」Tab 生成。"
+          onPreview={setSelectedImage}
+          title="优化图"
+        />
+        <AssetGroup
+          assets={sceneImageAssets}
+          description="用于营销场景、使用环境和氛围展示。"
+          emptyText="暂无场景图，可前往「场景」Tab 生成。"
+          onPreview={setSelectedImage}
+          title="场景图"
+        />
+        <AssetGroup
+          assets={detailPageAssets}
+          description="用于商品详情页的卖点、细节和购买理由展示。"
+          emptyText="暂无详情页图，可前往「详情页」Tab 生成。"
+          onPreview={setSelectedImage}
+          title="详情页图"
+        />
+        <AssetGroup
+          assets={imageSetAssets}
+          description="用于上架、详情页、社媒或平台 Listing 的成套图片。"
+          emptyText="暂无商品套图，可前往「套图」Tab 生成。"
+          notice={imageSetAssets.length ? "套图已生成，可单张预览或下载。后续可在「导出」Tab 汇总为商品素材包。" : undefined}
+          onPreview={setSelectedImage}
+          title="商品套图"
+        />
       </div>
 
       {selectedImage ? <ImageLightbox alt={selectedImage.alt} imageUrl={selectedImage.url} title={selectedImage.title} onClose={() => setSelectedImage(null)} /> : null}

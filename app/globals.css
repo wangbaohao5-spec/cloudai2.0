@@ -4490,7 +4490,7 @@ h3 {
 
 .product-asset-gallery {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   border-top: 1px solid var(--card-border);
   padding-top: 20px;
 }
@@ -4500,16 +4500,50 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  background: var(--workspace-surface);
+  box-shadow: var(--shadow);
 }
 
 .product-asset-gallery-header strong {
   color: var(--text);
+  font-size: 1rem;
+}
+
+.product-asset-gallery-header p {
+  max-width: 660px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
 }
 
 .product-asset-gallery-header span,
-.product-asset-empty {
+.product-asset-gallery-helper,
+.product-asset-empty,
+.product-asset-section-description,
+.product-asset-section-notice {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.product-asset-gallery-header span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.product-asset-gallery-helper {
+  margin: 0;
 }
 
 .product-asset-grid {
@@ -4526,6 +4560,10 @@ h3 {
 .product-asset-group {
   display: grid;
   gap: 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--workspace-surface);
 }
 
 .product-asset-group-header {
@@ -4535,15 +4573,35 @@ h3 {
   gap: 12px;
 }
 
-.product-asset-group-header strong {
-  color: var(--accent);
-  font-size: 0.9rem;
+.product-asset-group-header > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
-.product-asset-group-header span {
+.product-asset-group-header strong {
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
+.product-asset-section-description,
+.product-asset-section-notice {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.product-asset-section-notice {
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 9px 11px;
+  background: var(--surface);
+}
+
+.product-asset-group-header span,
+.product-asset-section-count {
   display: grid;
-  min-width: 26px;
-  height: 26px;
+  min-width: 30px;
+  height: 30px;
   place-items: center;
   border: 1px solid var(--card-border);
   border-radius: 999px;
@@ -4555,12 +4613,16 @@ h3 {
 
 .product-asset-tile {
   display: grid;
-  gap: 9px;
+  gap: 10px;
   min-width: 0;
   border: 1px solid var(--card-border);
   border-radius: 18px;
   padding: 10px;
   background: var(--workspace-surface);
+}
+
+.product-asset-card {
+  align-content: start;
 }
 
 .product-asset-media {
@@ -4574,22 +4636,49 @@ h3 {
   background: var(--card);
 }
 
+.product-asset-preview-button {
+  min-height: 0;
+}
+
 .product-asset-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.product-asset-preview-button {
-  min-height: 0;
+.product-asset-type-badge {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  left: 10px;
+  max-width: calc(100% - 20px);
+  overflow: hidden;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: color-mix(in srgb, var(--card) 76%, transparent);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  backdrop-filter: blur(14px);
 }
 
-.product-asset-tile strong {
+.product-asset-meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.product-asset-tile strong,
+.product-asset-meta strong {
   color: var(--accent);
   font-size: 0.82rem;
 }
 
-.product-asset-tile p {
+.product-asset-tile p,
+.product-asset-meta p {
   margin: 0;
   overflow: hidden;
   color: var(--text);
@@ -4597,6 +4686,23 @@ h3 {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.product-asset-meta span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-asset-empty {
+  margin: 0;
+  border: 1px dashed var(--card-border);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--surface);
+  line-height: 1.6;
 }
 
 .product-asset-download {
@@ -6720,6 +6826,21 @@ h3 {
 
   .product-image-set-plan-entry .button {
     width: 100%;
+  }
+
+  .product-asset-gallery-header,
+  .product-asset-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .product-asset-gallery-header span,
+  .product-asset-section-count {
+    align-self: flex-start;
+  }
+
+  .product-asset-grid {
+    grid-template-columns: 1fr;
   }
 
   .product-image-set-batch-toolbar {
