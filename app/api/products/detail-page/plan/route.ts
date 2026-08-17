@@ -1,4 +1,4 @@
-import { generateAIResponse } from "@/lib/ai/text-router";
+import { generateText } from "@/lib/ai/text-router";
 import {
   buildProductDetailPagePlanPrompt,
   type ProductDetailPageCount,
@@ -175,16 +175,18 @@ export async function POST(request: Request) {
       productTitle: analysisRecord.title,
       style,
     });
-    const response = await generateAIResponse(
-      [
+    const response = await generateText({
+      messages: [
         {
           role: "system",
           content: "你是 CloudAI 的电商详情页规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
         },
         { role: "user", content: prompt },
       ],
-      { jsonMode: true, temperature: 0.62 },
-    );
+      jsonMode: true,
+      task: "detail-page-plan",
+      temperature: 0.62,
+    });
     const plan = normalizePlan(parseJsonResponse(response), count);
 
     return NextResponse.json({

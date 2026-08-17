@@ -1,4 +1,4 @@
-import { generateAIResponse } from "@/lib/ai/text-router";
+import { generateText } from "@/lib/ai/text-router";
 import {
   buildProductImageSetPlanPrompt,
   type ProductImageSetCount,
@@ -176,16 +176,18 @@ export async function POST(request: Request) {
       productTitle: analysisRecord.title,
       purpose,
     });
-    const response = await generateAIResponse(
-      [
+    const response = await generateText({
+      messages: [
         {
           role: "system",
           content: "你是 CloudAI 的电商商品套图规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
         },
         { role: "user", content: prompt },
       ],
-      { jsonMode: true, temperature: 0.62 },
-    );
+      jsonMode: true,
+      task: "image-set-plan",
+      temperature: 0.62,
+    });
     const plan = normalizePlan(parseJsonResponse(response), purpose, count);
 
     return NextResponse.json(plan);

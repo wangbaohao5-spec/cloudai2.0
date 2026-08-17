@@ -2,7 +2,7 @@ import type { AIMessage, AIProvider, GenerateAIResponseOptions } from "@/lib/ai/
 import { getRequiredEnv } from "@/lib/server-env";
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
-const DEEPSEEK_MODEL = "deepseek-v4-pro";
+const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-pro";
 
 type DeepSeekResponse = {
   choices?: Array<{
@@ -33,6 +33,7 @@ function getCauseSummary(error: unknown) {
 export const deepseekProvider: AIProvider = {
   async generateAIResponse(messages: AIMessage[], options: GenerateAIResponseOptions = {}) {
     const apiKey = getRequiredEnv("DEEPSEEK_API_KEY");
+    const model = options.model || DEFAULT_DEEPSEEK_MODEL;
 
     let response: Response;
 
@@ -44,7 +45,7 @@ export const deepseekProvider: AIProvider = {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
+          model,
           messages,
           temperature: options.temperature ?? 0.7,
           response_format: options.jsonMode ? { type: "json_object" } : undefined,
@@ -55,7 +56,7 @@ export const deepseekProvider: AIProvider = {
         cause: getCauseSummary(error),
         endpoint: DEEPSEEK_API_URL,
         errorMessage: error instanceof Error ? error.message : String(error),
-        model: DEEPSEEK_MODEL,
+        model,
         provider: "deepseek",
       });
 
@@ -67,7 +68,7 @@ export const deepseekProvider: AIProvider = {
     if (!response.ok) {
       console.error("[deepseek-text] http error", {
         endpoint: DEEPSEEK_API_URL,
-        model: DEEPSEEK_MODEL,
+        model,
         provider: "deepseek",
         responseBody: JSON.stringify(data || {}).slice(0, 800),
         status: response.status,
@@ -82,7 +83,7 @@ export const deepseekProvider: AIProvider = {
     if (!content) {
       console.error("[deepseek-text] invalid response", {
         endpoint: DEEPSEEK_API_URL,
-        model: DEEPSEEK_MODEL,
+        model,
         provider: "deepseek",
       });
 

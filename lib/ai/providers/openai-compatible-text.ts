@@ -39,7 +39,7 @@ export const openAICompatibleTextProvider: AIProvider = {
   async generateAIResponse(messages: AIMessage[], options: GenerateAIResponseOptions = {}) {
     const apiKey = getRequiredEnv("OPENAI_TEXT_API_KEY");
     const baseUrl = getRequiredEnv("OPENAI_TEXT_BASE_URL");
-    const model = getOpenAICompatibleTextModelId();
+    const model = options.model || getOpenAICompatibleTextModelId();
     const endpoint = getChatCompletionsEndpoint(baseUrl);
 
     let response: Response;
