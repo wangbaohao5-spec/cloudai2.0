@@ -3043,6 +3043,15 @@ h3 {
   line-height: 1.5;
 }
 
+.product-generation-cost-hint.is-info {
+  background: var(--surface);
+}
+
+.product-generation-cost-hint.is-warning {
+  border-color: var(--warning-border, var(--workspace-border));
+  background: var(--warning-bg, var(--workspace-surface));
+}
+
 .product-generation-cost-hint.compact {
   padding: 10px 12px;
 }
@@ -3078,6 +3087,54 @@ h3 {
   margin: 0;
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.product-generation-cost-hint .product-generation-cost-warning {
+  color: var(--warning-text, var(--accent));
+  font-weight: 800;
+}
+
+.product-generation-action-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.product-quota-summary {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--workspace-surface);
+}
+
+.product-quota-summary div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-quota-summary span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.product-quota-summary strong {
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 0.8rem;
+}
+
+.product-quota-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
 }
 
 .product-detail-page-panel,

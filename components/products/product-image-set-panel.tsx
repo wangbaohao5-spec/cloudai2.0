@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductImageSetPlanPreview, type ProductImageSetImageResult } from "@/components/products/product-image-set-plan-preview";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
@@ -364,6 +365,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
       </div>
 
       <div className="product-image-set-plan-entry">
+        <ProductGenerationCostHint compact type="image-set" estimatedCost={0} label="规划不会消耗图片额度" />
         <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet} type="button" onClick={() => void handleGeneratePlan()}>
           {isPlanning ? (
             <>
@@ -397,6 +399,18 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
                   {pendingCount && !isFullSetGenerated ? <span>待生成：{pendingCount}</span> : null}
                   <span>预计剩余消耗：{imageSetCostEstimate.imageCount} 张图片额度</span>
                 </div>
+                <ProductGenerationCostHint
+                  compact
+                  type="image-set"
+                  estimatedCost={imageSetCostEstimate.imageCount}
+                  imageCount={imageSetCostEstimate.imageCount}
+                  label={
+                    imageSetCostEstimate.imageCount
+                      ? `预计还需消耗 ${imageSetCostEstimate.imageCount} 张图片额度`
+                      : "当前没有待生成图片"
+                  }
+                  description={imageSetCostEstimate.imageCount ? "已生成的图片不会重复生成，实际记录以用量中心为准。" : "整套图片已生成完成。"}
+                />
                 <strong>{getSummaryMessage()}</strong>
                 {retryFailedCostEstimate ? <span>重试失败项预计消耗 {retryFailedCostEstimate.imageCount} 张图片额度。</span> : null}
               </div>

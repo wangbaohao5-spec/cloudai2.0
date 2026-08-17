@@ -137,7 +137,12 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
           />
         </label>
 
-        <ProductGenerationCostHint compact label="生成优化图将消耗 1 张图片额度" description="生成前请确认优化 Prompt 和商品保真要求。" />
+        <ProductGenerationCostHint
+          compact
+          type="image-edit"
+          label="预计消耗 1 张图片额度"
+          description="生成前请确认优化 Prompt 和商品保真要求；实际记录以用量中心为准。"
+        />
         <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
           {isGenerating ? (
             <>

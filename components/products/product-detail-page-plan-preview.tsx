@@ -128,7 +128,12 @@ export function ProductDetailPagePlanPreview({
             {error ? <p className="image-generation-error">{error}</p> : null}
 
             <div className="product-detail-plan-card-actions">
-              <ProductGenerationCostHint compact label="生成这张详情图将消耗 1 张图片额度" description="生成前请确认页面文案、保真模式和商品细节要求。" />
+              <ProductGenerationCostHint
+                compact
+                type="detail-page"
+                label="生成这张详情图预计消耗 1 张图片额度"
+                description="生成前请确认页面文案、保真模式和商品细节要求；实际记录以用量中心为准。"
+              />
               <button className="button secondary" disabled={isGenerating} type="button" onClick={() => onGeneratePage?.(page)}>
                 {isGenerating ? (
                   <>

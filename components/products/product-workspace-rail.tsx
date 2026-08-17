@@ -162,6 +162,14 @@ export function ProductWorkspaceRail({
         <strong>{status.label}</strong>
       </div>
 
+      <section className="product-quota-summary" aria-label="图片额度状态">
+        <div>
+          <span>图片额度</span>
+          <strong>内测额度</strong>
+        </div>
+        <p>当前为内测版本，图片额度以用量中心实际记录为准。生成入口会提示预计消耗。</p>
+      </section>
+
       {creationCenterData ? (
         <div className="product-workspace-progress-wrap">
           <ProductCreationProgress

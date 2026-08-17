@@ -218,7 +218,12 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, onGene
           </div>
         </fieldset>
 
-        <ProductGenerationCostHint compact label="生成场景图将消耗 1 张图片额度" description="生成前请确认场景、平台、风格和保真模式。" />
+        <ProductGenerationCostHint
+          compact
+          type="scene-image"
+          label="预计消耗 1 张图片额度"
+          description="生成前请确认场景、平台、风格和保真模式；实际记录以用量中心为准。"
+        />
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
           {isGenerating ? (
             <>

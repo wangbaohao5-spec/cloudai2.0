@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductDetailPagePlanPreview, type DetailPageImageResult } from "@/components/products/product-detail-page-plan-preview";
+import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type {
   ProductDetailPageCount,
@@ -227,16 +228,19 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
         </fieldset>
       </div>
 
-      <button className="button primary" disabled={isPlanning || generatingPageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
-        {isPlanning ? (
-          <>
-            <AiThinkingLoading size="sm" />
-            正在规划详情页...
-          </>
-        ) : (
-          "生成详情页规划"
-        )}
-      </button>
+      <div className="product-generation-action-stack">
+        <ProductGenerationCostHint compact type="detail-page" estimatedCost={0} label="规划不会消耗图片额度" />
+        <button className="button primary" disabled={isPlanning || generatingPageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
+          {isPlanning ? (
+            <>
+              <AiThinkingLoading size="sm" />
+              正在规划详情页...
+            </>
+          ) : (
+            "生成详情页规划"
+          )}
+        </button>
+      </div>
 
       {error ? <p className="image-generation-error">{error}</p> : null}
 

@@ -4,6 +4,8 @@ export type ProductGenerationCostEstimate = {
   description: string;
 };
 
+export type ProductGenerationCostType = "detail-page" | "image" | "image-edit" | "image-set" | "scene-image";
+
 export function getSingleImageCostEstimate(label = "预计消耗 1 张图片额度"): ProductGenerationCostEstimate {
   return {
     imageCount: 1,

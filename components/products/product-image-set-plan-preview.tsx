@@ -211,7 +211,12 @@ export function ProductImageSetPlanPreview({
             ) : null}
 
             <div className="product-image-set-plan-footer">
-              <ProductGenerationCostHint compact label="生成这张套图将消耗 1 张图片额度" description="生成前请确认画面建议、必须保留和避免改动内容。" />
+              <ProductGenerationCostHint
+                compact
+                type="image-set"
+                label="生成这张图预计消耗 1 张图片额度"
+                description="生成前请确认画面建议、必须保留和避免改动内容；实际记录以用量中心为准。"
+              />
               <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
               <button className="button secondary" type="button" disabled={isGenerating || isGenerationDisabled} onClick={() => onGenerateImage?.(image)}>
                 {isGenerating ? (
