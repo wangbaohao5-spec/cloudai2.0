@@ -279,7 +279,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-imageSet"
         role="tabpanel"
       >
-        <ProductImageSetPanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
+        <ProductImageSetPanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} onViewAssets={() => switchTabAndFocus("assets", "product-workspace-panel-assets")} />
       </div>
 
       <div

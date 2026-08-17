@@ -11,6 +11,7 @@ type ProductImageSetPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
   onGenerated?: () => void;
+  onViewAssets?: () => void;
 };
 
 type BatchProgress = {
@@ -57,7 +58,7 @@ function getPurposeLabel(value: ProductImageSetPurpose) {
   return purposeOptions.find((option) => option.value === value)?.label || "商品套图";
 }
 
-export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated }: ProductImageSetPanelProps) {
+export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated, onViewAssets }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetCount>(7);
   const [error, setError] = useState("");
   const [generatingImageIndex, setGeneratingImageIndex] = useState<number | null>(null);
@@ -403,6 +404,11 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
                 {failedCount ? (
                   <button className="button secondary" disabled={isGeneratingSet || isPlanning} type="button" onClick={() => void handleRetryFailedImages()}>
                     重试失败项
+                  </button>
+                ) : null}
+                {isFullSetGenerated && onViewAssets ? (
+                  <button className="button secondary" disabled={isGeneratingSet || isPlanning} type="button" onClick={onViewAssets}>
+                    查看素材库
                   </button>
                 ) : null}
                 <button className="button primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>

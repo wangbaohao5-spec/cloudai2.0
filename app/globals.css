@@ -3442,6 +3442,13 @@ h3 {
 
 .product-image-set-mode-badge {
   flex: 0 0 auto;
+  border: 1px solid var(--card-border);
+  padding: 5px 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  font-size: 0.7rem;
+  font-weight: 850;
+  box-shadow: none;
 }
 
 .product-image-set-plan-card.has-result {
