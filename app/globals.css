@@ -3697,6 +3697,28 @@ h3 {
   background: var(--surface);
 }
 
+.product-image-set-card-error {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--danger);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--danger) 9%, var(--workspace-surface));
+}
+
+.product-image-set-card-error strong {
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.product-image-set-card-error p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .product-detail-plan-card dl,
 .product-image-set-plan-card dl {
   display: grid;
@@ -3797,9 +3819,23 @@ h3 {
     linear-gradient(145deg, var(--card-border), var(--workspace-border)) border-box;
 }
 
+.product-image-set-summary-bar.warning {
+  border-color: var(--warning);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--warning) 10%, var(--workspace-panel)), var(--workspace-surface)) padding-box,
+    linear-gradient(145deg, var(--warning), var(--workspace-border)) border-box;
+}
+
 .product-image-set-batch-toolbar .button {
   min-width: 132px;
   white-space: nowrap;
+}
+
+.product-image-set-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .product-image-set-summary-copy {
@@ -3864,6 +3900,11 @@ h3 {
 .product-image-set-batch-status.complete {
   border-color: var(--selected-border);
   background: var(--surface-hover);
+}
+
+.product-image-set-batch-status.warning {
+  border-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, var(--workspace-surface));
 }
 
 .product-detail-plan-card > p {
@@ -6680,6 +6721,14 @@ h3 {
 
   .product-image-set-batch-toolbar .button {
     width: 100%;
+  }
+
+  .product-image-set-summary-actions {
+    justify-content: stretch;
+  }
+
+  .product-image-set-summary-actions .button {
+    flex: 1 1 100%;
   }
 
   .product-workspace-summary .product-creation-summary {

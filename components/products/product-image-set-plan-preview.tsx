@@ -158,7 +158,7 @@ export function ProductImageSetPlanPreview({
               ) : (
                 <div className="product-image-set-card__placeholder product-image-set-card-placeholder">
                   {isGenerating ? <LongGenerationLoading size="md" /> : <span>{String(image.imageIndex).padStart(2, "0")}</span>}
-                  <strong>{isGenerating ? "正在生成这张图..." : imageTypeLabel}</strong>
+                  <strong>{isGenerating ? `正在生成第 ${image.imageIndex} 张...` : imageTypeLabel}</strong>
                   <p>{image.visualDirection || image.goal || "生成后将在这里显示图片预览。"}</p>
                 </div>
               )}
@@ -203,7 +203,12 @@ export function ProductImageSetPlanPreview({
               </div>
             ) : null}
 
-            {error ? <p className="image-generation-error">{error}</p> : null}
+            {error ? (
+              <div className="product-image-set-card-error" role="status">
+                <strong>{result ? "重新生成失败" : "生成失败"}</strong>
+                <p>失败原因：{error}</p>
+              </div>
+            ) : null}
 
             <div className="product-image-set-plan-footer">
               <ProductGenerationCostHint compact label="生成这张套图将消耗 1 张图片额度" description="生成前请确认画面建议、必须保留和避免改动内容。" />
@@ -216,6 +221,8 @@ export function ProductImageSetPlanPreview({
                   </>
                 ) : result ? (
                   "重新生成这张图"
+                ) : error ? (
+                  "重试这张图"
                 ) : (
                   "生成这张图"
                 )}
