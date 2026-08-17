@@ -19,26 +19,30 @@ type BatchProgress = {
   total: number;
 };
 
-const purposeOptions: Array<{ description: string; label: string; value: ProductImageSetPurpose }> = [
+const purposeOptions: Array<{ description: string; label: string; structure: string[]; value: ProductImageSetPurpose }> = [
   {
     value: "quick-listing",
     label: "快速上架",
-    description: "适合主图、卖点图、场景图、细节图。",
+    description: "适合主图、卖点图、场景图、细节图，快速生成商品上架素材。",
+    structure: ["白底图", "卖点图", "场景图", "细节图"],
   },
   {
     value: "detail-page",
     label: "详情页套图",
-    description: "适合首屏主视觉、核心卖点、使用场景、细节、参数和总结。",
+    description: "适合首屏主视觉、核心卖点、使用场景、商品细节和购买理由。",
+    structure: ["主视觉", "卖点图", "场景图", "细节图", "总结图"],
   },
   {
     value: "social-seeding",
     label: "社媒种草",
-    description: "适合小红书、抖音、朋友圈等内容场景。",
+    description: "适合小红书、抖音、朋友圈等内容种草场景。",
+    structure: ["氛围图", "人物使用图", "生活方式图", "短文案图"],
   },
   {
     value: "platform-listing",
     label: "平台 Listing",
     description: "适合 Amazon / Shopee / TikTok Shop 等跨境或平台商品图。",
+    structure: ["白底图", "多角度图", "参数图", "使用场景图"],
   },
 ];
 
@@ -46,8 +50,12 @@ const countOptions: Array<{ description: string; label: string; value: ProductIm
   { value: 3, label: "3 张", description: "快速测试" },
   { value: 5, label: "5 张", description: "基础套图" },
   { value: 7, label: "7 张", description: "常见商品套图" },
-  { value: 8, label: "8 张", description: "完整详情页 / Listing 结构" },
+  { value: 8, label: "8 张", description: "完整结构" },
 ];
+
+function getPurposeLabel(value: ProductImageSetPurpose) {
+  return purposeOptions.find((option) => option.value === value)?.label || "商品套图";
+}
 
 export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetCount>(7);
@@ -248,15 +256,23 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         <span>只生成规划</span>
       </div>
 
-      <div className="product-image-set-settings">
+      <div className="product-image-set-config product-image-set-settings">
         <fieldset>
           <legend>套图用途</legend>
           <div className="product-image-set-purpose-grid">
             {purposeOptions.map((option) => (
-              <label className={purpose === option.value ? "active" : ""} key={option.value}>
+              <label className={`product-image-set-purpose-card ${purpose === option.value ? "is-active active" : ""}`.trim()} key={option.value}>
                 <input checked={purpose === option.value} name="imageSetPurpose" type="radio" value={option.value} onChange={() => setPurpose(option.value)} />
-                <strong>{option.label}</strong>
+                <span className="product-image-set-purpose-card-header">
+                  <strong>{option.label}</strong>
+                  {purpose === option.value ? <em>当前选择</em> : null}
+                </span>
                 <span>{option.description}</span>
+                <span className="product-image-set-purpose-structure" aria-label={`${option.label}推荐结构`}>
+                  {option.structure.map((item) => (
+                    <i key={item}>{item}</i>
+                  ))}
+                </span>
               </label>
             ))}
           </div>
@@ -264,9 +280,9 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
 
         <fieldset>
           <legend>套图数量</legend>
-          <div className="product-image-set-count-grid">
+          <div className="product-image-set-count-options product-image-set-count-grid">
             {countOptions.map((option) => (
-              <label className={count === option.value ? "active" : ""} key={option.value}>
+              <label className={`product-image-set-count-option ${count === option.value ? "is-active active" : ""}`.trim()} key={option.value}>
                 <input checked={count === option.value} name="imageSetCount" type="radio" value={option.value} onChange={() => handleCountChange(option.value)} />
                 <strong>{option.label}</strong>
                 <span>{option.description}</span>
@@ -276,33 +292,38 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         </fieldset>
       </div>
 
-      <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet} type="button" onClick={() => void handleGeneratePlan()}>
-        {isPlanning ? (
-          <>
-            <AiThinkingLoading size="sm" />
-            正在规划商品套图...
-          </>
-        ) : (
-          "生成套图规划"
-        )}
-      </button>
+      <div className="product-image-set-plan-entry">
+        <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet} type="button" onClick={() => void handleGeneratePlan()}>
+          {isPlanning ? (
+            <>
+              <AiThinkingLoading size="sm" />
+              正在规划商品套图...
+            </>
+          ) : plan ? (
+            "重新生成套图规划"
+          ) : (
+            "生成套图规划"
+          )}
+        </button>
+        <p className="product-image-set-plan-note">CloudAI 会根据商品分析、卖点要求和当前用途，先规划每张图的任务；规划阶段不会生成图片，也不会消耗图片额度。</p>
+      </div>
 
       {error ? <p className="image-generation-error">{error}</p> : null}
 
       {plan ? (
         <>
           {imageSetCostEstimate ? (
-            <div className="product-image-set-batch-toolbar">
+            <div className="product-image-set-summary-bar product-image-set-batch-toolbar">
               <div className="product-image-set-summary-copy">
                 <p>商品套图 · {plan.images.length} 张</p>
-                <strong>
-                  已生成 {generatedCount} / {plan.images.length} 张
-                </strong>
-                <span>
-                  {remainingImages.length
-                    ? `本次将生成 ${remainingImages.length} 张，预计消耗 ${imageSetCostEstimate.imageCount} 张图片额度。已生成的图片不会重复生成。`
-                    : "整套图片已经生成完成，可在素材中查看和下载。"}
-                </span>
+                <div className="product-image-set-summary-metrics">
+                  <span>用途：{getPurposeLabel(plan.purpose)}</span>
+                  <span>
+                    已生成：{generatedCount} / {plan.images.length}
+                  </span>
+                  <span>预计剩余消耗：{imageSetCostEstimate.imageCount} 张图片额度</span>
+                </div>
+                <strong>{remainingImages.length ? "先规划，再生成。每张图片都有明确任务，减少重复和无效生成。" : "整套图片已经生成完成，可在素材中查看和下载。"}</strong>
               </div>
               <button className="button primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>
                 {isGeneratingSet
