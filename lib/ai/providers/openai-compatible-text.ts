@@ -1,10 +1,7 @@
 import type { AIMessage, AIProvider, GenerateAIResponseOptions } from "@/lib/ai/provider";
 import { getRequiredEnv } from "@/lib/server-env";
 
-const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
-const DEEPSEEK_MODEL = "deepseek-v4-pro";
-
-type DeepSeekResponse = {
+type OpenAICompatibleTextResponse = {
   choices?: Array<{
     message?: {
       content?: string;
@@ -30,45 +27,56 @@ function getCauseSummary(error: unknown) {
   };
 }
 
-export const deepseekProvider: AIProvider = {
+function getChatCompletionsEndpoint(baseUrl: string) {
+  return `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+}
+
+export function getOpenAICompatibleTextModelId() {
+  return getRequiredEnv("OPENAI_TEXT_MODEL");
+}
+
+export const openAICompatibleTextProvider: AIProvider = {
   async generateAIResponse(messages: AIMessage[], options: GenerateAIResponseOptions = {}) {
-    const apiKey = getRequiredEnv("DEEPSEEK_API_KEY");
+    const apiKey = getRequiredEnv("OPENAI_TEXT_API_KEY");
+    const baseUrl = getRequiredEnv("OPENAI_TEXT_BASE_URL");
+    const model = getOpenAICompatibleTextModelId();
+    const endpoint = getChatCompletionsEndpoint(baseUrl);
 
     let response: Response;
 
     try {
-      response = await fetch(DEEPSEEK_API_URL, {
+      response = await fetch(endpoint, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
+          model,
           messages,
           temperature: options.temperature ?? 0.7,
           response_format: options.jsonMode ? { type: "json_object" } : undefined,
         }),
       });
     } catch (error) {
-      console.error("[deepseek-text] fetch failed", {
+      console.error("[openai-compatible-text] fetch failed", {
         cause: getCauseSummary(error),
-        endpoint: DEEPSEEK_API_URL,
+        endpoint,
         errorMessage: error instanceof Error ? error.message : String(error),
-        model: DEEPSEEK_MODEL,
-        provider: "deepseek",
+        model,
+        provider: "openai-compatible",
       });
 
       throw new Error("文本生成服务暂时不可用，请稍后重试。");
     }
 
-    const data = (await response.json().catch(() => null)) as DeepSeekResponse | null;
+    const data = (await response.json().catch(() => null)) as OpenAICompatibleTextResponse | null;
 
     if (!response.ok) {
-      console.error("[deepseek-text] http error", {
-        endpoint: DEEPSEEK_API_URL,
-        model: DEEPSEEK_MODEL,
-        provider: "deepseek",
+      console.error("[openai-compatible-text] http error", {
+        endpoint,
+        model,
+        provider: "openai-compatible",
         responseBody: JSON.stringify(data || {}).slice(0, 800),
         status: response.status,
         statusText: response.statusText,
@@ -80,10 +88,10 @@ export const deepseekProvider: AIProvider = {
     const content = data?.choices?.[0]?.message?.content;
 
     if (!content) {
-      console.error("[deepseek-text] invalid response", {
-        endpoint: DEEPSEEK_API_URL,
-        model: DEEPSEEK_MODEL,
-        provider: "deepseek",
+      console.error("[openai-compatible-text] invalid response", {
+        endpoint,
+        model,
+        provider: "openai-compatible",
       });
 
       throw new Error("文本生成服务暂时不可用，请稍后重试。");
@@ -92,7 +100,3 @@ export const deepseekProvider: AIProvider = {
     return content;
   },
 };
-
-export async function generateAIResponse(messages: AIMessage[], options?: GenerateAIResponseOptions) {
-  return deepseekProvider.generateAIResponse(messages, options);
-}

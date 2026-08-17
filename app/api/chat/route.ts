@@ -1,4 +1,5 @@
 import { generateChatReply } from "@/lib/ai/chat";
+import { getTextProviderModelId } from "@/lib/ai/text-router";
 import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "chat",
-      model: "deepseek-v4-pro",
+      model: getTextProviderModelId(),
     });
 
     const reply = await generateChatReply(messages);

@@ -1,4 +1,5 @@
 import { generateCopywriting } from "@/lib/ai/copywriting";
+import { getTextProviderModelId } from "@/lib/ai/text-router";
 import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "copywriting",
-      model: "deepseek-v4-pro",
+      model: getTextProviderModelId(),
     });
 
     const result = await generateCopywriting(data);

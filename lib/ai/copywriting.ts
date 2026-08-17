@@ -1,4 +1,4 @@
-import { generateAIResponse } from "@/lib/ai/deepseek";
+import { generateAIResponse } from "@/lib/ai/text-router";
 import { buildCopywritingPrompt, COPYWRITING_SYSTEM_PROMPT } from "@/lib/prompts";
 import type { CopywritingFormData, CopywritingResult } from "@/lib/types";
 

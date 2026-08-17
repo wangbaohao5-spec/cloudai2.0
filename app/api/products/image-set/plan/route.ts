@@ -1,4 +1,4 @@
-import { generateAIResponse } from "@/lib/ai/deepseek";
+import { generateAIResponse } from "@/lib/ai/text-router";
 import {
   buildProductImageSetPlanPrompt,
   type ProductImageSetCount,
