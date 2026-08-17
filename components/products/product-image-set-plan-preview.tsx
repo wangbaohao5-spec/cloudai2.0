@@ -5,6 +5,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import type { ProductImageSetPlan, ProductImageSetPlanImage } from "@/lib/ai/product-image-set-plan-prompt-builder";
+import type { ReactNode } from "react";
 import { useState } from "react";
 
 type ProductImageSetPlanPreviewProps = {
@@ -44,17 +45,44 @@ const IMAGE_TYPE_LABELS: Partial<Record<ProductImageSetPlanImage["imageType"], s
   "white-background": "白底主图",
 };
 
-function DetailList({ items }: { items: string[] }) {
+const CHIP_LIMIT = 5;
+
+function getNonEmptyItems(items: Array<string | undefined>) {
+  return items.map((item) => item?.trim() || "").filter(Boolean);
+}
+
+function getLimitedItems(items: string[], limit = CHIP_LIMIT) {
+  return {
+    hiddenCount: Math.max(items.length - limit, 0),
+    visibleItems: items.slice(0, limit),
+  };
+}
+
+function ImageSetCardSection({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <section className="product-image-set-card-section">
+      <strong>{title}</strong>
+      {children}
+    </section>
+  );
+}
+
+function ImageSetChipList({ items }: { items: string[] }) {
+  const { hiddenCount, visibleItems } = getLimitedItems(items);
+
   if (!items.length) {
-    return <p>暂无明确要求</p>;
+    return null;
   }
 
   return (
-    <ul>
-      {items.map((item, index) => (
-        <li key={`${item}-${index}`}>{item}</li>
+    <div className="product-image-set-chip-list">
+      {visibleItems.map((item, index) => (
+        <span className="product-image-set-chip" key={`${item}-${index}`}>
+          {item}
+        </span>
       ))}
-    </ul>
+      {hiddenCount ? <span className="product-image-set-chip product-image-set-chip-more">+{hiddenCount} 项</span> : null}
+    </div>
   );
 }
 
@@ -83,13 +111,20 @@ export function ProductImageSetPlanPreview({
         const result = imageResults[image.imageIndex];
         const error = imageErrors[image.imageIndex];
         const imageTypeLabel = getImageTypeLabel(image.imageType);
+        const coreCopyItems = getNonEmptyItems([image.headline, image.subheadline, image.keyMessage]);
+        const keepItems = getNonEmptyItems([...image.requiredElements, ...image.mustKeep]);
+        const avoidItems = getNonEmptyItems(image.avoid);
+        const modeLabel = image.suggestedGenerationMode === "creative" ? "营销创意" : "保真优化";
 
         return (
-          <article className="product-image-set-plan-card" key={`${image.imageIndex}-${image.title}`}>
-            <div className="product-image-set-plan-card-header">
-              <span>第 {image.imageIndex} 张</span>
-              <em>{imageTypeLabel}</em>
-              <i>{image.suggestedGenerationMode === "creative" ? "创意" : "保真"}</i>
+          <article className={`product-image-set-plan-card ${result ? "has-result" : "is-task"}`} key={`${image.imageIndex}-${image.title}`}>
+            <div className="product-image-set-card-header product-image-set-plan-card-header">
+              <div className="product-image-set-card-kicker">
+                <span className="product-image-set-type-badge">
+                  第 {image.imageIndex} 张 · {imageTypeLabel}
+                </span>
+                <i className="product-image-set-mode-badge">{modeLabel}</i>
+              </div>
             </div>
 
             <div className={`product-image-set-card__media product-image-set-card-media ${result ? "has-image" : "is-placeholder"}`}>
@@ -131,42 +166,42 @@ export function ProductImageSetPlanPreview({
 
             <div className="product-image-set-card__body product-image-set-card-body">
               <h3>{image.title}</h3>
-              <p>{image.keyMessage || image.headline || image.goal || "暂无核心信息"}</p>
+              <p>{result ? image.keyMessage || image.headline || "当前显示最近一次生成结果。" : image.goal || image.keyMessage || "暂无任务说明"}</p>
             </div>
 
-            <dl>
-              <div>
-                <dt>目标</dt>
-                <dd>{image.goal || "暂无"}</dd>
+            {!result ? (
+              <div className="product-image-set-card-sections">
+                {image.goal ? (
+                  <ImageSetCardSection title="这张图的任务">
+                    <p>{image.goal}</p>
+                  </ImageSetCardSection>
+                ) : null}
+                {coreCopyItems.length ? (
+                  <ImageSetCardSection title="核心文案">
+                    <div className="product-image-set-copy-stack">
+                      {coreCopyItems.map((item, index) => (
+                        <p key={`${item}-${index}`}>{item}</p>
+                      ))}
+                    </div>
+                  </ImageSetCardSection>
+                ) : null}
+                {image.visualDirection ? (
+                  <ImageSetCardSection title="画面建议">
+                    <p>{image.visualDirection}</p>
+                  </ImageSetCardSection>
+                ) : null}
+                {keepItems.length ? (
+                  <ImageSetCardSection title="必须保留">
+                    <ImageSetChipList items={keepItems} />
+                  </ImageSetCardSection>
+                ) : null}
+                {avoidItems.length ? (
+                  <ImageSetCardSection title="避免改动">
+                    <ImageSetChipList items={avoidItems} />
+                  </ImageSetCardSection>
+                ) : null}
               </div>
-              <div>
-                <dt>核心文案</dt>
-                <dd>{image.headline || image.keyMessage || "暂无"}</dd>
-              </div>
-              <div>
-                <dt>副标题</dt>
-                <dd>{image.subheadline || "暂无"}</dd>
-              </div>
-              <div>
-                <dt>画面建议</dt>
-                <dd>{image.visualDirection || "暂无"}</dd>
-              </div>
-            </dl>
-
-            <div className="product-image-set-plan-lists">
-              <section>
-                <strong>必要元素</strong>
-                <DetailList items={image.requiredElements} />
-              </section>
-              <section>
-                <strong>必须保留</strong>
-                <DetailList items={image.mustKeep} />
-              </section>
-              <section>
-                <strong>避免改动</strong>
-                <DetailList items={image.avoid} />
-              </section>
-            </div>
+            ) : null}
 
             {error ? <p className="image-generation-error">{error}</p> : null}
 
