@@ -18,8 +18,8 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
     <section className="dashboard-section glass-card">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Recent Usage</p>
-          <h2>最近 AI 调用记录</h2>
+          <p className="eyebrow">Recent Quota</p>
+          <h2>最近额度记录</h2>
         </div>
         <span>最近 20 条</span>
       </div>
@@ -33,15 +33,15 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
                 <p>{record.model}</p>
               </div>
               <span>{formatDateTime(record.createdAt)}</span>
-              <em>AI 调用</em>
+              <em>额度使用</em>
             </article>
           ))}
         </div>
       ) : (
         <EmptyState
           icon="📊"
-          title="还没有用量记录"
-          description="完成一次商品分析、文案生成或图片生成后，这里会显示最新调用记录。"
+          title="还没有额度记录"
+          description="完成一次商品分析、文案生成或图片生成后，这里会显示最近使用记录。"
           actionHref="/dashboard/products"
           actionLabel="开始创作商品"
         />

@@ -74,7 +74,7 @@ export function ImageEditShell() {
         <div className="image-edit-panel glass-card">
           <p className="eyebrow">Product Image Edit</p>
           <h2>商品原图优化</h2>
-          <p className="image-generation-intro">上传商品图，选择优化目标，CloudAI 会生成可编辑 Prompt 并调用 GPT-image-2 优化图片。</p>
+          <p className="image-generation-intro">上传商品图，选择优化目标，CloudAI 会生成可编辑 Prompt 并使用 GPT-image-2 优化图片。</p>
           <ImageEditForm
             disabled={isLoading}
             error={error}

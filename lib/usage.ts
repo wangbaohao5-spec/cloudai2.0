@@ -38,7 +38,7 @@ export type UsageCenterData = {
 
 function getRateLimitMessage(type: UsageRecord["type"], retryAfterSeconds: number, windowSeconds: number) {
   if (windowSeconds >= 24 * 60 * 60) {
-    return "今日 AI 调用次数已达上限，请明天再试。";
+    return "今日生成额度已达上限，请明天再试。";
   }
 
   if (type === "video") {

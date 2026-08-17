@@ -141,7 +141,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
           compact
           type="image-edit"
           label="预计消耗 1 张图片额度"
-          description="生成前请确认优化 Prompt 和商品保真要求；实际记录以用量中心为准。"
+          description="生成前请确认优化 Prompt 和商品保真要求；实际记录以额度中心为准。"
         />
         <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
           {isGenerating ? (
@@ -153,7 +153,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
             "优化商品原图"
           )}
         </button>
-        <p className="image-generation-helper">将调用现有图片编辑接口，并继续记录 Usage 和 History。</p>
+        <p className="image-generation-helper">将使用现有图片编辑能力，并继续记录到额度中心和历史记录。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}
       </form>
 

@@ -19,7 +19,7 @@ export function TodayGeneratedSummary({ stats }: TodayGeneratedSummaryProps) {
       <div>
         <p className="eyebrow">今日生成</p>
         <h2>{stats.total}</h2>
-        <p>今日 AI 能力调用总量</p>
+        <p>今日生成额度使用</p>
       </div>
       <div className="today-generated-list">
         {statItems.map((item) => (

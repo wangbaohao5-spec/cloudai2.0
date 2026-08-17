@@ -409,7 +409,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
                       ? `预计还需消耗 ${imageSetCostEstimate.imageCount} 张图片额度`
                       : "当前没有待生成图片"
                   }
-                  description={imageSetCostEstimate.imageCount ? "已生成的图片不会重复生成，实际记录以用量中心为准。" : "整套图片已生成完成。"}
+                  description={imageSetCostEstimate.imageCount ? "已生成的图片不会重复生成，实际记录以额度中心为准。" : "整套图片已生成完成。"}
                 />
                 <strong>{getSummaryMessage()}</strong>
                 {retryFailedCostEstimate ? <span>重试失败项预计消耗 {retryFailedCostEstimate.imageCount} 张图片额度。</span> : null}
@@ -453,7 +453,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
             plan={plan}
             onGenerateImage={(image) => void handleGenerateImage(image)}
           />
-          <p className="product-image-set-note">整套生成会按顺序逐张调用现有图片生成接口；失败项可稍后单独重新生成。</p>
+          <p className="product-image-set-note">整套生成会按顺序逐张使用现有图片生成能力；失败项可稍后单独重新生成。</p>
         </>
       ) : (
         <div className="product-image-set-placeholder">

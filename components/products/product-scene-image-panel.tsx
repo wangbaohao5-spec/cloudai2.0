@@ -222,7 +222,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, onGene
           compact
           type="scene-image"
           label="预计消耗 1 张图片额度"
-          description="生成前请确认场景、平台、风格和保真模式；实际记录以用量中心为准。"
+          description="生成前请确认场景、平台、风格和保真模式；实际记录以额度中心为准。"
         />
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
           {isGenerating ? (
@@ -234,7 +234,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, onGene
             "生成商品营销场景图"
           )}
         </button>
-        <p className="image-generation-helper">将调用商品场景图接口，并继续记录 Usage 和 History。</p>
+        <p className="image-generation-helper">将使用商品场景图生成能力，并继续记录到额度中心和历史记录。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}
       </form>
 

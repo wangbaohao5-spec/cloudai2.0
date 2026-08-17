@@ -30,7 +30,7 @@ export const dashboardNavSections: DashboardNavSection[] = [
     label: "管理",
     items: [
       { label: "历史记录", href: "/dashboard/history" },
-      { label: "用量中心", href: "/dashboard/usage" },
+      { label: "额度中心", href: "/dashboard/usage" },
     ],
   },
 ];

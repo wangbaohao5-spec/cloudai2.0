@@ -22,8 +22,8 @@ export function UsageSummaryGrid({ summaries }: UsageSummaryGridProps) {
     <section className="usage-stat-panel glass-card">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Usage Today</p>
-          <h2>今日 AI 调用次数</h2>
+          <p className="eyebrow">Quota Today</p>
+          <h2>今日额度使用</h2>
         </div>
         <span>按当前用户统计</span>
       </div>
@@ -35,7 +35,7 @@ export function UsageSummaryGrid({ summaries }: UsageSummaryGridProps) {
               <strong>{summary.today}</strong>
             </div>
             <p>
-              每日限制 {summary.dailyLimit} 次，剩余 {summary.remainingToday} 次
+              今日额度 {summary.dailyLimit} 次，剩余 {summary.remainingToday} 次
             </p>
             <small>{USAGE_LIMITS[summary.type].map((rule) => formatRule(rule.windowSeconds, rule.max)).join(" / ")}</small>
           </article>

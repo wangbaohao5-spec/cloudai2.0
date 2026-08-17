@@ -115,7 +115,7 @@ export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChan
       <button className="button primary" disabled={disabled} type="submit">
         {disabled ? "优化中..." : "优化商品图片"}
       </button>
-      <p className="image-generation-helper">将调用 GPT-image-2 图片编辑能力，并按 image-enhance 类型记录 Usage 和 History。</p>
+      <p className="image-generation-helper">将使用 GPT-image-2 图片编辑能力，并记录到额度中心和历史记录。</p>
       {error ? <p className="image-generation-error">{error}</p> : null}
     </form>
   );

@@ -5,7 +5,7 @@ const quickStartItems = [
   { href: "/dashboard/history", label: "查看历史" },
   { href: "/dashboard/chat", label: "AI 助手" },
   { href: "/dashboard/image", label: "图片工具" },
-  { href: "/dashboard/usage", label: "用量中心" },
+  { href: "/dashboard/usage", label: "额度中心" },
 ];
 
 export function DashboardQuickStart() {

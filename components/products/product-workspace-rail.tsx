@@ -167,7 +167,7 @@ export function ProductWorkspaceRail({
           <span>图片额度</span>
           <strong>内测额度</strong>
         </div>
-        <p>当前为内测版本，图片额度以用量中心实际记录为准。生成入口会提示预计消耗。</p>
+        <p>当前为内测版本，图片额度以额度中心实际记录为准。生成入口会提示预计消耗。</p>
       </section>
 
       {creationCenterData ? (

@@ -14,11 +14,11 @@ export function UsageCenter({ data }: UsageCenterProps) {
   return (
     <section className="usage-center">
       <div className="dashboard-overview-hero glass-card">
-        <p className="eyebrow">Usage Center</p>
-        <h2>用量中心</h2>
-        <p>查看当前账号的 AI 调用次数、每日保护限制和最近调用记录。</p>
+        <p className="eyebrow">Quota Center</p>
+        <h2>额度中心</h2>
+        <p>查看图片、文案、视频和商品分析等能力的额度使用情况。</p>
         <div className="usage-center-hero-meta">
-          <span>今日总调用 {getTotalToday(data)} 次</span>
+          <span>今日已使用 {getTotalToday(data)} 次额度</span>
           <span>更新于 {new Date(data.generatedAt).toLocaleString("zh-CN")}</span>
         </div>
       </div>

@@ -281,7 +281,7 @@ export function ProductWorkflowShell() {
             {isUploading ? "上传中..." : isAnalyzing ? "分析中..." : "分析商品图片"}
           </button>
 
-          <p className="image-generation-helper">分析会消耗 product-analysis 用量，并保存到历史记录。</p>
+          <p className="image-generation-helper">分析会使用商品分析额度，并保存到历史记录。</p>
           {error ? <p className="image-generation-error">{error}</p> : null}
         </div>
 

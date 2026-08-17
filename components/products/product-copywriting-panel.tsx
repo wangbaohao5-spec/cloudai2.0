@@ -408,7 +408,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
             "基于分析生成商品文案"
           )}
         </button>
-        <p className="image-generation-helper">将调用现有商品文案接口，并继续记录 Usage 和 History。</p>
+        <p className="image-generation-helper">将使用现有商品文案能力，并继续记录到额度中心和历史记录。</p>
         {copywritingError ? <p className="image-generation-error">{copywritingError}</p> : null}
       </form>
 
