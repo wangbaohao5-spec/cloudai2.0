@@ -6110,6 +6110,37 @@ h3 {
   grid-column: 1 / -1;
 }
 
+.product-generation-brief-risk {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--surface);
+}
+
+.product-generation-brief-risk h4 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.product-generation-brief-risk p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.product-generation-brief-risk .product-generation-brief-grid {
+  gap: 12px;
+}
+
+.product-generation-brief-risk textarea {
+  min-height: 96px;
+}
+
 .product-generation-brief-actions {
   display: flex;
   flex-wrap: wrap;

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
-import { getProductGenerationBriefFromSession, getProductGenerationBriefSessionKey } from "@/lib/product-generation-brief";
+import { DEFAULT_FORBIDDEN_PRODUCT_CLAIMS, getProductGenerationBriefFromSession, getProductGenerationBriefSessionKey } from "@/lib/product-generation-brief";
 import { useEffect, useMemo, useState } from "react";
 
 type ProductGenerationBriefProps = {
@@ -62,6 +62,12 @@ function itemsToLines(items: string[]) {
 }
 
 function buildBriefFromAnalysis(analysis: ProductImageAnalysis | null): ProductGenerationBrief {
+  const riskConfirmations = {
+    confirmedBrandClaims: "",
+    forbiddenClaims: DEFAULT_FORBIDDEN_PRODUCT_CLAIMS,
+    complianceNotes: "",
+  };
+
   if (!analysis) {
     return {
       avoidChanges: [],
@@ -69,6 +75,7 @@ function buildBriefFromAnalysis(analysis: ProductImageAnalysis | null): ProductG
       extraRequirements: "",
       mustKeepDetails: [],
       productName: "",
+      riskConfirmations,
       styleRequirements: "",
       targetAudience: "",
       usageScenarios: [],
@@ -81,6 +88,7 @@ function buildBriefFromAnalysis(analysis: ProductImageAnalysis | null): ProductG
     extraRequirements: "",
     mustKeepDetails: uniqueItems(compactItems(analysis.mustKeepDetails)),
     productName: getStringField(analysis, ["productName", "suggestedName"]) || analysis.productNameSuggestions?.[0] || "",
+    riskConfirmations,
     styleRequirements: compactItems(analysis.detailPageHints?.visualMood, analysis.visualStyle)[0] || "",
     targetAudience: analysis.targetAudience || "",
     usageScenarios: uniqueItems(compactItems(analysis.detailPageHints?.usageScenes, analysis.scenes)),
@@ -104,6 +112,17 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
   function updateBrief(nextBrief: ProductGenerationBrief) {
     setBrief(nextBrief);
     setStatus("");
+  }
+
+  function updateRiskConfirmations(nextRiskConfirmations: NonNullable<ProductGenerationBrief["riskConfirmations"]>) {
+    updateBrief({
+      ...brief,
+      riskConfirmations: {
+        confirmedBrandClaims: nextRiskConfirmations.confirmedBrandClaims || "",
+        forbiddenClaims: nextRiskConfirmations.forbiddenClaims || "",
+        complianceNotes: nextRiskConfirmations.complianceNotes || "",
+      },
+    });
   }
 
   function handleSave() {
@@ -143,6 +162,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
         <div className="product-generation-brief-summary" aria-label="生成任务书摘要">
           <span>卖点 {brief.coreSellingPoints.length}</span>
           <span>保留 {brief.mustKeepDetails.length}</span>
+          <span>{brief.riskConfirmations?.forbiddenClaims ? "已设置风险限制" : "待确认风险"}</span>
           <span>{brief.styleRequirements ? "已填写风格" : "待补充风格"}</span>
         </div>
       </div>
@@ -217,6 +237,59 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
             onChange={(event) => updateBrief({ ...brief, extraRequirements: event.target.value })}
           />
         </label>
+      </div>
+
+      <div className="product-generation-brief-risk">
+        <div>
+          <h4>风险确认</h4>
+          <p>请确认哪些品牌、授权、认证、材质或功效信息可以使用。未明确提供的信息，CloudAI 会尽量避免自动生成。如果后续生成结果出现风险提示，请回到这里补充或限制相关表述。</p>
+        </div>
+
+        <div className="product-generation-brief-grid">
+          <label className="product-generation-brief-wide">
+            可使用的品牌/授权信息
+            <textarea
+              rows={3}
+              value={brief.riskConfirmations?.confirmedBrandClaims || ""}
+              placeholder="如果确实有官方授权、品牌联名、认证或检测报告，请在这里说明。没有则留空。"
+              onChange={(event) =>
+                updateRiskConfirmations({
+                  ...brief.riskConfirmations,
+                  confirmedBrandClaims: event.target.value,
+                })
+              }
+            />
+          </label>
+
+          <label>
+            禁止生成的表述
+            <textarea
+              rows={3}
+              value={brief.riskConfirmations?.forbiddenClaims || DEFAULT_FORBIDDEN_PRODUCT_CLAIMS}
+              onChange={(event) =>
+                updateRiskConfirmations({
+                  ...brief.riskConfirmations,
+                  forbiddenClaims: event.target.value,
+                })
+              }
+            />
+          </label>
+
+          <label>
+            其它真实性备注
+            <textarea
+              rows={3}
+              value={brief.riskConfirmations?.complianceNotes || ""}
+              placeholder="例如材质、功效、产地、适用人群等需要谨慎表达的内容。"
+              onChange={(event) =>
+                updateRiskConfirmations({
+                  ...brief.riskConfirmations,
+                  complianceNotes: event.target.value,
+                })
+              }
+            />
+          </label>
+        </div>
       </div>
 
       <div className="product-generation-brief-actions">

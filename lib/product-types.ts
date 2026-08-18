@@ -9,6 +9,11 @@ export type ProductGenerationBrief = {
   mustKeepDetails: string[];
   avoidChanges: string[];
   extraRequirements: string;
+  riskConfirmations?: {
+    confirmedBrandClaims?: string;
+    forbiddenClaims?: string;
+    complianceNotes?: string;
+  };
 };
 
 export type ProductImageAnalysis = {

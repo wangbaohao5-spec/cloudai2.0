@@ -4,6 +4,8 @@ const ARRAY_ITEM_LIMIT = 8;
 const SHORT_TEXT_LIMIT = 300;
 const LONG_TEXT_LIMIT = 600;
 
+export const DEFAULT_FORBIDDEN_PRODUCT_CLAIMS = "不要生成官方授权、正品保证、官方认证、国家认证、行业第一、100%、医疗功效等未经确认的内容。";
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
 }
@@ -28,11 +30,16 @@ function sanitizeStringArray(value: unknown, limit = SHORT_TEXT_LIMIT) {
 }
 
 function hasBriefContent(brief: ProductGenerationBrief) {
+  const riskConfirmations = brief.riskConfirmations;
+
   return Boolean(
     brief.productName ||
       brief.targetAudience ||
       brief.styleRequirements ||
       brief.extraRequirements ||
+      riskConfirmations?.confirmedBrandClaims ||
+      riskConfirmations?.forbiddenClaims ||
+      riskConfirmations?.complianceNotes ||
       brief.coreSellingPoints.length ||
       brief.usageScenarios.length ||
       brief.mustKeepDetails.length ||
@@ -49,6 +56,7 @@ export function sanitizeProductGenerationBrief(value: unknown): ProductGeneratio
     return null;
   }
 
+  const riskConfirmations = isRecord(value.riskConfirmations) ? value.riskConfirmations : {};
   const brief: ProductGenerationBrief = {
     productName: sanitizeString(value.productName, 160),
     coreSellingPoints: sanitizeStringArray(value.coreSellingPoints),
@@ -58,6 +66,11 @@ export function sanitizeProductGenerationBrief(value: unknown): ProductGeneratio
     mustKeepDetails: sanitizeStringArray(value.mustKeepDetails),
     avoidChanges: sanitizeStringArray(value.avoidChanges),
     extraRequirements: sanitizeString(value.extraRequirements, LONG_TEXT_LIMIT),
+    riskConfirmations: {
+      confirmedBrandClaims: sanitizeString(riskConfirmations.confirmedBrandClaims, LONG_TEXT_LIMIT),
+      forbiddenClaims: sanitizeString(riskConfirmations.forbiddenClaims, LONG_TEXT_LIMIT) || DEFAULT_FORBIDDEN_PRODUCT_CLAIMS,
+      complianceNotes: sanitizeString(riskConfirmations.complianceNotes, LONG_TEXT_LIMIT),
+    },
   };
 
   return hasBriefContent(brief) ? brief : null;
