@@ -1970,6 +1970,138 @@ h3 {
   line-height: 1.6;
 }
 
+.model-lab-page {
+  display: grid;
+  gap: 24px;
+}
+
+.model-lab-hero,
+.model-test-table-card,
+.model-conclusion-card {
+  border-radius: 28px;
+  padding: 28px;
+}
+
+.model-lab-hero {
+  display: grid;
+  gap: 12px;
+}
+
+.model-lab-hero span,
+.model-conclusion-card span {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.model-lab-hero h1,
+.model-conclusion-card h2 {
+  margin: 0;
+}
+
+.model-lab-hero p,
+.model-lab-section p,
+.model-conclusion-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.model-lab-notice {
+  max-width: 820px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+}
+
+.model-lab-section {
+  display: grid;
+  gap: 16px;
+}
+
+.model-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.model-strategy-card {
+  display: grid;
+  gap: 10px;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.model-strategy-card span {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.model-strategy-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.model-strategy-card p {
+  font-size: 0.9rem;
+}
+
+.model-test-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.model-test-table {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: collapse;
+}
+
+.model-test-table th,
+.model-test-table td {
+  border-bottom: 1px solid var(--card-border);
+  padding: 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.model-test-table th {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.model-test-table td {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.model-test-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.model-score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--accent);
+  background: var(--bg-elevated);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .quick-action-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -6768,6 +6900,7 @@ h3 {
   .usage-stat-grid,
   .usage-type-grid,
   .usage-center-grid,
+  .model-strategy-grid,
   .quick-action-grid {
     grid-template-columns: 1fr;
   }
