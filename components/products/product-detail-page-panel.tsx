@@ -184,8 +184,8 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
     return (
       <section className="product-detail-page-panel glass-card">
         <p className="eyebrow">Detail Page</p>
-        <h2>商品详情页规划</h2>
-        <p className="image-generation-intro">完成商品分析后，可以先规划详情页结构，再用于后续生成图文素材。</p>
+        <h2>详情页素材</h2>
+        <p className="image-generation-intro">完成商品分析后，可以按需规划并生成详情页图片素材。</p>
       </section>
     );
   }
@@ -195,8 +195,8 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Detail Page</p>
-          <h2>商品详情页规划</h2>
-          <p className="image-generation-intro">基于当前商品分析和已生成文案，先规划详情页结构，再用于后续生成图文素材。</p>
+          <h2>详情页素材</h2>
+          <p className="image-generation-intro">基于当前商品分析和生成要求，按需规划详情页图片素材。</p>
         </div>
         <span>规划预览</span>
       </div>

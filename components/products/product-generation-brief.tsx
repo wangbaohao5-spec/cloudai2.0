@@ -61,6 +61,23 @@ function itemsToLines(items: string[]) {
   return items.join("\n");
 }
 
+function renderPreviewItems(items: string[], fallback: string) {
+  const visibleItems = items.slice(0, 3);
+
+  if (!visibleItems.length) {
+    return <span>{fallback}</span>;
+  }
+
+  return (
+    <>
+      {visibleItems.map((item) => (
+        <span key={item}>{item}</span>
+      ))}
+      {items.length > visibleItems.length ? <span>+{items.length - visibleItems.length} 项</span> : null}
+    </>
+  );
+}
+
 function buildBriefFromAnalysis(analysis: ProductImageAnalysis | null): ProductGenerationBrief {
   const riskConfirmations = {
     confirmedBrandClaims: "",
@@ -99,6 +116,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
   const aiBrief = useMemo(() => buildBriefFromAnalysis(analysis), [analysis]);
   const storageKey = getProductGenerationBriefSessionKey(analysisHistoryId);
   const [brief, setBrief] = useState<ProductGenerationBrief>(aiBrief);
+  const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -134,6 +152,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
     window.sessionStorage.setItem(storageKey, JSON.stringify(brief));
     onBriefChange?.(brief);
     setStatus("已保存");
+    setIsEditing(false);
   }
 
   function handleReset() {
@@ -145,6 +164,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
 
     onBriefChange?.(aiBrief);
     setStatus("已重置为 AI 分析结果");
+    setIsEditing(false);
   }
 
   if (!analysis) {
@@ -157,7 +177,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
         <div>
           <p className="eyebrow">Generation Brief</p>
           <h3>商品卖点 & 生成要求</h3>
-          <p>CloudAI 会根据商品分析整理一份生成任务书。你可以补充或修改卖点、风格和必须保留的细节，后续生成图片和详情页时会优先参考这些内容。</p>
+          <p>CloudAI 会根据商品分析整理一份生成任务书。你可以按需编辑卖点、风格和必须保留的细节，后续生成图片和详情页时会优先参考这些内容。</p>
         </div>
         <div className="product-generation-brief-summary" aria-label="生成任务书摘要">
           <span>卖点 {brief.coreSellingPoints.length}</span>
@@ -167,6 +187,50 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
         </div>
       </div>
 
+      {!isEditing ? (
+        <div className="product-generation-brief-compact" id="product-risk-confirmations">
+          <div className="product-generation-brief-compact-main">
+            <div>
+              <span>商品名称</span>
+              <strong>{brief.productName || "待补充商品名称"}</strong>
+            </div>
+            <div>
+              <span>目标用户</span>
+              <p>{brief.targetAudience || "待补充目标用户"}</p>
+            </div>
+            <div>
+              <span>风格要求</span>
+              <p>{brief.styleRequirements || "可按套图、详情页或平台需求补充风格。"}</p>
+            </div>
+          </div>
+
+          <div className="product-generation-brief-preview-grid">
+            <section>
+              <strong>核心卖点</strong>
+              <div>{renderPreviewItems(brief.coreSellingPoints, "暂无卖点，可编辑补充")}</div>
+            </section>
+            <section>
+              <strong>必须保留</strong>
+              <div>{renderPreviewItems(brief.mustKeepDetails, "暂无保真细节，可编辑补充")}</div>
+            </section>
+            <section>
+              <strong>避免改动</strong>
+              <div>{renderPreviewItems(brief.avoidChanges, "暂无限制，可编辑补充")}</div>
+            </section>
+          </div>
+
+          <div className="product-generation-brief-compact-actions">
+            <button className="button primary" type="button" onClick={() => setIsEditing(true)}>
+              编辑生成要求
+            </button>
+            <button className="button ghost" type="button" onClick={handleReset}>
+              重置为 AI 分析结果
+            </button>
+            {status ? <span>{status}</span> : null}
+          </div>
+        </div>
+      ) : (
+        <>
       <div className="product-generation-brief-grid">
         <label>
           商品名称
@@ -299,8 +363,13 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
         <button className="button ghost" type="button" onClick={handleReset}>
           重置为 AI 分析结果
         </button>
+        <button className="button ghost" type="button" onClick={() => setIsEditing(false)}>
+          收起编辑
+        </button>
         {status ? <span>{status}</span> : null}
       </div>
+        </>
+      )}
     </section>
   );
 }

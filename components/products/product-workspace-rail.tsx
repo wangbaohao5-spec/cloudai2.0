@@ -108,7 +108,7 @@ export function ProductWorkspaceRail({
         <p className="image-generation-intro">上传一张商品图，完成分析后在右侧工作区生成素材。</p>
       </div>
 
-      <section className="product-workspace-summary" aria-label="当前商品摘要">
+      <section className="product-workspace-summary" id="product-upload-section" aria-label="当前商品摘要">
         <div className="product-upload-box">
           <label>
             商品图片
@@ -122,6 +122,15 @@ export function ProductWorkspaceRail({
               <p>选择一张商品图片开始创建素材。</p>
             )}
           </div>
+          <details className="product-upload-tips">
+            <summary>上传建议</summary>
+            <ul>
+              <li>商品主体完整，光线清楚</li>
+              <li>尽量正向拍摄，避免严重倾斜</li>
+              <li>避免遮挡、强反光、过暗</li>
+              <li>服装类建议正向或上身清晰</li>
+            </ul>
+          </details>
         </div>
 
         {creationCenterData ? (
@@ -170,6 +179,15 @@ export function ProductWorkspaceRail({
         <p>当前为内测版本，图片额度以额度中心实际记录为准。生成入口会提示预计消耗。</p>
       </section>
 
+      <section className="product-workflow-mini-steps is-compact" aria-label="推荐生成流程">
+        <strong>流程</strong>
+        <div>
+          {["上传", "分析", "生成要求", "套图", "素材库", "导出"].map((step) => (
+            <span key={step}>{step}</span>
+          ))}
+        </div>
+      </section>
+
       {creationCenterData ? (
         <div className="product-workspace-progress-wrap">
           <ProductCreationProgress
@@ -182,37 +200,40 @@ export function ProductWorkspaceRail({
         </div>
       ) : null}
 
-      <div className="product-platform-selector" aria-label="目标平台">
-        <div className="product-creation-section-header">
+      <details className="product-workspace-secondary-settings">
+        <summary>更多设置</summary>
+        <div className="product-platform-selector" aria-label="目标平台">
+          <div className="product-creation-section-header">
+            <div>
+              <strong>目标平台</strong>
+              <span>用于后续模板适配</span>
+            </div>
+          </div>
           <div>
-            <strong>目标平台</strong>
-            <span>用于后续模板适配</span>
+            {platformOptions.map((option) => (
+              <button
+                className={platform === option ? "active" : undefined}
+                key={option}
+                onClick={() => setPlatform(option)}
+                type="button"
+              >
+                {option}
+              </button>
+            ))}
           </div>
         </div>
-        <div>
-          {platformOptions.map((option) => (
-            <button
-              className={platform === option ? "active" : undefined}
-              key={option}
-              onClick={() => setPlatform(option)}
-              type="button"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <div className="product-workspace-future-feature" aria-disabled="true">
-        <div>
-          <strong>详情页生成</strong>
-          <span>预留能力</span>
+        <div className="product-workspace-future-feature" aria-disabled="true">
+          <div>
+            <strong>详情页素材</strong>
+            <span>次级入口</span>
+          </div>
+          <p>详情页图片可在右侧「详情页」Tab 中按规划逐张生成，本区只保留轻量提示。</p>
+          <button disabled type="button">
+            右侧使用
+          </button>
         </div>
-        <p>后续可基于当前分析、文案和图片素材生成完整商品详情页。本阶段仅展示入口，不接入生成流程。</p>
-        <button disabled type="button">
-          即将支持
-        </button>
-      </div>
+      </details>
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>
         {isAnalyzing ? <AiThinkingLoading size="sm" /> : isPrimaryActionLoading ? <LoadingIndicator /> : null}

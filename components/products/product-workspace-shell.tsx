@@ -332,8 +332,11 @@ export function ProductWorkspaceShell() {
         <ProductWorkspaceTabs
           creationCenterData={creationCenterData}
           creationCenterError={creationCenterError}
+          isAnalyzing={isAnalyzing}
           isCreationCenterLoading={isCreationCenterLoading}
           result={result}
+          uploadedAsset={uploadedAsset}
+          onAnalyze={() => void handleAnalyze()}
           onGenerated={handleGenerated}
         />
       </section>

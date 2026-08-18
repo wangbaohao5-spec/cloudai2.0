@@ -1,4 +1,5 @@
 type ProductWorkspaceEmptyAction = {
+  disabled?: boolean;
   label: string;
   onClick: () => void;
   tone?: "primary" | "secondary";
@@ -51,7 +52,13 @@ export function ProductWorkspaceEmptyState({
       {actions.length ? (
         <div className="product-workspace-empty-actions">
           {actions.map((action) => (
-            <button className={`button ${action.tone === "primary" ? "primary" : "secondary"}`} key={action.label} type="button" onClick={action.onClick}>
+            <button
+              className={`button ${action.tone === "primary" ? "primary" : "secondary"}`}
+              disabled={action.disabled}
+              key={action.label}
+              type="button"
+              onClick={action.onClick}
+            >
               {action.label}
             </button>
           ))}
