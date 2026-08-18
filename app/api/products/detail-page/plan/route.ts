@@ -1,4 +1,5 @@
 import { generateText } from "@/lib/ai/text-router";
+import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import {
   buildProductDetailPagePlanPrompt,
   type ProductDetailPageCount,
@@ -188,11 +189,19 @@ export async function POST(request: Request) {
       temperature: 0.62,
     });
     const plan = normalizePlan(parseJsonResponse(response), count);
+    const riskScan = scanProductContentRisk(JSON.stringify(plan));
+
+    console.info("[product-risk-scan]", {
+      source: "detail-page-plan",
+      level: riskScan.level,
+      matches: riskScan.matches,
+    });
 
     return NextResponse.json({
       count,
       style,
       ...plan,
+      riskScan,
     });
   } catch (error) {
     return jsonError(error, "Product detail page plan generation failed.");

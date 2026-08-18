@@ -1,4 +1,5 @@
 import { generateText } from "@/lib/ai/text-router";
+import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import {
   buildProductImageSetPlanPrompt,
   type ProductImageSetCount,
@@ -189,8 +190,18 @@ export async function POST(request: Request) {
       temperature: 0.62,
     });
     const plan = normalizePlan(parseJsonResponse(response), purpose, count);
+    const riskScan = scanProductContentRisk(JSON.stringify(plan));
 
-    return NextResponse.json(plan);
+    console.info("[product-risk-scan]", {
+      source: "image-set-plan",
+      level: riskScan.level,
+      matches: riskScan.matches,
+    });
+
+    return NextResponse.json({
+      ...plan,
+      riskScan,
+    });
   } catch (error) {
     return jsonError(error, "Product image set plan generation failed.");
   }

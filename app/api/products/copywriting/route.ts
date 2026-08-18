@@ -1,4 +1,5 @@
 import { generateCopywriting } from "@/lib/ai/copywriting";
+import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import { getTextProviderModelId } from "@/lib/ai/text-router";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
@@ -58,6 +59,19 @@ export async function POST(request: Request) {
     });
 
     const result = await generateCopywriting(copywritingData, "product-copywriting");
+    const riskScan = scanProductContentRisk(JSON.stringify(result));
+
+    console.info("[product-risk-scan]", {
+      source: "product-copywriting",
+      level: riskScan.level,
+      matches: riskScan.matches,
+    });
+
+    const output = {
+      ...result,
+      riskScan,
+    };
+
     const historyResult = await settleTask(
       saveHistory({
         userId: user.id,
@@ -71,13 +85,13 @@ export async function POST(request: Request) {
           formData: copywritingData,
           analysis: analysisRecord.output,
         },
-        output: result,
+        output,
       }),
     );
     const warnings = [historyResult.error].filter((warning): warning is string => Boolean(warning));
 
     return NextResponse.json({
-      ...result,
+      ...output,
       historyId: historyResult.data?.id,
       warnings: warnings.length ? warnings : undefined,
     });
