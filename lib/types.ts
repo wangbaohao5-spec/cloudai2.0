@@ -1,3 +1,5 @@
+import type { ProductContentRiskScanResult } from "@/lib/ai/product-content-risk-scanner";
+
 export type CopywritingFormData = {
   productName: string;
   productType: string;
@@ -14,6 +16,7 @@ export type CopywritingResult = {
   title: string;
   points: string[];
   description: string;
+  riskScan?: ProductContentRiskScanResult;
   shortVideoScript: string;
 };
 

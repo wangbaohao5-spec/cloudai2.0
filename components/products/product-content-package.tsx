@@ -62,6 +62,22 @@ function formatInlineList(items?: string[]) {
   return visibleItems.length ? visibleItems.join("、") : "暂无";
 }
 
+function formatRiskScanMarkdown(riskScan: CopywritingResult["riskScan"]) {
+  if (!riskScan || riskScan.level === "none") {
+    return "";
+  }
+
+  const keywords = Array.isArray(riskScan.matches)
+    ? Array.from(new Set(riskScan.matches.map((match) => match.keyword).filter(Boolean))).slice(0, 12)
+    : [];
+
+  if (!keywords.length) {
+    return "";
+  }
+
+  return ["### 风险提示", "", "检测到可能需要确认的表述：", formatList(keywords)].join("\n");
+}
+
 function sanitizeFileName(name: string) {
   return name.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() || "商品素材包";
 }
@@ -77,6 +93,8 @@ function buildCopywritingMarkdown(records: HistoryRecord[]) {
         return [`### 文案 ${index + 1}`, `记录：${record.title}`, "内容格式暂无法识别"].join("\n\n");
       }
 
+      const riskScanMarkdown = formatRiskScanMarkdown(record.output.riskScan);
+
       return [
         `### 文案 ${index + 1}：${record.title}`,
         `标题：${record.output.title || "暂无"}`,
@@ -84,7 +102,10 @@ function buildCopywritingMarkdown(records: HistoryRecord[]) {
         formatList(record.output.points),
         `描述：${record.output.description || "暂无"}`,
         `短视频脚本：${record.output.shortVideoScript || "暂无"}`,
-      ].join("\n\n");
+        riskScanMarkdown,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
     })
     .join("\n\n---\n\n");
 }
