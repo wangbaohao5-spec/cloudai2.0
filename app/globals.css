@@ -2511,6 +2511,171 @@ h3 {
   font-weight: 900;
 }
 
+.generation-qa-page {
+  display: grid;
+  gap: 24px;
+}
+
+.generation-qa-hero,
+.generation-qa-table-card,
+.generation-qa-checklist-card {
+  border-radius: 28px;
+  padding: 28px;
+}
+
+.generation-qa-hero {
+  display: grid;
+  gap: 12px;
+}
+
+.generation-qa-hero > span,
+.generation-qa-card > span {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.generation-qa-hero h1,
+.generation-qa-section h2,
+.generation-qa-card h3,
+.generation-qa-checklist-group h3 {
+  margin: 0;
+}
+
+.generation-qa-hero p,
+.generation-qa-section p,
+.generation-qa-card p,
+.generation-qa-checklist-group li {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.generation-qa-notice {
+  max-width: 840px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+}
+
+.generation-qa-section {
+  display: grid;
+  gap: 16px;
+}
+
+.generation-qa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.generation-qa-card {
+  display: grid;
+  gap: 10px;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.generation-qa-card h3,
+.generation-qa-checklist-group h3 {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.generation-qa-card p {
+  font-size: 0.9rem;
+}
+
+.generation-qa-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.generation-qa-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.generation-qa-table th,
+.generation-qa-table td {
+  border-bottom: 1px solid var(--card-border);
+  padding: 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.generation-qa-table th {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.generation-qa-table td {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.generation-qa-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.generation-qa-badge,
+.generation-qa-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.generation-qa-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.generation-qa-checklist {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.generation-qa-checklist-group {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.generation-qa-checklist-group ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.generation-qa-checklist-group li {
+  font-size: 0.86rem;
+}
+
 .quick-action-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -7471,6 +7636,8 @@ h3 {
   .usage-stat-grid,
   .usage-type-grid,
   .usage-center-grid,
+  .generation-qa-grid,
+  .generation-qa-checklist,
   .model-strategy-grid,
   .quick-action-grid {
     grid-template-columns: 1fr;
