@@ -40,6 +40,7 @@ export const deepseekProvider: AIProvider = {
     try {
       console.info("[deepseek] request model", {
         model,
+        requestId: options.requestId || "unknown",
         task: options.task || "default",
       });
 

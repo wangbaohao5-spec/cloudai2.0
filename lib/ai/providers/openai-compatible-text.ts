@@ -48,6 +48,7 @@ export const openAICompatibleTextProvider: AIProvider = {
       console.info("[openai-compatible-text] request model", {
         endpoint,
         model,
+        requestId: options.requestId || "unknown",
         task: options.task || "default",
       });
 

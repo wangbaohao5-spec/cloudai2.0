@@ -8,6 +8,7 @@ export type TextGenerationTask = "copywriting" | "detail-page-plan" | "image-set
 export type GenerateAIResponseOptions = {
   jsonMode?: boolean;
   model?: string;
+  requestId?: string;
   task?: TextGenerationTask;
   temperature?: number;
 };
@@ -65,6 +66,33 @@ type TextProviderConfig = {
 
 function getOptionalTextEnv(name: TextEnvName) {
   return process.env[name]?.trim() || "";
+}
+
+function createTextRequestId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID().slice(0, 8);
+  }
+
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function logTextEnvSnapshot() {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  console.info("[text-router] env snapshot", {
+    COPYWRITING_TEXT_MODEL: getOptionalTextEnv("COPYWRITING_TEXT_MODEL"),
+    COPYWRITING_TEXT_PROVIDER: getOptionalTextEnv("COPYWRITING_TEXT_PROVIDER"),
+    DETAIL_PAGE_PLAN_TEXT_MODEL: getOptionalTextEnv("DETAIL_PAGE_PLAN_TEXT_MODEL"),
+    DETAIL_PAGE_PLAN_TEXT_PROVIDER: getOptionalTextEnv("DETAIL_PAGE_PLAN_TEXT_PROVIDER"),
+    IMAGE_SET_PLAN_TEXT_MODEL: getOptionalTextEnv("IMAGE_SET_PLAN_TEXT_MODEL"),
+    IMAGE_SET_PLAN_TEXT_PROVIDER: getOptionalTextEnv("IMAGE_SET_PLAN_TEXT_PROVIDER"),
+    PRODUCT_COPYWRITING_TEXT_MODEL: getOptionalTextEnv("PRODUCT_COPYWRITING_TEXT_MODEL"),
+    PRODUCT_COPYWRITING_TEXT_PROVIDER: getOptionalTextEnv("PRODUCT_COPYWRITING_TEXT_PROVIDER"),
+    TEXT_MODEL: getOptionalTextEnv("TEXT_MODEL"),
+    TEXT_PROVIDER: getOptionalTextEnv("TEXT_PROVIDER"),
+  });
 }
 
 function normalizeProviderName(provider: string): TextProviderName {
@@ -147,23 +175,26 @@ export function getTextProviderModelId(task?: TextGenerationTask) {
 
 export async function generateAIResponse(messages: AIMessage[], options?: GenerateAIResponseOptions) {
   const config = getRunnableTextProviderConfig(options?.task);
+  const requestId = options?.requestId || createTextRequestId();
 
+  logTextEnvSnapshot();
   console.info("[text-router] resolved model", {
     model: config.model,
     modelSource: config.modelSource,
     provider: config.provider,
     providerSource: config.providerSource,
+    requestId,
     task: config.task || "default",
   });
 
   if (config.provider === "openai-compatible") {
     const { openAICompatibleTextProvider } = await import("@/lib/ai/providers/openai-compatible-text");
 
-    return openAICompatibleTextProvider.generateAIResponse(messages, { ...options, model: config.model });
+    return openAICompatibleTextProvider.generateAIResponse(messages, { ...options, model: config.model, requestId });
   }
 
   const { deepseekProvider } = await import("@/lib/ai/deepseek");
-  return deepseekProvider.generateAIResponse(messages, { ...options, model: config.model });
+  return deepseekProvider.generateAIResponse(messages, { ...options, model: config.model, requestId });
 }
 
 export async function generateText({
