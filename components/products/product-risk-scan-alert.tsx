@@ -1,5 +1,6 @@
 "use client";
 
+import { getRiskCategoryLabel } from "@/lib/ai/product-risk-labels";
 import { getRiskCategorySuggestion } from "@/lib/ai/product-risk-suggestion";
 
 type RiskLevel = "none" | "low" | "medium" | "high";
@@ -24,16 +25,6 @@ const LEVEL_LABELS: Record<Exclude<RiskLevel, "none">, string> = {
   medium: "注意",
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  "absolute-claim": "绝对化宣传",
-  "brand-authorization": "品牌/授权表述",
-  certification: "认证/检测表述",
-  "guarantee-claim": "保证承诺表述",
-  "medical-claim": "医疗/功效表述",
-  "official-claim": "官方身份表述",
-  "sales-claim": "销量/评价表述",
-};
-
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   "absolute-claim": "涉及最好、第一、100%、永久等表达，建议改为更稳妥的描述。",
   "brand-authorization": "涉及品牌授权、联名、官方关系等内容，建议仅在真实可证明时使用。",
@@ -45,10 +36,6 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
 };
 
 const CATEGORY_KEYWORD_LIMIT = 6;
-
-function getRiskCategoryLabel(category: string) {
-  return CATEGORY_LABELS[category] || "需要确认的表述";
-}
 
 function getRiskCategoryDescription(category: string) {
   return CATEGORY_DESCRIPTIONS[category] || "这类表述建议人工确认真实性和可证明性后再使用。";

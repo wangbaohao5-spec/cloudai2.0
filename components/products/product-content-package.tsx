@@ -1,12 +1,20 @@
 "use client";
 
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { getRiskCategoryLabel } from "@/lib/ai/product-risk-labels";
+import type { ProductContentRiskScanResult } from "@/lib/ai/product-content-risk-scanner";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
 import { useMemo, useState } from "react";
 
 type ProductContentPackageProps = {
   data: ProductCreationCenterData;
+};
+
+type RiskSummaryItem = {
+  category: string;
+  keyword: string;
+  sources: Set<string>;
 };
 
 function isCopywritingResult(output: unknown): output is CopywritingResult {
@@ -17,6 +25,16 @@ function isCopywritingResult(output: unknown): output is CopywritingResult {
   const value = output as Partial<CopywritingResult>;
 
   return typeof value.title === "string" || Array.isArray(value.points) || typeof value.description === "string" || typeof value.shortVideoScript === "string";
+}
+
+function isRiskScanResult(value: unknown): value is ProductContentRiskScanResult {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const riskScan = value as Partial<ProductContentRiskScanResult>;
+
+  return typeof riskScan.level === "string" && Array.isArray(riskScan.matches);
 }
 
 function getOutputUrl(output: unknown) {
@@ -76,6 +94,59 @@ function formatRiskScanMarkdown(riskScan: CopywritingResult["riskScan"]) {
   }
 
   return ["### 风险提示", "", "检测到可能需要确认的表述：", formatList(keywords)].join("\n");
+}
+
+function collectRiskScanItems(records: HistoryRecord[], source: string, items: Map<string, RiskSummaryItem>) {
+  records.forEach((record) => {
+    const riskScan = getObjectField(record.output, "riskScan");
+
+    if (!isRiskScanResult(riskScan) || riskScan.level === "none") {
+      return;
+    }
+
+    riskScan.matches.forEach((match) => {
+      if (!match.keyword) {
+        return;
+      }
+
+      const category = match.category || "unknown";
+      const key = `${category}:${match.keyword}`;
+      const existingItem = items.get(key);
+
+      if (existingItem) {
+        existingItem.sources.add(source);
+        return;
+      }
+
+      items.set(key, {
+        category,
+        keyword: match.keyword,
+        sources: new Set([source]),
+      });
+    });
+  });
+}
+
+function buildRiskSummaryMarkdown(data: ProductCreationCenterData) {
+  const items = new Map<string, RiskSummaryItem>();
+
+  collectRiskScanItems(data.copywriting, "商品文案", items);
+  collectRiskScanItems(data.detailPages, "详情页规划", items);
+  collectRiskScanItems(data.imageSetImages, "套图规划", items);
+
+  const summaryItems = Array.from(items.values());
+
+  if (!summaryItems.length) {
+    return "";
+  }
+
+  return [
+    "## 需要确认的表述",
+    "",
+    "检测到以下可能需要人工确认的商品表述，请在发布前核实：",
+    "",
+    summaryItems.map((item) => `- ${item.keyword}（${getRiskCategoryLabel(item.category)}；来源：${Array.from(item.sources).join("、")}）`).join("\n"),
+  ].join("\n");
 }
 
 function sanitizeFileName(name: string) {
@@ -225,6 +296,7 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     title: record.title,
     url: getOutputUrl(record.output),
   }));
+  const riskSummaryMarkdown = buildRiskSummaryMarkdown(data);
 
   return [
     "# 商品素材包",
@@ -233,6 +305,12 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     `- 商品类别：${data.analysis.category || "暂无"}`,
     `- 目标用户：${data.analysis.targetAudience || "暂无"}`,
     "",
+    "## 生成规范说明",
+    "以下内容由 CloudAI 根据商品图片、商品分析结果和用户填写的生成要求辅助生成。发布或上架前，请人工确认品牌授权、材质、成分、功效、认证、检测报告、价格、销量、用户评价等信息真实、准确、可证明。",
+    "",
+    "CloudAI 默认会尽量避免主动生成未经确认的官方授权、正品保证、认证、医疗功效和绝对化宣传，但仍建议在正式使用前进行人工审核。",
+    "",
+    ...(riskSummaryMarkdown ? [riskSummaryMarkdown, ""] : []),
     "## AI 商品分析",
     "### 商品特点",
     formatList(data.analysis.features),
