@@ -4,7 +4,14 @@ import { ProductImageSetPlanPreview, type ProductImageSetImageResult } from "@/c
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { AiThinkingLoading } from "@/components/ui/loading";
-import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
+import type {
+  ProductImageSetCount,
+  ProductImageSetCustomStructure,
+  ProductImageSetPlan,
+  ProductImageSetPlanImage,
+  ProductImageSetPurpose,
+  ProductImageSetStructureMode,
+} from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
 import type { ProductAnalysisResponse, ProductGenerationBrief } from "@/lib/product-types";
 import { useState } from "react";
@@ -71,12 +78,59 @@ const countOptions: Array<{ description: string; label: string; value: ProductIm
   { value: 8, label: "8 张", description: "完整结构" },
 ];
 
+const structureModeOptions: Array<{ description: string; label: string; value: ProductImageSetStructureMode }> = [
+  { value: "smart", label: "智能匹配", description: "CloudAI 自动规划每张图类型。" },
+  { value: "custom", label: "自定义配置", description: "手动设置不同图片类型数量。" },
+];
+
+const customStructureOptions: Array<{ key: keyof ProductImageSetCustomStructure; label: string }> = [
+  { key: "whiteBackground", label: "白底图" },
+  { key: "usageScene", label: "场景图" },
+  { key: "sellingPoint", label: "卖点图" },
+  { key: "detailCloseup", label: "细节图" },
+  { key: "other", label: "其他" },
+];
+
+const customStructureDefaults = {
+  3: { detailCloseup: 0, other: 0, sellingPoint: 1, usageScene: 1, whiteBackground: 1 },
+  5: { detailCloseup: 1, other: 0, sellingPoint: 2, usageScene: 1, whiteBackground: 1 },
+  7: { detailCloseup: 1, other: 1, sellingPoint: 2, usageScene: 2, whiteBackground: 1 },
+  8: { detailCloseup: 2, other: 1, sellingPoint: 2, usageScene: 2, whiteBackground: 1 },
+} satisfies Record<ProductImageSetCount, ProductImageSetCustomStructure>;
+
 function getPurposeLabel(value: ProductImageSetPurpose) {
   return purposeOptions.find((option) => option.value === value)?.label || "商品套图";
 }
 
+function getDefaultCustomStructure(count: ProductImageSetCount): ProductImageSetCustomStructure {
+  return {
+    comparison: 0,
+    sizeSpec: 0,
+    ...customStructureDefaults[count],
+  };
+}
+
+function getCustomStructureTotal(structure: ProductImageSetCustomStructure) {
+  return Object.values(structure).reduce((total, value) => total + (typeof value === "number" ? value : 0), 0);
+}
+
+function formatCustomStructure(structure: ProductImageSetCustomStructure | null) {
+  if (!structure) {
+    return "";
+  }
+
+  return customStructureOptions
+    .map((option) => {
+      const value = structure[option.key] || 0;
+      return value ? `${option.label} ${value}` : "";
+    })
+    .filter(Boolean)
+    .join(" / ");
+}
+
 export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetCount>(7);
+  const [customStructure, setCustomStructure] = useState<ProductImageSetCustomStructure>(() => getDefaultCustomStructure(7));
   const [error, setError] = useState("");
   const [generatingImageIndex, setGeneratingImageIndex] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<number, string>>({});
@@ -85,8 +139,13 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   const [isGeneratingSet, setIsGeneratingSet] = useState(false);
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<ProductImageSetPlan | null>(null);
+  const [plannedCustomStructure, setPlannedCustomStructure] = useState<ProductImageSetCustomStructure | null>(null);
+  const [plannedStructureMode, setPlannedStructureMode] = useState<ProductImageSetStructureMode>("smart");
   const [purpose, setPurpose] = useState<ProductImageSetPurpose>("detail-page");
   const [riskScan, setRiskScan] = useState<ProductRiskScan | null>(null);
+  const [structureMode, setStructureMode] = useState<ProductImageSetStructureMode>("smart");
+  const customStructureTotal = getCustomStructureTotal(customStructure);
+  const isCustomStructureValid = structureMode === "smart" || customStructureTotal === count;
   const remainingImages = plan?.images.filter((image) => !imageResults[image.imageIndex]).sort((left, right) => left.imageIndex - right.imageIndex) || [];
   const failedImages = plan?.images.filter((image) => !imageResults[image.imageIndex] && Boolean(imageErrors[image.imageIndex])).sort((left, right) => left.imageIndex - right.imageIndex) || [];
   const generatedCount = plan ? plan.images.length - remainingImages.length : 0;
@@ -136,16 +195,38 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
 
   function handleCountChange(nextCount: ProductImageSetCount) {
     setCount(nextCount);
+    if (structureMode === "custom") {
+      setCustomStructure(getDefaultCustomStructure(nextCount));
+    }
     setPlan(null);
+    setPlannedCustomStructure(null);
+    setPlannedStructureMode(structureMode);
     setRiskScan(null);
     setImageErrors({});
     setImageResults({});
     setBatchProgress({ completed: 0, failed: 0, total: 0 });
   }
 
+  function handleStructureModeChange(nextMode: ProductImageSetStructureMode) {
+    setStructureMode(nextMode);
+    setError("");
+  }
+
+  function updateCustomStructure(key: keyof ProductImageSetCustomStructure, delta: number) {
+    setCustomStructure((current) => ({
+      ...current,
+      [key]: Math.min(Math.max((current[key] || 0) + delta, 0), 8),
+    }));
+  }
+
   async function handleGeneratePlan() {
     if (!analysisResult?.historyId) {
       setError("请先完成商品分析，再生成套图规划。");
+      return;
+    }
+
+    if (!isCustomStructureValid) {
+      setError(`当前配置共 ${customStructureTotal} 张，请调整为 ${count} 张后再生成规划。`);
       return;
     }
 
@@ -162,8 +243,10 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
           count,
+          customStructure: structureMode === "custom" ? customStructure : undefined,
           generationBrief: generationBrief || undefined,
           purpose,
+          structureMode,
         }),
       });
 
@@ -178,6 +261,8 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         images: Array.isArray(data.images) ? data.images : [],
         purpose: data.purpose,
       });
+      setPlannedCustomStructure(structureMode === "custom" ? customStructure : null);
+      setPlannedStructureMode(structureMode);
       setRiskScan(data.riskScan || null);
       setImageErrors({});
       setImageResults({});
@@ -350,6 +435,23 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
 
       <div className="product-image-set-config product-image-set-settings">
         <fieldset>
+          <legend>结构模式</legend>
+          <div className="product-image-set-mode-switch" role="group" aria-label="套图结构模式">
+            {structureModeOptions.map((option) => (
+              <button
+                className={structureMode === option.value ? "active" : undefined}
+                key={option.value}
+                type="button"
+                onClick={() => handleStructureModeChange(option.value)}
+              >
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>套图用途</legend>
           <div className="product-image-set-purpose-grid">
             {purposeOptions.map((option) => (
@@ -382,11 +484,40 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
             ))}
           </div>
         </fieldset>
+
+        {structureMode === "custom" ? (
+          <fieldset>
+            <legend>自定义结构</legend>
+            <div className="product-image-set-custom-structure">
+              {customStructureOptions.map((option) => {
+                const value = customStructure[option.key] || 0;
+
+                return (
+                  <div className="product-image-set-custom-row" key={option.key}>
+                    <span>{option.label}</span>
+                    <div>
+                      <button type="button" aria-label={`减少${option.label}`} disabled={value <= 0} onClick={() => updateCustomStructure(option.key, -1)}>
+                        -
+                      </button>
+                      <strong>{value}</strong>
+                      <button type="button" aria-label={`增加${option.label}`} disabled={value >= 8} onClick={() => updateCustomStructure(option.key, 1)}>
+                        +
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className={`product-image-set-custom-total ${isCustomStructureValid ? "" : "is-warning"}`.trim()}>
+              当前配置：{customStructureTotal} 张，需与所选张数 {count} 张一致。
+            </p>
+          </fieldset>
+        ) : null}
       </div>
 
       <div className="product-image-set-plan-entry">
         <ProductGenerationCostHint compact type="image-set" estimatedCost={0} label="规划不会消耗图片额度" description="" />
-        <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet} type="button" onClick={() => void handleGeneratePlan()}>
+        <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet || !isCustomStructureValid} type="button" onClick={() => void handleGeneratePlan()}>
           {isPlanning ? (
             <>
               <AiThinkingLoading size="sm" />
@@ -412,6 +543,8 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
                 <p>商品套图 · {plan.images.length} 张</p>
                 <div className="product-image-set-summary-metrics">
                   <span>用途：{getPurposeLabel(plan.purpose)}</span>
+                  <span>模式：{plannedStructureMode === "custom" ? "自定义配置" : "智能匹配"}</span>
+                  {plannedStructureMode === "custom" && plannedCustomStructure ? <span>{formatCustomStructure(plannedCustomStructure)}</span> : null}
                   <span>
                     已生成：{generatedCount} / {plan.images.length}
                   </span>

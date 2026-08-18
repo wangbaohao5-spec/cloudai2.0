@@ -2,11 +2,13 @@ import { generateText } from "@/lib/ai/text-router";
 import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import {
   buildProductImageSetPlanPrompt,
+  type ProductImageSetCustomStructure,
   type ProductImageSetCount,
   type ProductImageSetImageType,
   type ProductImageSetPlan,
   type ProductImageSetPlanImage,
   type ProductImageSetPurpose,
+  type ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
@@ -21,12 +23,16 @@ export const runtime = "nodejs";
 type ProductImageSetPlanRequestBody = {
   analysisHistoryId?: string;
   count?: number;
+  customStructure?: unknown;
   generationBrief?: unknown;
   purpose?: string;
+  structureMode?: string;
 };
 
 const IMAGE_SET_PURPOSES = ["detail-page", "platform-listing", "quick-listing", "social-seeding"] as const;
 const IMAGE_SET_COUNTS = [3, 5, 7, 8] as const;
+const IMAGE_SET_STRUCTURE_MODES = ["custom", "smart"] as const;
+const CUSTOM_STRUCTURE_KEYS = ["comparison", "detailCloseup", "other", "sellingPoint", "sizeSpec", "usageScene", "whiteBackground"] as const;
 const IMAGE_SET_IMAGE_TYPES = [
   "brand-story",
   "comparison",
@@ -51,6 +57,10 @@ function isImageSetCount(value: number): value is ProductImageSetCount {
   return IMAGE_SET_COUNTS.includes(value as ProductImageSetCount);
 }
 
+function isImageSetStructureMode(value: string): value is ProductImageSetStructureMode {
+  return IMAGE_SET_STRUCTURE_MODES.includes(value as ProductImageSetStructureMode);
+}
+
 function isImageSetImageType(value: string): value is ProductImageSetImageType {
   return IMAGE_SET_IMAGE_TYPES.includes(value as ProductImageSetImageType);
 }
@@ -69,6 +79,22 @@ function normalizeStringArray(value: unknown) {
   }
 
   return value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean).slice(0, 8);
+}
+
+function normalizeCustomStructure(value: unknown): ProductImageSetCustomStructure {
+  const source = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const structure: ProductImageSetCustomStructure = {};
+
+  for (const key of CUSTOM_STRUCTURE_KEYS) {
+    const rawValue = Number(source[key] || 0);
+    structure[key] = Number.isFinite(rawValue) ? Math.min(Math.max(Math.trunc(rawValue), 0), 8) : 0;
+  }
+
+  return structure;
+}
+
+function getCustomStructureTotal(structure: ProductImageSetCustomStructure) {
+  return CUSTOM_STRUCTURE_KEYS.reduce((total, key) => total + (structure[key] || 0), 0);
 }
 
 function parseJsonResponse(response: string) {
@@ -142,6 +168,7 @@ export async function POST(request: Request) {
     const analysisHistoryId = body.analysisHistoryId?.trim();
     const purpose = body.purpose?.trim() || "detail-page";
     const count = Number(body.count || 7);
+    const structureModeInput = body.structureMode?.trim() || "smart";
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
 
     if (!analysisHistoryId) {
@@ -154,6 +181,17 @@ export async function POST(request: Request) {
 
     if (!isImageSetCount(count)) {
       return NextResponse.json({ error: "套图数量无效，请选择 3、5、7 或 8 张。" }, { status: 400 });
+    }
+
+    if (!isImageSetStructureMode(structureModeInput)) {
+      return NextResponse.json({ error: "套图结构模式无效，请重新选择。" }, { status: 400 });
+    }
+
+    const structureMode = structureModeInput;
+    const customStructure = structureMode === "custom" ? normalizeCustomStructure(body.customStructure) : null;
+
+    if (customStructure && getCustomStructureTotal(customStructure) !== count) {
+      return NextResponse.json({ error: `自定义结构数量需等于 ${count} 张，请调整后再生成规划。` }, { status: 400 });
     }
 
     const analysisRecord = await getHistoryRecordForUser(user.id, analysisHistoryId);
@@ -173,9 +211,11 @@ export async function POST(request: Request) {
     const prompt = buildProductImageSetPlanPrompt({
       analysis: analysisRecord.output,
       count,
+      customStructure,
       generationBrief,
       productTitle: analysisRecord.title,
       purpose,
+      structureMode,
     });
     const response = await generateText({
       messages: [

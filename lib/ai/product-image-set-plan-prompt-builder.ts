@@ -5,6 +5,16 @@ import type { ProductGenerationBrief, ProductImageAnalysis, ProductVisualGenerat
 
 export type ProductImageSetPurpose = "quick-listing" | "detail-page" | "social-seeding" | "platform-listing";
 export type ProductImageSetCount = 3 | 5 | 7 | 8;
+export type ProductImageSetStructureMode = "custom" | "smart";
+export type ProductImageSetCustomStructure = {
+  comparison?: number;
+  detailCloseup?: number;
+  other?: number;
+  sellingPoint?: number;
+  sizeSpec?: number;
+  usageScene?: number;
+  whiteBackground?: number;
+};
 export type ProductImageSetImageType =
   | "brand-story"
   | "comparison"
@@ -43,9 +53,11 @@ export type ProductImageSetPlan = {
 type ProductImageSetPlanPromptInput = {
   analysis: ProductImageAnalysis;
   count: ProductImageSetCount;
+  customStructure?: ProductImageSetCustomStructure | null;
   generationBrief?: ProductGenerationBrief | null;
   productTitle: string;
   purpose: ProductImageSetPurpose;
+  structureMode?: ProductImageSetStructureMode;
 };
 
 const PURPOSE_GUIDES = {
@@ -97,7 +109,43 @@ function getCountGuide(count: ProductImageSetCount) {
   return "8 张：完整详情页或 Listing 结构，必须形成从吸引点击到解释卖点、展示细节、建立信任、促进转化的完整序列。";
 }
 
-export function buildProductImageSetPlanPrompt({ analysis, count, generationBrief, productTitle, purpose }: ProductImageSetPlanPromptInput) {
+function buildCustomStructurePrompt(customStructure?: ProductImageSetCustomStructure | null) {
+  if (!customStructure) {
+    return "";
+  }
+
+  const rows: Array<[string, number]> = ([
+    ["白底图", customStructure.whiteBackground],
+    ["场景图", customStructure.usageScene],
+    ["卖点图", customStructure.sellingPoint],
+    ["细节图", customStructure.detailCloseup],
+    ["尺寸/参数图", customStructure.sizeSpec],
+    ["对比图", customStructure.comparison],
+    ["其他", customStructure.other],
+  ] as Array<[string, number | undefined]>).filter((row): row is [string, number] => typeof row[1] === "number" && row[1] > 0);
+
+  if (!rows.length) {
+    return "";
+  }
+
+  return [
+    "用户选择了自定义套图结构，请严格按照以下数量规划：",
+    ...rows.map(([label, value]) => `- ${label}：${value} 张`),
+    "硬约束：输出 images 数量必须等于 count，每种 imageType 数量尽量严格匹配用户指定结构，不要擅自改变结构。",
+    "映射建议：白底图使用 white-background；场景图使用 usage-scene 或 model-wearing；卖点图使用 selling-point；细节图使用 detail-closeup 或 four-grid-detail；尺寸/参数图使用 size-spec；对比图使用 comparison。",
+    "other 可以根据商品和用途选择 hero、multi-angle、brand-story、cta、size-spec、comparison 等合适类型。",
+  ].join("\n");
+}
+
+export function buildProductImageSetPlanPrompt({
+  analysis,
+  count,
+  customStructure,
+  generationBrief,
+  productTitle,
+  purpose,
+  structureMode = "smart",
+}: ProductImageSetPlanPromptInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
   const categoryStrategy = getProductCategoryVisualStrategy({
     category: analysis.category,
@@ -133,6 +181,8 @@ export function buildProductImageSetPlanPrompt({ analysis, count, generationBrie
     "",
     `固定用途：${purpose}。`,
     `固定数量：${count} 张。images.length 必须等于 ${count}。`,
+    `结构模式：${structureMode === "custom" ? "自定义配置" : "智能匹配"}。`,
+    structureMode === "custom" ? buildCustomStructurePrompt(customStructure) : "智能匹配模式：请根据商品分析、用途、数量和用户生成要求自动规划每张图类型。",
     "imageIndex 必须从 1 开始连续递增。",
     "允许 imageType：hero、white-background、selling-point、usage-scene、detail-closeup、model-wearing、multi-angle、size-spec、comparison、four-grid-detail、brand-story、cta。",
     "suggestedGenerationMode 只能是 faithful 或 creative。结构敏感、有 Logo/印花/图案/固定外观的商品优先 faithful。",
