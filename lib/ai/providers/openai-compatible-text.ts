@@ -45,6 +45,12 @@ export const openAICompatibleTextProvider: AIProvider = {
     let response: Response;
 
     try {
+      console.info("[openai-compatible-text] request model", {
+        endpoint,
+        model,
+        task: options.task || "default",
+      });
+
       response = await fetch(endpoint, {
         method: "POST",
         headers: {

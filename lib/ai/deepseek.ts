@@ -38,6 +38,11 @@ export const deepseekProvider: AIProvider = {
     let response: Response;
 
     try {
+      console.info("[deepseek] request model", {
+        model,
+        task: options.task || "default",
+      });
+
       response = await fetch(DEEPSEEK_API_URL, {
         method: "POST",
         headers: {

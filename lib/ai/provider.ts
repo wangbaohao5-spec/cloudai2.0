@@ -17,6 +17,7 @@ export type AIProvider = {
 };
 
 type TextProviderName = "deepseek" | "openai-compatible";
+type TextConfigSource = "default" | "fallback" | "global-env" | "provider-default-env" | "task-env";
 
 const DEEPSEEK_MODEL_ID = "deepseek-v4-pro";
 
@@ -56,7 +57,9 @@ const TASK_ENV_MAP = {
 
 type TextProviderConfig = {
   model: string;
+  modelSource: TextConfigSource;
   provider: TextProviderName;
+  providerSource: TextConfigSource;
   task?: TextGenerationTask;
 };
 
@@ -73,13 +76,27 @@ function getTaskTextEnv(task: TextGenerationTask | undefined, field: "model" | "
 }
 
 function getResolvedTextProviderConfig(task?: TextGenerationTask): TextProviderConfig {
-  const provider = normalizeProviderName(getTaskTextEnv(task, "provider") || getOptionalTextEnv("TEXT_PROVIDER"));
-  const configuredModel = getTaskTextEnv(task, "model") || getOptionalTextEnv("TEXT_MODEL");
-  const model = configuredModel || (provider === "openai-compatible" ? getOptionalTextEnv("OPENAI_TEXT_MODEL") : DEEPSEEK_MODEL_ID);
+  const taskProvider = getTaskTextEnv(task, "provider");
+  const globalProvider = getOptionalTextEnv("TEXT_PROVIDER");
+  const provider = normalizeProviderName(taskProvider || globalProvider);
+  const providerSource: TextConfigSource = taskProvider ? "task-env" : globalProvider ? "global-env" : "default";
+  const taskModel = getTaskTextEnv(task, "model");
+  const globalModel = getOptionalTextEnv("TEXT_MODEL");
+  const providerDefaultModel = provider === "openai-compatible" ? getOptionalTextEnv("OPENAI_TEXT_MODEL") : "";
+  const model = taskModel || globalModel || providerDefaultModel || DEEPSEEK_MODEL_ID;
+  const modelSource: TextConfigSource = taskModel
+    ? "task-env"
+    : globalModel
+      ? "global-env"
+      : providerDefaultModel
+        ? "provider-default-env"
+        : "default";
 
   return {
     model,
+    modelSource,
     provider,
+    providerSource,
     task,
   };
 }
@@ -107,7 +124,9 @@ function getRunnableTextProviderConfig(task?: TextGenerationTask): TextProviderC
 
   return {
     model: DEEPSEEK_MODEL_ID,
+    modelSource: "fallback",
     provider: "deepseek",
+    providerSource: "fallback",
     task,
   };
 }
@@ -129,9 +148,11 @@ export function getTextProviderModelId(task?: TextGenerationTask) {
 export async function generateAIResponse(messages: AIMessage[], options?: GenerateAIResponseOptions) {
   const config = getRunnableTextProviderConfig(options?.task);
 
-  console.info("[text-router] selected text provider", {
+  console.info("[text-router] resolved model", {
     model: config.model,
+    modelSource: config.modelSource,
     provider: config.provider,
+    providerSource: config.providerSource,
     task: config.task || "default",
   });
 
