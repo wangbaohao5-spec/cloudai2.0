@@ -17,6 +17,7 @@ type ProductDetailPagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
   onGenerated?: () => void;
+  onOpenRiskConfirmations?: () => void;
 };
 
 type ProductRiskScan = {
@@ -59,7 +60,7 @@ const generationModeOptions: Array<{ description: string; label: string; value: 
   },
 ];
 
-export function ProductDetailPagePanel({ analysisResult, generationBrief, onGenerated }: ProductDetailPagePanelProps) {
+export function ProductDetailPagePanel({ analysisResult, generationBrief, onGenerated, onOpenRiskConfirmations }: ProductDetailPagePanelProps) {
   const [count, setCount] = useState<ProductDetailPageCount>(3);
   const [error, setError] = useState("");
   const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
@@ -265,7 +266,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
 
       {plan ? (
         <>
-          <ProductRiskScanAlert riskScan={riskScan} />
+          <ProductRiskScanAlert riskScan={riskScan} onOpenRiskConfirmations={onOpenRiskConfirmations} />
           <ProductDetailPagePlanPreview
             generatingPageIndex={generatingPageIndex}
             pageErrors={pageErrors}

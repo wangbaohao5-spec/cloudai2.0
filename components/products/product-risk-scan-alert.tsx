@@ -3,6 +3,7 @@
 type RiskLevel = "none" | "low" | "medium" | "high";
 
 type ProductRiskScanAlertProps = {
+  onOpenRiskConfirmations?: () => void;
   riskScan?: {
     level: RiskLevel;
     matches?: Array<{
@@ -12,6 +13,7 @@ type ProductRiskScanAlertProps = {
     }>;
     summary?: string;
   } | null;
+  showAction?: boolean;
 };
 
 const LEVEL_LABELS: Record<Exclude<RiskLevel, "none">, string> = {
@@ -22,7 +24,11 @@ const LEVEL_LABELS: Record<Exclude<RiskLevel, "none">, string> = {
 
 const CHIP_LIMIT = 8;
 
-export function ProductRiskScanAlert({ riskScan }: ProductRiskScanAlertProps) {
+function scrollToRiskConfirmations() {
+  document.getElementById("product-risk-confirmations")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAction = true }: ProductRiskScanAlertProps) {
   if (!riskScan || riskScan.level === "none") {
     return null;
   }
@@ -40,6 +46,7 @@ export function ProductRiskScanAlert({ riskScan }: ProductRiskScanAlertProps) {
       </div>
       <p className="product-risk-alert-description">
         {riskScan.summary || "检测到可能需要用户确认的商品描述。"} 请确认这些内容是否真实、可证明，避免使用未经确认的授权、认证、功效或绝对化宣传。
+        你可以在「商品卖点 & 生成要求」中确认允许使用的品牌/授权信息，或禁止 CloudAI 生成相关表述。
       </p>
       {visibleMatches.length ? (
         <div className="product-risk-alert-chips" aria-label="命中的风险关键词">
@@ -49,6 +56,13 @@ export function ProductRiskScanAlert({ riskScan }: ProductRiskScanAlertProps) {
             </span>
           ))}
           {hiddenCount ? <span className="product-risk-alert-chip">+{hiddenCount} 项</span> : null}
+        </div>
+      ) : null}
+      {showAction ? (
+        <div className="product-risk-alert-actions">
+          <button className="button secondary product-risk-alert-action" type="button" onClick={onOpenRiskConfirmations || scrollToRiskConfirmations}>
+            去补充风险确认
+          </button>
         </div>
       ) : null}
     </aside>

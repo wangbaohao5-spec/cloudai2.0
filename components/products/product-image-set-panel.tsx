@@ -13,6 +13,7 @@ type ProductImageSetPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
   onGenerated?: () => void;
+  onOpenRiskConfirmations?: () => void;
   onViewAssets?: () => void;
 };
 
@@ -74,7 +75,7 @@ function getPurposeLabel(value: ProductImageSetPurpose) {
   return purposeOptions.find((option) => option.value === value)?.label || "商品套图";
 }
 
-export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated, onViewAssets }: ProductImageSetPanelProps) {
+export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetCount>(7);
   const [error, setError] = useState("");
   const [generatingImageIndex, setGeneratingImageIndex] = useState<number | null>(null);
@@ -450,7 +451,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
               </div>
             </div>
           ) : null}
-          <ProductRiskScanAlert riskScan={riskScan} />
+          <ProductRiskScanAlert riskScan={riskScan} onOpenRiskConfirmations={onOpenRiskConfirmations} />
           {batchProgress.total ? (
             <div className={`product-image-set-batch-status ${batchProgress.failed ? "warning" : batchProgress.completed === batchProgress.total ? "complete" : ""}`.trim()} aria-live="polite">
               <strong>

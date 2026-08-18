@@ -10,6 +10,7 @@ import { useState } from "react";
 type ProductCopywritingPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   onGenerated?: () => void;
+  onOpenRiskConfirmations?: () => void;
 };
 
 type ProductRiskScan = {
@@ -277,7 +278,7 @@ function ProductCopywritingResultSections({
   );
 }
 
-export function ProductCopywritingPanel({ analysisResult, onGenerated }: ProductCopywritingPanelProps) {
+export function ProductCopywritingPanel({ analysisResult, onGenerated, onOpenRiskConfirmations }: ProductCopywritingPanelProps) {
   const [copywritingError, setCopywritingError] = useState("");
   const [copywritingResult, setCopywritingResult] = useState<ProductCopywritingResponse | null>(null);
   const [copiedKey, setCopiedKey] = useState("");
@@ -430,7 +431,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
 
       {copywritingResult ? (
         <div className="product-copywriting-result">
-          <ProductRiskScanAlert riskScan={copywritingResult.riskScan} />
+          <ProductRiskScanAlert riskScan={copywritingResult.riskScan} onOpenRiskConfirmations={onOpenRiskConfirmations} />
           <ProductCopywritingResultSections copiedKey={copiedKey} result={copywritingResult} onCopy={(text, key) => void handleCopyText(text, key)} />
         </div>
       ) : null}

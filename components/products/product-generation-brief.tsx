@@ -239,7 +239,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
         </label>
       </div>
 
-      <div className="product-generation-brief-risk">
+      <div className="product-generation-brief-risk" id="product-risk-confirmations">
         <div>
           <h4>风险确认</h4>
           <p>请确认哪些品牌、授权、认证、材质或功效信息可以使用。未明确提供的信息，CloudAI 会尽量避免自动生成。如果后续生成结果出现风险提示，请回到这里补充或限制相关表述。</p>

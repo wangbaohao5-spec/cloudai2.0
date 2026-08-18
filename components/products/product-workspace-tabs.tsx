@@ -136,6 +136,13 @@ export function ProductWorkspaceTabs({
     scrollToPanel(panelId);
   }
 
+  function openRiskConfirmations() {
+    setActiveTab("analysis");
+    window.setTimeout(() => {
+      document.getElementById("product-risk-confirmations")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
+
   return (
     <section className="product-workspace-main">
       <div className="product-workspace-tabs" role="tablist" aria-label="商品工作台分区">
@@ -218,7 +225,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-copywriting"
         role="tabpanel"
       >
-        <ProductCopywritingPanel analysisResult={result} onGenerated={onGenerated} />
+        <ProductCopywritingPanel analysisResult={result} onGenerated={onGenerated} onOpenRiskConfirmations={openRiskConfirmations} />
       </div>
 
       <div
@@ -269,7 +276,7 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-detailPage"
         role="tabpanel"
       >
-        <ProductDetailPagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
+        <ProductDetailPagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} onOpenRiskConfirmations={openRiskConfirmations} />
       </div>
 
       <div
@@ -279,7 +286,13 @@ export function ProductWorkspaceTabs({
         id="product-workspace-panel-imageSet"
         role="tabpanel"
       >
-        <ProductImageSetPanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} onViewAssets={() => switchTabAndFocus("assets", "product-workspace-panel-assets")} />
+        <ProductImageSetPanel
+          analysisResult={result}
+          generationBrief={generationBrief}
+          onGenerated={onGenerated}
+          onOpenRiskConfirmations={openRiskConfirmations}
+          onViewAssets={() => switchTabAndFocus("assets", "product-workspace-panel-assets")}
+        />
       </div>
 
       <div

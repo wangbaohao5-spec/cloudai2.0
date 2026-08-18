@@ -3697,6 +3697,16 @@ h3 {
   min-width: 0;
 }
 
+.product-risk-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-risk-alert-action {
+  width: fit-content;
+}
+
 .product-risk-alert.is-high .product-risk-alert-title span {
   border-color: var(--warning-border, var(--workspace-border));
   color: var(--text);
@@ -6117,6 +6127,10 @@ h3 {
   border-radius: 18px;
   padding: 14px;
   background: var(--surface);
+}
+
+#product-risk-confirmations {
+  scroll-margin-top: 120px;
 }
 
 .product-generation-brief-risk h4 {
