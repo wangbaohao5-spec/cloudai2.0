@@ -361,7 +361,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
                 </span>
                 <span>{option.description}</span>
                 <span className="product-image-set-purpose-structure" aria-label={`${option.label}推荐结构`}>
-                  {option.structure.map((item) => (
+                  {option.structure.slice(0, 4).map((item) => (
                     <i key={item}>{item}</i>
                   ))}
                 </span>
@@ -385,7 +385,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
       </div>
 
       <div className="product-image-set-plan-entry">
-        <ProductGenerationCostHint compact type="image-set" estimatedCost={0} label="规划不会消耗图片额度" />
+        <ProductGenerationCostHint compact type="image-set" estimatedCost={0} label="规划不会消耗图片额度" description="" />
         <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet} type="button" onClick={() => void handleGeneratePlan()}>
           {isPlanning ? (
             <>
@@ -398,7 +398,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
             "生成套图规划"
           )}
         </button>
-        <p className="product-image-set-plan-note">CloudAI 会根据商品分析、卖点要求和当前用途，先规划每张图的任务；规划阶段不会生成图片，也不会消耗图片额度。</p>
+        <p className="product-image-set-plan-note">先规划每张图的任务，不会立即生成图片。</p>
       </div>
 
       {error ? <p className="image-generation-error">{error}</p> : null}
@@ -429,7 +429,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
                       ? `预计还需消耗 ${imageSetCostEstimate.imageCount} 张图片额度`
                       : "当前没有待生成图片"
                   }
-                  description={imageSetCostEstimate.imageCount ? "已生成的图片不会重复生成，实际记录以额度中心为准。" : "整套图片已生成完成。"}
+                  description={imageSetCostEstimate.imageCount ? "已生成图片不会重复生成。" : "整套图片已生成完成。"}
                 />
                 <strong>{getSummaryMessage()}</strong>
                 {retryFailedCostEstimate ? <span>重试失败项预计消耗 {retryFailedCostEstimate.imageCount} 张图片额度。</span> : null}

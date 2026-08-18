@@ -25,12 +25,13 @@ export function ProductGenerationCostHint({
   const isQuotaKnown = typeof remainingQuota === "number";
   const isInsufficient = isQuotaKnown && cost > remainingQuota;
   const displayDescription =
-    description ||
-    (cost === 0
+    typeof description === "string"
+      ? description
+      : cost === 0
       ? "规划阶段只生成结构和文案，不会消耗图片额度。"
       : imageCount === 1
         ? "CloudAI 会尽量避免失败任务消耗额度，实际记录以额度中心为准。"
-        : `本次将生成 ${imageCount} 张图片，预计消耗 ${imageCount} 张图片额度。`);
+        : `本次将生成 ${imageCount} 张图片，预计消耗 ${imageCount} 张图片额度。`;
   const quotaText = isQuotaKnown ? `当前剩余：${remainingQuota} 张图片额度` : "";
   const className = [
     "product-generation-cost-hint",

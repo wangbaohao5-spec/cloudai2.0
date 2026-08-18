@@ -98,10 +98,25 @@ export function ProductImageSetPlanPreview({
   onGenerateImage,
   plan,
 }: ProductImageSetPlanPreviewProps) {
+  const [expandedImageIndexes, setExpandedImageIndexes] = useState<Set<number>>(new Set());
   const [lightboxImage, setLightboxImage] = useState<{ alt: string; title: string; url: string } | null>(null);
 
   if (!plan?.images.length) {
     return null;
+  }
+
+  function togglePlanDetails(imageIndex: number) {
+    setExpandedImageIndexes((current) => {
+      const next = new Set(current);
+
+      if (next.has(imageIndex)) {
+        next.delete(imageIndex);
+      } else {
+        next.add(imageIndex);
+      }
+
+      return next;
+    });
   }
 
   return (
@@ -115,6 +130,7 @@ export function ProductImageSetPlanPreview({
         const keepItems = getNonEmptyItems([...image.requiredElements, ...image.mustKeep]);
         const avoidItems = getNonEmptyItems(image.avoid);
         const modeLabel = image.suggestedGenerationMode === "creative" ? "营销创意" : "保真优化";
+        const isDetailOpen = expandedImageIndexes.has(image.imageIndex);
 
         return (
           <article className={`product-image-set-plan-card ${result ? "has-result" : "is-task"}`} key={`${image.imageIndex}-${image.title}`}>
@@ -166,10 +182,15 @@ export function ProductImageSetPlanPreview({
 
             <div className="product-image-set-card__body product-image-set-card-body">
               <h3>{image.title}</h3>
-              <p>{result ? image.keyMessage || image.headline || "当前显示最近一次生成结果。" : image.goal || image.keyMessage || "暂无任务说明"}</p>
+              <p className="product-image-set-card-summary">
+                {result ? image.keyMessage || image.headline || "当前显示最近一次生成结果。" : image.goal || image.keyMessage || "暂无任务说明"}
+              </p>
+              <button className="product-image-set-details-toggle" type="button" onClick={() => togglePlanDetails(image.imageIndex)}>
+                {isDetailOpen ? "收起详情" : "查看规划详情"}
+              </button>
             </div>
 
-            {!result ? (
+            {isDetailOpen ? (
               <div className="product-image-set-card-sections">
                 {image.goal ? (
                   <ImageSetCardSection title="这张图的任务">
@@ -215,7 +236,7 @@ export function ProductImageSetPlanPreview({
                 compact
                 type="image-set"
                 label="生成这张图预计消耗 1 张图片额度"
-                description="生成前请确认画面建议、必须保留和避免改动内容；实际记录以额度中心为准。"
+                description="实际记录以额度中心为准。"
               />
               <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
               <button className="button secondary" type="button" disabled={isGenerating || isGenerationDisabled} onClick={() => onGenerateImage?.(image)}>
