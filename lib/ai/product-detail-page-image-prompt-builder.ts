@@ -1,5 +1,6 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
+import { ABSOLUTE_CLAIMS_RULES, BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
 
@@ -51,6 +52,9 @@ export function buildProductDetailPageImagePrompt({ analysis, generationBrief, p
     "严格保持商品结构、轮廓、Logo、品牌标识、材质、颜色、尺寸比例和关键设计细节。",
     "禁止重新设计商品，禁止替换成同品类的其他商品，禁止改变商品型号、形态、结构、配色或标识。",
     "只允许调整商品周围的背景、版式、光影、装饰元素、信息排版和详情页视觉氛围。",
+    PRODUCT_VISUAL_FIDELITY_RULES,
+    BRAND_AND_AUTHORIZATION_RULES,
+    ABSOLUTE_CLAIMS_RULES,
     "",
     `商品名称：${productName}`,
     `商品类别：${analysis.category || "商品"}`,

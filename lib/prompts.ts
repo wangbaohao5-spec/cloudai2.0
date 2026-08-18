@@ -1,4 +1,5 @@
 import type { CopywritingFormData } from "@/lib/types";
+import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
 import { getPlatformPromptGuide, getPromptTemplate, getPromptTemplates } from "@/lib/prompt-templates";
 
 export const COPYWRITING_SYSTEM_PROMPT = "你是专业电商运营专家。";
@@ -64,6 +65,8 @@ ${templates
 - 短视频口播
 - 如果当前模板是广告推广文案，请在 description 中体现广告正文的痛点、利益、信任背书和行动号召
 - 如果当前模式是一键生成营销方案，请综合生成完整营销方案，但仍严格填充 title、points、description、shortVideoScript 四个字段
+
+${PRODUCT_GENERATION_RULES_BLOCK}
 
 请只返回 JSON，不要输出 Markdown 或额外解释。JSON 字段必须包含：
 {

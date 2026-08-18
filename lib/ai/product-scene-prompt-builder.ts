@@ -1,4 +1,5 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
+import { ABSOLUTE_CLAIMS_RULES, BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
 import type { ProductImageAnalysis } from "@/lib/product-types";
 
 export type ProductScenePromptInput = {
@@ -56,6 +57,9 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
     `类目场景建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
     `类目保真规则：${categoryStrategy.fidelityRules.join(" ")}`,
     `类目避免事项：${categoryStrategy.avoidRules.join(" ")}`,
+    PRODUCT_VISUAL_FIDELITY_RULES,
+    BRAND_AND_AUTHORIZATION_RULES,
+    ABSOLUTE_CLAIMS_RULES,
     "产品主体突出，商业摄影灯光，真实材质，高清细节，构图整洁，适合电商营销使用",
     "不要添加文字，不要水印，不要 logo，不要生成无法从商品分析中确认的品牌或参数",
     "这是基于商品分析结果生成的营销场景图，不是原图精确复刻",
@@ -93,6 +97,9 @@ export function buildProductSceneEditPrompt({ analysis, scene, platform, style }
     `类目场景建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
     `类目保真规则：${categoryStrategy.fidelityRules.join(" ")}`,
     `类目避免事项：${categoryStrategy.avoidRules.join(" ")}`,
+    PRODUCT_VISUAL_FIDELITY_RULES,
+    BRAND_AND_AUTHORIZATION_RULES,
+    ABSOLUTE_CLAIMS_RULES,
     "生成高质量商业摄影效果，商品主体清晰突出，背景服务于营销表达，适合电商投放或上架使用",
     "不要生成文字，不要水印，不要额外 logo，不要添加不存在的功能、参数、配件或无法确认的品牌信息",
   ].join("，");

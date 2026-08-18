@@ -1,3 +1,4 @@
+import { BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
 import { getProductImageEditGoal, type ProductImageEditGoalId } from "@/lib/product-image-edit-options";
 
 type ProductImageEditPromptInput = {
@@ -12,5 +13,7 @@ export function buildProductImageEditPrompt({ goalId, userPrompt }: ProductImage
   const goal = getProductImageEditGoal(goalId);
   const extraPrompt = userPrompt?.trim();
 
-  return [goal.promptTemplate, PRODUCT_PRESERVATION_RULES, extraPrompt ? `用户额外要求：${extraPrompt}` : ""].filter(Boolean).join("\n\n");
+  return [goal.promptTemplate, PRODUCT_PRESERVATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES, BRAND_AND_AUTHORIZATION_RULES, extraPrompt ? `用户额外要求：${extraPrompt}` : ""]
+    .filter(Boolean)
+    .join("\n\n");
 }

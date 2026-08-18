@@ -1,5 +1,6 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
+import { ABSOLUTE_CLAIMS_RULES, BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
 import type { ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
 import type { ProductGenerationBrief, ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
@@ -58,6 +59,9 @@ export function buildProductImageSetImagePrompt({
     "上传图片中的商品是唯一商品主体，最终图片必须仍然看起来是同一件商品。",
     "不要替换成同品类其他商品，不要重新设计商品，不要改变商品核心结构、颜色、图案、Logo、材质、比例和关键细节。",
     "只允许优化背景、构图、光线、版式、氛围和电商呈现。",
+    PRODUCT_VISUAL_FIDELITY_RULES,
+    BRAND_AND_AUTHORIZATION_RULES,
+    ABSOLUTE_CLAIMS_RULES,
     "",
     `商品名称：${productName}`,
     `商品类别：${analysis.category || "商品"}`,

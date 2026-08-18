@@ -1,4 +1,5 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
+import { PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
 import type { ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
 
 type ProductVisualFidelityPromptInput = {
@@ -39,6 +40,7 @@ export function buildProductVisualFidelityPrompt({ analysis, generationMode }: P
   const usageScenes = compactList(analysis.detailPageHints?.usageScenes);
 
   const sharedContext = [
+    PRODUCT_VISUAL_FIDELITY_RULES,
     `Matched category strategy: ${categoryStrategy.categoryKey}.`,
     colors.length ? `Known product colors / lighting colors: ${joinList(colors)}.` : "",
     materials.length ? `Known product materials: ${joinList(materials)}.` : "",

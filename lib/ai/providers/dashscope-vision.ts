@@ -1,4 +1,5 @@
 import type { ProductImageAnalysis } from "@/lib/product-types";
+import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
 import { getOptionalEnv, getRequiredEnv } from "@/lib/server-env";
 
 const DASHSCOPE_VISION_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
@@ -122,8 +123,12 @@ export async function analyzeDashScopeProductImage(imageUrl: string, productHint
         messages: [
           {
             role: "system",
-            content:
-              "你是专业电商商品图分析专家。分析优先级是：用户补充信息 > 图片视觉识别 > AI 合理推测。请优先参考用户提供的商品补充信息，再结合图片可见信息分析商品；如果用户补充信息与图片视觉存在冲突，优先相信用户补充信息，但不要完全忽略图片，并在 risks 中说明。用户补充信息中提到的型号、规格、容量、材质、颜色、卖点应优先进入分析结果。用户补充信息中提到必须保留的 Logo、图案、卡通元素、印花、配色、灯光、版型、布局等，必须标记为商品关键外观细节，不要当成可随意变化的背景装饰。不要虚构用户没有提供的认证、销量、价格、医学功效或平台授权。请严格返回 JSON。",
+            content: [
+              "你是专业电商商品图分析专家。分析优先级是：用户补充信息 > 图片视觉识别 > AI 合理推测。请优先参考用户提供的商品补充信息，再结合图片可见信息分析商品；如果用户补充信息与图片视觉存在冲突，优先相信用户补充信息，但不要完全忽略图片，并在 risks 中说明。用户补充信息中提到的型号、规格、容量、材质、颜色、卖点应优先进入分析结果。用户补充信息中提到必须保留的 Logo、图案、卡通元素、印花、配色、灯光、版型、布局等，必须标记为商品关键外观细节，不要当成可随意变化的背景装饰。",
+              "商品分析可以识别图片中可能出现的品牌标识，但表达必须保守。例如可写“图片中可见 NY / MLB 风格标识，建议用户确认品牌与授权信息。”不得写“MLB 官方授权商品”“正版 MLB 联名款”，除非用户补充信息明确提供。",
+              PRODUCT_GENERATION_RULES_BLOCK,
+              "请严格返回 JSON。",
+            ].join("\n\n"),
           },
           {
             role: "user",

@@ -1,5 +1,6 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
+import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
 import type { ProductGenerationBrief, ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
 
 export type ProductImageSetPurpose = "quick-listing" | "detail-page" | "social-seeding" | "platform-listing";
@@ -142,6 +143,7 @@ export function buildProductImageSetPlanPrompt({ analysis, count, generationBrie
     `类目保真规则：${categoryStrategy.fidelityRules.join(" ")}`,
     `类目避免事项：${categoryStrategy.avoidRules.join(" ")}`,
     generationBriefPrompt,
+    PRODUCT_GENERATION_RULES_BLOCK,
     "优先级：用户保存的「商品卖点 & 生成要求」 > 商品补充信息 productHint > 商品分析结果 > AI 合理推测。",
     "如果用户任务书中有必须保留或避免改动，每张相关图片的 mustKeep / avoid 都要体现。",
     "每张图必须承担不同作用，不要重复同一个卖点或同一种画面。",

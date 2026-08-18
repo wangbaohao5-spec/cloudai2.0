@@ -1,4 +1,5 @@
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
+import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
 import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
 
@@ -183,6 +184,7 @@ export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords,
     getPageStructureGuide(count),
     getCategoryPlanningGuide(analysis),
     generationBriefPrompt,
+    PRODUCT_GENERATION_RULES_BLOCK,
     "每页作用必须不同，headline / sellingPoint / visualDirection 不要重复。",
     "不要把同一个卖点硬拆成很多重复页面。卖点不足时，自动补充使用场景、细节特写、四宫格细节、佩戴/上身/使用效果、多色/多规格展示、总结 CTA。",
     "不要夸大功效，不要生成虚假参数，不要编造认证、销量、价格、品牌授权或医学功效。",
