@@ -3697,6 +3697,41 @@ h3 {
   min-width: 0;
 }
 
+.product-risk-alert-groups {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.product-risk-alert-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--workspace-border);
+  border-radius: 14px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--workspace-surface) 78%, transparent);
+}
+
+.product-risk-alert-group-header {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.product-risk-alert-group-header strong {
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.product-risk-alert-group-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
 .product-risk-alert-actions {
   display: flex;
   flex-wrap: wrap;

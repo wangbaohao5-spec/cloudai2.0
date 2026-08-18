@@ -22,7 +22,35 @@ const LEVEL_LABELS: Record<Exclude<RiskLevel, "none">, string> = {
   medium: "注意",
 };
 
-const CHIP_LIMIT = 8;
+const CATEGORY_LABELS: Record<string, string> = {
+  "absolute-claim": "绝对化宣传",
+  "brand-authorization": "品牌/授权表述",
+  certification: "认证/检测表述",
+  "guarantee-claim": "保证承诺表述",
+  "medical-claim": "医疗/功效表述",
+  "official-claim": "官方身份表述",
+  "sales-claim": "销量/评价表述",
+};
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  "absolute-claim": "涉及最好、第一、100%、永久等表达，建议改为更稳妥的描述。",
+  "brand-authorization": "涉及品牌授权、联名、官方关系等内容，建议仅在真实可证明时使用。",
+  certification: "涉及认证、检测、专利、报告等内容，建议有真实证明材料再使用。",
+  "guarantee-claim": "涉及正品保证、质量保证、假一赔十等承诺，建议确认售后和资质后使用。",
+  "medical-claim": "涉及治疗、治愈、医疗级、保证有效等表达，建议谨慎使用。",
+  "official-claim": "涉及官方、旗舰、指定等身份关系，建议确认后再使用。",
+  "sales-claim": "涉及销量第一、万人推荐、用户一致好评等表达，建议有真实数据再使用。",
+};
+
+const CATEGORY_KEYWORD_LIMIT = 6;
+
+function getRiskCategoryLabel(category: string) {
+  return CATEGORY_LABELS[category] || "需要确认的表述";
+}
+
+function getRiskCategoryDescription(category: string) {
+  return CATEGORY_DESCRIPTIONS[category] || "这类表述建议人工确认真实性和可证明性后再使用。";
+}
 
 function scrollToRiskConfirmations() {
   document.getElementById("product-risk-confirmations")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -34,9 +62,16 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
   }
 
   const matches = Array.isArray(riskScan.matches) ? riskScan.matches.filter((match) => match.keyword?.trim()) : [];
-  const visibleMatches = matches.slice(0, CHIP_LIMIT);
-  const hiddenCount = Math.max(matches.length - CHIP_LIMIT, 0);
   const level = riskScan.level === "high" || riskScan.level === "medium" || riskScan.level === "low" ? riskScan.level : "low";
+  const groupedMatches = matches.reduce<Record<string, typeof matches>>((groups, match) => {
+    const category = match.category || "unknown";
+
+    groups[category] = groups[category] || [];
+    groups[category].push(match);
+
+    return groups;
+  }, {});
+  const categoryEntries = Object.entries(groupedMatches);
 
   return (
     <aside className={`product-risk-alert is-${level}`} aria-live="polite">
@@ -48,14 +83,29 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
         {riskScan.summary || "检测到可能需要用户确认的商品描述。"} 请确认这些内容是否真实、可证明，避免使用未经确认的授权、认证、功效或绝对化宣传。
         你可以在「商品卖点 & 生成要求」中确认允许使用的品牌/授权信息，或禁止 CloudAI 生成相关表述。
       </p>
-      {visibleMatches.length ? (
-        <div className="product-risk-alert-chips" aria-label="命中的风险关键词">
-          {visibleMatches.map((match) => (
-            <span className="product-risk-alert-chip" key={`${match.category}-${match.keyword}`}>
-              {match.keyword}
-            </span>
-          ))}
-          {hiddenCount ? <span className="product-risk-alert-chip">+{hiddenCount} 项</span> : null}
+      {categoryEntries.length ? (
+        <div className="product-risk-alert-groups" aria-label="按类别分组的风险关键词">
+          {categoryEntries.map(([category, categoryMatches]) => {
+            const visibleMatches = categoryMatches.slice(0, CATEGORY_KEYWORD_LIMIT);
+            const hiddenCount = Math.max(categoryMatches.length - CATEGORY_KEYWORD_LIMIT, 0);
+
+            return (
+              <section className="product-risk-alert-group" key={category}>
+                <div className="product-risk-alert-group-header">
+                  <strong>{getRiskCategoryLabel(category)}</strong>
+                  <p>{getRiskCategoryDescription(category)}</p>
+                </div>
+                <div className="product-risk-alert-chips">
+                  {visibleMatches.map((match) => (
+                    <span className="product-risk-alert-chip" key={`${match.category}-${match.keyword}`}>
+                      {match.keyword}
+                    </span>
+                  ))}
+                  {hiddenCount ? <span className="product-risk-alert-chip">+{hiddenCount} 项</span> : null}
+                </div>
+              </section>
+            );
+          })}
         </div>
       ) : null}
       {showAction ? (
