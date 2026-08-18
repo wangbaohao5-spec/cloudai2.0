@@ -1,28 +1,28 @@
 import Link from "next/link";
 
 const workflowStatus = [
-  { label: "商品分析", value: "已完成" },
-  { label: "商品文案", value: "3 条" },
-  { label: "图片优化", value: "2 张" },
-  { label: "场景图", value: "4 张" },
-  { label: "素材包", value: "已整理" },
+  { label: "AI 分析", value: "完成" },
+  { label: "文案", value: "3 条" },
+  { label: "详情页", value: "2 张" },
+  { label: "套图", value: "5 张" },
+  { label: "素材库", value: "已生成" },
 ];
 
 export function HeroSection() {
   return (
     <section id="hero" className="hero section">
       <div className="hero-content">
-        <p className="eyebrow">面向电商创作者的 AI 商品工作台</p>
-        <h1>一张商品图，生成完整电商营销素材</h1>
+        <p className="eyebrow">AI 电商商品创作工作台</p>
+        <h1>一张商品图，生成整套电商素材</h1>
         <p className="hero-description">
-          上传商品图片，CloudAI 会帮你完成商品分析、营销文案、图片优化、场景图生成，并整理成可复制、可下载的素材包。
+          上传商品图片后，CloudAI 会帮你完成商品分析、卖点文案、详情页图片、场景图、商品套图和素材库，让商品内容从上传到交付形成完整工作流。
         </p>
         <div className="hero-actions">
-          <Link className="button primary" href="/dashboard">
+          <Link className="button primary" href="/dashboard/products">
             进入工作台
           </Link>
-          <Link className="button secondary" href="/dashboard/products">
-            开始创作商品素材
+          <Link className="button secondary" href="#showcase">
+            查看生成示例
           </Link>
         </div>
       </div>
@@ -41,13 +41,13 @@ export function HeroSection() {
           <div>
             <p className="eyebrow">当前商品</p>
             <h2>Freeplus 温和洁面乳</h2>
-            <p>敏感肌日常清洁 · 温和保湿 · 通勤与旅行场景</p>
+            <p>温和清洁 · 保留瓶型包装 · 详情页素材生成中</p>
           </div>
         </div>
 
         <div className="hero-analysis-card">
-          <strong>AI 分析摘要</strong>
-          <p>定位为低刺激洁面产品，适合关注成分温和、肤感清爽和日常复购的用户。</p>
+          <strong>AI 分析完成</strong>
+          <p>已整理商品类别、目标用户、核心卖点、材质质感和后续生成需要保留的包装细节。</p>
         </div>
 
         <div className="hero-workflow-status">

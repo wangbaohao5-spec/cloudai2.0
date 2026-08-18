@@ -3,52 +3,62 @@ import Link from "next/link";
 const workflowSteps = [
   {
     title: "上传商品图",
-    description: "上传商品原图，作为所有创作的起点。",
+    description: "上传商品原图，作为后续分析和生成的基础。",
   },
   {
-    title: "AI 分析商品",
-    description: "识别商品类别、目标用户、核心卖点和适合的内容方向。",
+    title: "AI 分析商品档案",
+    description: "识别商品类型、颜色、材质、卖点和必须保留的细节。",
   },
   {
-    title: "生成文案与视觉素材",
-    description: "生成商品标题、卖点描述、图片优化结果和营销场景图。",
+    title: "编辑商品卖点与生成要求",
+    description: "把 AI 分析结果整理成可控的商品生成任务书。",
   },
   {
-    title: "整理素材包",
-    description: "将分析、文案和图片结果整理为可复制、可下载的商品素材包。",
+    title: "生成详情页、套图和素材库",
+    description: "按不同用途生成可预览、可下载、可导出的商品素材。",
   },
 ];
 
 const capabilities = [
   {
     title: "商品分析",
-    description: "识别商品类别、目标用户、核心卖点，为后续创作提供上下文。",
+    description: "识别商品信息、卖点、颜色、材质和需要保留的细节。",
   },
   {
-    title: "商品文案",
-    description: "生成标题、卖点、详情描述和短视频脚本，减少重复写作。",
+    title: "商品卖点 & 生成要求",
+    description: "把商品分析转成可编辑的生成任务书，减少无效 prompt。",
   },
   {
-    title: "图片优化",
-    description: "基于商品原图优化展示效果，保持商品主体一致。",
+    title: "详情页生成",
+    description: "规划并生成适合商品详情页的卖点图、细节图和购买理由图。",
   },
   {
-    title: "营销场景图",
-    description: "围绕商品生成适合推广和展示的场景图片。",
+    title: "商品套图",
+    description: "按快速上架、详情页、社媒种草和平台 Listing 生成成套图片。",
   },
   {
-    title: "素材包整理",
-    description: "将分析、文案和图片整理成 Markdown 商品素材包，方便复制和下载。",
+    title: "素材库",
+    description: "自动汇总原图、优化图、场景图、详情页图和套图素材。",
+  },
+  {
+    title: "额度透明",
+    description: "规划阶段不消耗图片额度，生成前显示预计消耗。",
   },
 ];
 
-const productTags = ["洁面乳", "个人护理", "敏感肌"];
-const analysisItems = [
-  { label: "类别", value: "个人护理" },
-  { label: "目标用户", value: "敏感肌 / 日常洁面人群" },
-  { label: "核心卖点", value: "温和、保湿、低刺激" },
+const workspaceTabs = ["分析", "素材", "文案", "图片", "场景", "详情页", "套图", "导出"];
+const railItems = [
+  { label: "商品档案", value: "Freeplus 温和洁面乳" },
+  { label: "商品卖点", value: "温和清洁 / 清爽肤感 / 日常复购" },
+  { label: "生成要求", value: "保留瓶型、包装、Logo 和容量信息" },
+  { label: "创作进度", value: "套图 5 张 · 详情页 2 张" },
 ];
-const outputItems = ["标题文案", "核心卖点", "图片优化", "场景图", "Markdown 素材包"];
+const showcaseItems = [
+  { title: "护肤品详情页", tags: ["详情页", "卖点图"], tone: "skincare" },
+  { title: "服装场景图", tags: ["上身展示", "细节图"], tone: "fashion" },
+  { title: "首饰套图", tags: ["白底图", "细节图"], tone: "jewelry" },
+  { title: "数码外设套图", tags: ["场景图", "核心卖点"], tone: "tech" },
+];
 
 export function FeatureSection() {
   return (
@@ -56,8 +66,8 @@ export function FeatureSection() {
       <section id="workflow" className="section showcase landing-workflow">
         <div className="section-heading">
           <p className="eyebrow">Workflow</p>
-          <h2>从商品图到完整素材包</h2>
-          <p>把原本分散的分析、文案、图片和整理工作串成一条清晰流程。</p>
+          <h2>从一张商品图开始</h2>
+          <p>把上传、分析、任务书、生成和交付串成一条清楚的商品内容流程。</p>
         </div>
         <div className="landing-workflow-grid">
           {workflowSteps.map((step, index) => (
@@ -70,11 +80,51 @@ export function FeatureSection() {
         </div>
       </section>
 
+      <section className="section landing-workspace-preview-section">
+        <div className="section-heading">
+          <p className="eyebrow">Workspace</p>
+          <h2>不是单个 AI 工具，而是商品内容工作台</h2>
+          <p>CloudAI 会围绕一个商品持续组织内容：分析、文案、图片、场景、详情页、套图、素材库和导出都在同一个工作流中完成。</p>
+        </div>
+        <div className="landing-workspace-mock glass-card" aria-label="商品工作台静态预览">
+          <aside className="landing-workspace-rail">
+            {railItems.map((item) => (
+              <article key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </article>
+            ))}
+          </aside>
+          <div className="landing-workspace-panel">
+            <div className="landing-workspace-tabs">
+              {workspaceTabs.map((tab) => (
+                <span className={tab === "套图" ? "active" : ""} key={tab}>
+                  {tab}
+                </span>
+              ))}
+            </div>
+            <div className="landing-workspace-board">
+              <article>
+                <span>商品套图 · 5 张</span>
+                <strong>详情页套图规划</strong>
+                <p>主视觉、核心卖点、使用场景、细节特写和购买理由已经拆成独立任务。</p>
+              </article>
+              <div className="landing-workspace-assets">
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="capabilities" className="section landing-capabilities">
         <div className="section-heading">
           <p className="eyebrow">Capabilities</p>
-          <h2>围绕商品创作的完整能力</h2>
-          <p>CloudAI 将商品上下文贯穿分析、文案、图片和素材整理，让每一步输出都围绕同一个商品展开。</p>
+          <h2>为电商商品内容而设计</h2>
+          <p>从商品理解到素材交付，每个能力都服务于实际上架、详情页和社媒内容生产。</p>
         </div>
         <div className="landing-capability-grid">
           {capabilities.map((capability) => (
@@ -86,62 +136,40 @@ export function FeatureSection() {
         </div>
       </section>
 
-      <section id="example" className="section landing-example">
+      <section id="showcase" className="section landing-example">
         <div className="section-heading">
-          <p className="eyebrow">Example</p>
-          <h2>看看一个商品如何变成素材包</h2>
-          <p>这是一个静态示例，展示商品工作台如何把原图、分析和生成结果组织到一起。</p>
+          <p className="eyebrow">Showcase</p>
+          <h2>生成示例</h2>
+          <p>以下为 CloudAI 商品素材生成方向示例，真实效果会根据商品图片、生成要求和模型表现变化。</p>
         </div>
-        <div className="landing-example-grid">
-          <article className="landing-example-card">
-            <span>商品输入</span>
-            <div className="landing-product-mock">
-              <small>PRODUCT</small>
-              <strong>Freeplus 温和洁面乳</strong>
-              <p>温和清洁 · 敏感肌友好</p>
-              <div>
-                {productTags.map((tag) => (
-                  <em key={tag}>{tag}</em>
-                ))}
+        <div className="landing-showcase-grid">
+          {showcaseItems.map((item) => (
+            <article className="landing-showcase-card" key={item.title}>
+              <div className={`landing-showcase-visual ${item.tone}`} aria-hidden="true">
+                <span />
+                <i />
               </div>
-            </div>
-          </article>
-          <article className="landing-example-card">
-            <span>AI 分析</span>
-            <div className="landing-analysis-list">
-              {analysisItems.map((item) => (
-                <p key={item.label}>
-                  <strong>{item.label}</strong>
-                  <span>{item.value}</span>
+              <div>
+                <h3>{item.title}</h3>
+                <p>
+                  {item.tags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
                 </p>
-              ))}
-            </div>
-          </article>
-          <article className="landing-example-card landing-example-output">
-            <span>输出素材</span>
-            <div className="landing-output-list">
-              {outputItems.map((item) => (
-                <p key={item}>
-                  <span aria-hidden="true" />
-                  {item}
-                </p>
-              ))}
-            </div>
-          </article>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className="section landing-final-cta">
         <div className="about-card">
           <p className="eyebrow">Start</p>
-          <h2>准备创建你的第一个商品素材包了吗？</h2>
-          <p>进入 CloudAI 工作台，上传商品图开始创作。</p>
+          <h2>开始为你的第一个商品生成素材</h2>
+          <p>进入商品工作台，上传商品图，体验从商品分析到素材交付的完整流程。</p>
           <div className="hero-actions">
-            <Link className="button primary" href="/dashboard">
-              进入工作台
-            </Link>
-            <Link className="button secondary" href="/dashboard/products">
-              开始创作
+            <Link className="button primary" href="/dashboard/products">
+              进入商品工作台
             </Link>
           </div>
         </div>

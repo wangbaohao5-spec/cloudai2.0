@@ -1,7 +1,7 @@
 const navItems = [
   { href: "#workflow", label: "工作流" },
   { href: "#capabilities", label: "核心能力" },
-  { href: "#example", label: "示例" },
+  { href: "#showcase", label: "生成示例" },
 ];
 
 export function SiteHeader() {
@@ -24,7 +24,7 @@ export function SiteHeader() {
             </li>
           ))}
         </ul>
-        <a className="nav-cta" href="/dashboard">
+        <a className="nav-cta" href="/dashboard/products">
           进入工作台
         </a>
       </nav>

@@ -568,11 +568,33 @@ h3 {
 }
 
 .hero {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
   gap: 56px;
   align-items: center;
   min-height: 760px;
+}
+
+.hero::before {
+  position: absolute;
+  inset: 24px 0 auto 0;
+  z-index: -1;
+  height: 520px;
+  border-radius: 48px;
+  background:
+    linear-gradient(var(--header-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--header-border) 1px, transparent 1px),
+    radial-gradient(circle at 20% 20%, var(--accent-soft), transparent 32%),
+    radial-gradient(circle at 72% 18%, var(--primary-soft), transparent 30%);
+  background-size:
+    48px 48px,
+    48px 48px,
+    auto,
+    auto;
+  opacity: 0.55;
+  content: "";
+  mask-image: linear-gradient(to bottom, black, transparent);
 }
 
 .hero-description,
@@ -760,6 +782,7 @@ h3 {
 }
 
 .landing-workflow,
+.landing-workspace-preview-section,
 .landing-capabilities,
 .landing-example {
   scroll-margin-top: 96px;
@@ -782,7 +805,7 @@ h3 {
 }
 
 .landing-capability-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .landing-example-grid {
@@ -839,11 +862,207 @@ h3 {
     var(--surface);
 }
 
-.landing-example-card {
+.landing-workspace-mock {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
+  gap: 18px;
+  border-radius: 32px;
+  padding: 20px;
+}
+
+.landing-workspace-rail,
+.landing-workspace-panel,
+.landing-workspace-board article {
+  border: 1px solid var(--workspace-border);
+  background: var(--workspace-panel);
+}
+
+.landing-workspace-rail {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  border-radius: 24px;
+  padding: 16px;
+}
+
+.landing-workspace-rail article {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 13px;
+  background: var(--surface);
+}
+
+.landing-workspace-rail span,
+.landing-workspace-board span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.landing-workspace-rail strong,
+.landing-workspace-board strong {
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.landing-workspace-panel {
+  display: grid;
+  gap: 16px;
+  border-radius: 24px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.landing-workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.landing-workspace-tabs span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.landing-workspace-tabs span.active {
+  border-color: var(--selected-border);
+  color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.landing-workspace-board {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(240px, 1.05fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.landing-workspace-board article {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+  border-radius: 22px;
+  padding: 20px;
+}
+
+.landing-workspace-board p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.landing-workspace-assets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landing-workspace-assets span {
+  min-height: 128px;
+  border: 1px solid var(--preview-border);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 34% 28%, var(--accent-soft), transparent 34%),
+    linear-gradient(135deg, var(--surface-hover), var(--preview-bg));
+}
+
+.landing-example-card,
+.landing-showcase-card {
   display: grid;
   gap: 18px;
   align-content: start;
   background: var(--workspace-surface);
+}
+
+.landing-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.landing-showcase-card {
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.landing-showcase-visual {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--preview-border);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 28% 28%, var(--accent-soft), transparent 34%),
+    linear-gradient(135deg, var(--surface-hover), var(--preview-bg));
+}
+
+.landing-showcase-visual span {
+  position: absolute;
+  right: 16%;
+  bottom: 16%;
+  width: 34%;
+  aspect-ratio: 1;
+  border: 1px solid var(--selected-border);
+  border-radius: 18px;
+  background: var(--panel-gradient);
+  box-shadow: var(--shadow);
+}
+
+.landing-showcase-visual i {
+  position: absolute;
+  left: 14%;
+  top: 16%;
+  width: 44%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.62;
+}
+
+.landing-showcase-visual.fashion span {
+  border-radius: 999px 999px 20px 20px;
+}
+
+.landing-showcase-visual.jewelry span {
+  width: 30%;
+  border-radius: 999px;
+}
+
+.landing-showcase-visual.tech span {
+  width: 48%;
+  aspect-ratio: 1.55;
+  border-radius: 16px;
+}
+
+.landing-showcase-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.landing-showcase-card p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.landing-showcase-card p span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .landing-product-mock,
@@ -6777,7 +6996,10 @@ h3 {
   }
 
   .hero-product-card,
-  .landing-example-grid {
+  .landing-example-grid,
+  .landing-workspace-mock,
+  .landing-workspace-board,
+  .landing-showcase-grid {
     grid-template-columns: 1fr;
   }
 
@@ -6793,6 +7015,18 @@ h3 {
   .landing-capability-grid,
   .recent-products-grid {
     grid-template-columns: 1fr;
+  }
+
+  .landing-workspace-mock {
+    padding: 14px;
+  }
+
+  .landing-workspace-tabs {
+    max-width: 100%;
+  }
+
+  .landing-workspace-assets span {
+    min-height: 110px;
   }
 
   .landing-workflow-card,
