@@ -2,6 +2,7 @@
 
 import { getRiskCategoryLabel } from "@/lib/ai/product-risk-labels";
 import { getRiskCategorySuggestion } from "@/lib/ai/product-risk-suggestion";
+import { useState } from "react";
 
 type RiskLevel = "none" | "low" | "medium" | "high";
 
@@ -46,6 +47,8 @@ function scrollToRiskConfirmations() {
 }
 
 export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAction = true }: ProductRiskScanAlertProps) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
   if (!riskScan || riskScan.level === "none") {
     return null;
   }
@@ -64,15 +67,29 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
 
   return (
     <aside className={`product-risk-alert is-${level}`} aria-live="polite">
-      <div className="product-risk-alert-title">
-        <strong>需要确认的表述</strong>
-        <span>{LEVEL_LABELS[level]}</span>
+      <div className="product-risk-alert-main">
+        <div className="product-risk-alert-copy">
+          <div className="product-risk-alert-title">
+            <strong>需要确认的表述</strong>
+            <span>{LEVEL_LABELS[level]}</span>
+            {matches.length ? <span>{matches.length} 个命中词</span> : null}
+          </div>
+          <p className="product-risk-alert-description">检测到可能需要确认的表述，请确认品牌授权、认证、功效或绝对化宣传是否真实可证明。</p>
+        </div>
+        <div className="product-risk-alert-actions">
+          {categoryEntries.length ? (
+            <button className="button ghost product-risk-alert-action" type="button" onClick={() => setIsDetailOpen((current) => !current)}>
+              {isDetailOpen ? "收起详情" : "查看详情"}
+            </button>
+          ) : null}
+          {showAction ? (
+            <button className="button secondary product-risk-alert-action" type="button" onClick={onOpenRiskConfirmations || scrollToRiskConfirmations}>
+              补充风险确认
+            </button>
+          ) : null}
+        </div>
       </div>
-      <p className="product-risk-alert-description">
-        {riskScan.summary || "检测到可能需要用户确认的商品描述。"} 请确认这些内容是否真实、可证明，避免使用未经确认的授权、认证、功效或绝对化宣传。
-        你可以在「商品卖点 & 生成要求」中确认允许使用的品牌/授权信息，或禁止 CloudAI 生成相关表述。
-      </p>
-      {categoryEntries.length ? (
+      {isDetailOpen && categoryEntries.length ? (
         <div className="product-risk-alert-groups" aria-label="按类别分组的风险关键词">
           {categoryEntries.map(([category, categoryMatches]) => {
             const visibleMatches = categoryMatches.slice(0, CATEGORY_KEYWORD_LIMIT);
@@ -106,13 +123,6 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
               </section>
             );
           })}
-        </div>
-      ) : null}
-      {showAction ? (
-        <div className="product-risk-alert-actions">
-          <button className="button secondary product-risk-alert-action" type="button" onClick={onOpenRiskConfirmations || scrollToRiskConfirmations}>
-            去补充风险确认
-          </button>
         </div>
       ) : null}
     </aside>

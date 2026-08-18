@@ -405,6 +405,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
 
       {plan ? (
         <>
+          <ProductRiskScanAlert riskScan={riskScan} onOpenRiskConfirmations={onOpenRiskConfirmations} />
           {imageSetCostEstimate ? (
             <div className={`product-image-set-summary-bar product-image-set-batch-toolbar ${batchStatusTone}`.trim()}>
               <div className="product-image-set-summary-copy">
@@ -451,7 +452,6 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
               </div>
             </div>
           ) : null}
-          <ProductRiskScanAlert riskScan={riskScan} onOpenRiskConfirmations={onOpenRiskConfirmations} />
           {batchProgress.total ? (
             <div className={`product-image-set-batch-status ${batchProgress.failed ? "warning" : batchProgress.completed === batchProgress.total ? "complete" : ""}`.trim()} aria-live="polite">
               <strong>

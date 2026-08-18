@@ -216,8 +216,8 @@ export function ProductWorkspaceTabs({
         ) : null}
         {result ? (
           <>
-            <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
             <ProductGenerationBriefEditor analysis={result.analysis} analysisHistoryId={result.historyId} onBriefChange={setGenerationBrief} />
+            <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
           </>
         ) : null}
       </div>

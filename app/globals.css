@@ -3620,8 +3620,8 @@ h3 {
 .product-platform-selector button.active,
 .product-platform-selector button:hover {
   border-color: var(--selected-border);
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  color: var(--text);
+  background: var(--surface-hover);
 }
 
 .product-workspace-future-feature {
@@ -3922,8 +3922,8 @@ h3 {
   display: grid;
   gap: 8px;
   border: 1px solid var(--workspace-border);
-  border-radius: 16px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 8px 10px;
   color: var(--muted);
   background: var(--workspace-surface);
 }
@@ -3938,17 +3938,30 @@ h3 {
   background: color-mix(in srgb, var(--warning) 8%, var(--workspace-surface));
 }
 
+.product-risk-alert-main {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.product-risk-alert-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .product-risk-alert-title {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .product-risk-alert-title strong {
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 0.86rem;
 }
 
 .product-risk-alert-title span,
@@ -3958,10 +3971,10 @@ h3 {
   width: fit-content;
   border: 1px solid var(--workspace-border);
   border-radius: 999px;
-  padding: 4px 9px;
+  padding: 3px 7px;
   color: var(--text);
   background: var(--surface);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -3969,8 +3982,8 @@ h3 {
 .product-risk-alert-description {
   margin: 0;
   color: var(--muted);
-  font-size: 0.8rem;
-  line-height: 1.5;
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .product-risk-alert-chips {
@@ -4043,11 +4056,15 @@ h3 {
 .product-risk-alert-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  flex: 0 0 auto;
+  gap: 6px;
 }
 
 .product-risk-alert-action {
   width: fit-content;
+  min-height: 32px;
+  padding: 7px 10px;
+  font-size: 0.76rem;
 }
 
 .product-risk-alert.is-high .product-risk-alert-title span {
@@ -5282,8 +5299,8 @@ h3 {
   border: 1px solid var(--workspace-border);
   border-radius: 999px;
   padding: 7px 11px;
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  color: var(--text);
+  background: var(--surface);
   font-size: 0.78rem;
   font-style: normal;
   font-weight: 900;
@@ -5336,8 +5353,8 @@ h3 {
 
 .product-creation-progress-list article.done > span {
   border-color: var(--selected-border);
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  color: var(--text);
+  background: var(--surface-hover);
 }
 
 .product-creation-progress-list article.pending > span {
@@ -5381,8 +5398,8 @@ h3 {
 
 .product-creation-progress-list article.done .product-creation-progress-row em {
   border-color: var(--selected-border);
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  color: var(--text);
+  background: var(--surface-hover);
 }
 
 .product-creation-progress-list p {
@@ -5422,8 +5439,8 @@ h3 {
 
 .product-creation-progress-grid article.done > span {
   border-color: var(--selected-border);
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  color: var(--text);
+  background: var(--surface-hover);
 }
 
 .product-creation-progress-grid strong {
@@ -6406,7 +6423,7 @@ h3 {
 .product-analysis-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .product-analysis-chip {
@@ -6414,12 +6431,12 @@ h3 {
   max-width: 100%;
   border: 1px solid var(--workspace-border);
   border-radius: 999px;
-  padding: 6px 9px;
-  color: var(--badge-text);
-  background: var(--badge-bg);
-  font-size: 0.78rem;
+  padding: 4px 7px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 0.74rem;
   font-weight: 850;
-  line-height: 1.35;
+  line-height: 1.25;
   word-break: break-word;
 }
 
@@ -6434,26 +6451,26 @@ h3 {
 
 .product-generation-brief {
   display: grid;
-  gap: 18px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-bottom: 14px;
   border: 1px solid var(--card-border);
-  border-radius: 22px;
-  padding: 18px;
+  border-radius: 18px;
+  padding: 14px;
   background: var(--workspace-surface);
-  box-shadow: var(--shadow);
+  box-shadow: inset 0 1px 0 var(--surface-hover);
 }
 
 .product-generation-brief-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .product-generation-brief-header h3 {
-  margin: 0 0 8px;
+  margin: 0 0 5px;
   color: var(--text);
-  font-size: 1.18rem;
+  font-size: 1.02rem;
   line-height: 1.35;
 }
 
@@ -6461,39 +6478,39 @@ h3 {
   max-width: 760px;
   margin: 0;
   color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.7;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .product-generation-brief-summary {
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
 .product-generation-brief-summary span {
   border: 1px solid var(--workspace-border);
   border-radius: 999px;
-  padding: 7px 10px;
-  color: var(--muted);
+  padding: 4px 7px;
+  color: var(--text);
   background: var(--surface);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 900;
   white-space: nowrap;
 }
 
 .product-generation-brief-compact {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
 }
 
 .product-generation-brief-compact-main {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .product-generation-brief-compact-main > div,
@@ -6502,22 +6519,22 @@ h3 {
   gap: 6px;
   min-width: 0;
   border: 1px solid var(--workspace-border);
-  border-radius: 16px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 9px 10px;
   background: var(--surface);
 }
 
 .product-generation-brief-compact-main span,
 .product-generation-brief-preview-grid strong {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 900;
 }
 
 .product-generation-brief-compact-main strong {
   overflow: hidden;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -6527,8 +6544,8 @@ h3 {
   overflow: hidden;
   margin: 0;
   color: var(--text);
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: 0.78rem;
+  line-height: 1.42;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -6536,13 +6553,13 @@ h3 {
 .product-generation-brief-preview-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .product-generation-brief-preview-grid section div {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -6552,10 +6569,10 @@ h3 {
   overflow: hidden;
   border: 1px solid var(--workspace-border);
   border-radius: 999px;
-  padding: 5px 8px;
-  color: var(--muted);
+  padding: 3px 7px;
+  color: var(--text);
   background: var(--workspace-surface);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6564,13 +6581,13 @@ h3 {
 .product-generation-brief-compact-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .product-generation-brief-compact-actions span {
   color: var(--success);
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 850;
 }
 
@@ -6791,8 +6808,8 @@ h3 {
   margin-bottom: 8px;
   border-radius: 999px;
   padding: 4px 8px;
-  color: var(--badge-text);
-  background: var(--badge-bg);
+  color: var(--text);
+  background: var(--surface-hover);
   font-size: 0.76rem;
   font-weight: 900;
 }
