@@ -992,10 +992,21 @@ h3 {
   padding: 14px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.landing-showcase-card:hover {
+  border-color: var(--selected-border);
+  box-shadow: var(--shadow);
+  transform: translateY(-3px);
 }
 
 .landing-showcase-visual {
   position: relative;
+  display: grid;
   overflow: hidden;
   aspect-ratio: 4 / 3;
   border: 1px solid var(--preview-border);
@@ -1005,42 +1016,221 @@ h3 {
     linear-gradient(135deg, var(--surface-hover), var(--preview-bg));
 }
 
-.landing-showcase-visual span {
+.landing-showcase-visual::before {
   position: absolute;
-  right: 16%;
-  bottom: 16%;
+  inset: 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  content: "";
+}
+
+.landing-showcase-product,
+.landing-showcase-copy,
+.landing-showcase-detail {
+  position: absolute;
+  z-index: 1;
+}
+
+.landing-showcase-product {
+  right: 13%;
+  bottom: 13%;
+  display: grid;
   width: 34%;
-  aspect-ratio: 1;
+  aspect-ratio: 0.66;
   border: 1px solid var(--selected-border);
-  border-radius: 18px;
-  background: var(--panel-gradient);
+  border-radius: 18px 18px 12px 12px;
+  background:
+    linear-gradient(180deg, var(--bg-elevated), var(--surface-hover));
   box-shadow: var(--shadow);
 }
 
-.landing-showcase-visual i {
-  position: absolute;
-  left: 14%;
+.landing-showcase-product span {
+  border-radius: 999px;
+  background: var(--card-border);
+}
+
+.landing-showcase-product span:nth-child(1) {
+  align-self: start;
+  justify-self: center;
+  width: 34%;
+  height: 12%;
+  margin-top: -8%;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.landing-showcase-product span:nth-child(2),
+.landing-showcase-product span:nth-child(3) {
+  justify-self: center;
+  width: 62%;
+  height: 7px;
+}
+
+.landing-showcase-product span:nth-child(4) {
+  justify-self: center;
+  width: 42%;
+  height: 7px;
+}
+
+.landing-showcase-copy {
+  left: 10%;
   top: 16%;
+  display: grid;
+  gap: 7px;
   width: 44%;
-  height: 10px;
+}
+
+.landing-showcase-copy span {
+  display: block;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--text);
+  opacity: 0.26;
+}
+
+.landing-showcase-copy span:first-child {
+  width: 82%;
+  height: 13px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.landing-showcase-copy span:last-child {
+  width: 58%;
+}
+
+.landing-showcase-detail {
+  left: 11%;
+  bottom: 13%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 34%;
+}
+
+.landing-showcase-detail span {
+  aspect-ratio: 1;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.landing-showcase-visual.skincare::after {
+  position: absolute;
+  right: 36%;
+  top: 16%;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: var(--accent);
-  opacity: 0.62;
+  box-shadow:
+    20px 14px 0 var(--card-border),
+    34px -4px 0 var(--accent-soft),
+    -16px 22px 0 var(--card-border);
+  content: "";
+  opacity: 0.85;
 }
 
-.landing-showcase-visual.fashion span {
-  border-radius: 999px 999px 20px 20px;
+.landing-showcase-visual.fashion .landing-showcase-product {
+  left: 18%;
+  right: auto;
+  bottom: 12%;
+  width: 28%;
+  aspect-ratio: 0.52;
+  border-radius: 999px 999px 18px 18px;
 }
 
-.landing-showcase-visual.jewelry span {
-  width: 30%;
+.landing-showcase-visual.fashion .landing-showcase-product::before {
+  position: absolute;
+  top: -18%;
+  left: 50%;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.landing-showcase-visual.fashion .landing-showcase-copy {
+  left: auto;
+  right: 10%;
+  top: 16%;
+  width: 38%;
+}
+
+.landing-showcase-visual.fashion .landing-showcase-detail {
+  left: auto;
+  right: 11%;
+  bottom: 14%;
+}
+
+.landing-showcase-visual.jewelry .landing-showcase-product {
+  top: 18%;
+  right: 18%;
+  bottom: auto;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, transparent 44%, var(--surface-hover) 45% 57%, transparent 58%),
+    conic-gradient(from 18deg, var(--accent), var(--card-border), var(--accent-soft), var(--accent));
+}
+
+.landing-showcase-visual.jewelry .landing-showcase-product span {
+  display: none;
+}
+
+.landing-showcase-visual.jewelry .landing-showcase-detail span {
   border-radius: 999px;
 }
 
-.landing-showcase-visual.tech span {
-  width: 48%;
-  aspect-ratio: 1.55;
+.landing-showcase-visual.tech .landing-showcase-product {
+  right: 10%;
+  bottom: 22%;
+  width: 56%;
+  aspect-ratio: 2.4;
   border-radius: 16px;
+  background:
+    repeating-linear-gradient(90deg, var(--card-border) 0 7px, transparent 7px 14px),
+    linear-gradient(135deg, var(--surface-hover), var(--workspace-panel));
+}
+
+.landing-showcase-visual.tech .landing-showcase-product span {
+  display: none;
+}
+
+.landing-showcase-visual.tech::after {
+  position: absolute;
+  right: 18%;
+  bottom: 13%;
+  width: 52%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 24px var(--accent-soft);
+  content: "";
+  opacity: 0.9;
+}
+
+.landing-showcase-label {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  margin-bottom: 10px;
+  padding: 6px 9px;
+  color: var(--accent);
+  background: var(--surface);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.landing-showcase-description {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 
 .landing-showcase-card h3 {

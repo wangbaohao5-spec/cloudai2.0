@@ -54,10 +54,34 @@ const railItems = [
   { label: "创作进度", value: "套图 5 张 · 详情页 2 张" },
 ];
 const showcaseItems = [
-  { title: "护肤品详情页", tags: ["详情页", "卖点图"], tone: "skincare" },
-  { title: "服装场景图", tags: ["上身展示", "细节图"], tone: "fashion" },
-  { title: "首饰套图", tags: ["白底图", "细节图"], tone: "jewelry" },
-  { title: "数码外设套图", tags: ["场景图", "核心卖点"], tone: "tech" },
+  {
+    description: "突出温和清洁、泡沫质地、成分卖点和使用场景。",
+    label: "详情页 / 卖点图",
+    title: "护肤品详情页",
+    tags: ["详情页", "卖点图", "细节图"],
+    tone: "skincare",
+  },
+  {
+    description: "展示上身效果、版型、面料和穿搭氛围。",
+    label: "上身展示 / 场景图",
+    title: "服装场景图",
+    tags: ["上身展示", "场景图", "细节图"],
+    tone: "fashion",
+  },
+  {
+    description: "组合白底图、佩戴图、材质细节和礼品氛围。",
+    label: "套图 / 白底图",
+    title: "首饰套图",
+    tags: ["套图", "白底图", "细节图"],
+    tone: "jewelry",
+  },
+  {
+    description: "展示产品主体、灯光氛围、功能卖点和桌面场景。",
+    label: "套图 / 场景图",
+    title: "数码外设套图",
+    tags: ["套图", "场景图", "核心卖点"],
+    tone: "tech",
+  },
 ];
 
 export function FeatureSection() {
@@ -140,17 +164,34 @@ export function FeatureSection() {
         <div className="section-heading">
           <p className="eyebrow">Showcase</p>
           <h2>生成示例</h2>
-          <p>以下为 CloudAI 商品素材生成方向示例，真实效果会根据商品图片、生成要求和模型表现变化。</p>
+          <p>从商品主图到详情页、场景图和套图，CloudAI 会围绕同一个商品组织素材，而不是只生成单张图片。</p>
         </div>
         <div className="landing-showcase-grid">
           {showcaseItems.map((item) => (
             <article className="landing-showcase-card" key={item.title}>
               <div className={`landing-showcase-visual ${item.tone}`} aria-hidden="true">
-                <span />
-                <i />
+                <div className="landing-showcase-product">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div className="landing-showcase-copy">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div className="landing-showcase-detail">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
               </div>
               <div>
+                <span className="landing-showcase-label">{item.label}</span>
                 <h3>{item.title}</h3>
+                <p className="landing-showcase-description">{item.description}</p>
                 <p>
                   {item.tags.map((tag) => (
                     <span key={tag}>{tag}</span>
