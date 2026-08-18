@@ -20,6 +20,7 @@ type ProductWorkspaceTabsProps = {
   creationCenterError: string;
   isAnalyzing: boolean;
   isCreationCenterLoading: boolean;
+  isUploading: boolean;
   onAnalyze: () => void;
   onGenerated: () => void;
   result: ProductAnalysisResponse | null;
@@ -111,6 +112,7 @@ export function ProductWorkspaceTabs({
   creationCenterError,
   isAnalyzing,
   isCreationCenterLoading,
+  isUploading,
   onAnalyze,
   onGenerated,
   result,
@@ -142,6 +144,9 @@ export function ProductWorkspaceTabs({
     { label: "场景", done: sceneImageCount > 0 },
   ];
   const isExportReady = exportChecklist.every((item) => item.done);
+  const uploadEmptyAction = isUploading
+    ? { disabled: true, label: "上传图片中...", onClick: scrollToUploadSection, tone: "primary" as const }
+    : { label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
 
   function switchTab(tabId: TabId) {
     setActiveTab(tabId);
@@ -197,7 +202,7 @@ export function ProductWorkspaceTabs({
               { label: "补充卖点或必须保留的细节", done: false },
               { label: "生成套图和素材包", done: false },
             ]}
-            actions={[{ label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" }]}
+            actions={[uploadEmptyAction]}
           />
         ) : null}
         {uploadedAsset && !result ? (
@@ -211,7 +216,7 @@ export function ProductWorkspaceTabs({
               { label: "等待 AI 分析", done: false },
               { label: "生成素材前先确认商品信息", done: false },
             ]}
-            actions={[{ disabled: isAnalyzing, label: isAnalyzing ? "正在分析..." : "分析商品", onClick: onAnalyze, tone: "primary" }]}
+            actions={[{ disabled: isAnalyzing || isUploading, label: isAnalyzing ? "分析中..." : isUploading ? "上传图片中..." : "分析商品", onClick: onAnalyze, tone: "primary" }]}
           />
         ) : null}
         {result ? (

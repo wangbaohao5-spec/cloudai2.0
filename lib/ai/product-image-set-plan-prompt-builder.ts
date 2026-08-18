@@ -4,7 +4,9 @@ import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rule
 import type { ProductGenerationBrief, ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
 
 export type ProductImageSetPurpose = "quick-listing" | "detail-page" | "social-seeding" | "platform-listing";
-export type ProductImageSetCount = 3 | 5 | 7 | 8;
+export type ProductImageSetSmartCount = 3 | 5 | 7 | 8;
+export type ProductImageSetCount = ProductImageSetSmartCount;
+export type ProductImageSetPlanCount = number;
 export type ProductImageSetStructureMode = "custom" | "smart";
 export type ProductImageSetCustomStructure = {
   comparison?: number;
@@ -46,13 +48,13 @@ export type ProductImageSetPlanImage = {
 
 export type ProductImageSetPlan = {
   purpose: ProductImageSetPurpose;
-  count: ProductImageSetCount;
+  count: ProductImageSetPlanCount;
   images: ProductImageSetPlanImage[];
 };
 
 type ProductImageSetPlanPromptInput = {
   analysis: ProductImageAnalysis;
-  count: ProductImageSetCount;
+  count: ProductImageSetPlanCount;
   customStructure?: ProductImageSetCustomStructure | null;
   generationBrief?: ProductGenerationBrief | null;
   productTitle: string;
@@ -93,7 +95,7 @@ function joinList(items?: string[]) {
   return items?.filter(Boolean).join("、") || "暂无明确结果";
 }
 
-function getCountGuide(count: ProductImageSetCount) {
+function getCountGuide(count: ProductImageSetPlanCount) {
   if (count === 3) {
     return "3 张：快速测试，必须覆盖主视觉、核心卖点、购买/使用理由，三张不能重复。";
   }
@@ -106,7 +108,11 @@ function getCountGuide(count: ProductImageSetCount) {
     return "7 张：常见商品套图，建议覆盖主视觉、卖点、场景、细节、四宫格/参数、多角度/人物/材质、CTA。";
   }
 
-  return "8 张：完整详情页或 Listing 结构，必须形成从吸引点击到解释卖点、展示细节、建立信任、促进转化的完整序列。";
+  if (count === 8) {
+    return "8 张：完整详情页或 Listing 结构，必须形成从吸引点击到解释卖点、展示细节、建立信任、促进转化的完整序列。";
+  }
+
+  return `${count} 张：请按照用户自定义结构规划，确保每张图片承担不同任务，避免重复同一种画面。`;
 }
 
 function buildCustomStructurePrompt(customStructure?: ProductImageSetCustomStructure | null) {

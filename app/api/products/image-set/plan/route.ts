@@ -3,11 +3,12 @@ import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import {
   buildProductImageSetPlanPrompt,
   type ProductImageSetCustomStructure,
-  type ProductImageSetCount,
   type ProductImageSetImageType,
   type ProductImageSetPlan,
+  type ProductImageSetPlanCount,
   type ProductImageSetPlanImage,
   type ProductImageSetPurpose,
+  type ProductImageSetSmartCount,
   type ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { jsonError } from "@/lib/api-errors";
@@ -53,8 +54,12 @@ function isImageSetPurpose(value: string): value is ProductImageSetPurpose {
   return IMAGE_SET_PURPOSES.includes(value as ProductImageSetPurpose);
 }
 
-function isImageSetCount(value: number): value is ProductImageSetCount {
-  return IMAGE_SET_COUNTS.includes(value as ProductImageSetCount);
+function isImageSetSmartCount(value: number): value is ProductImageSetSmartCount {
+  return IMAGE_SET_COUNTS.includes(value as ProductImageSetSmartCount);
+}
+
+function isCustomImageSetCount(value: number): value is ProductImageSetPlanCount {
+  return Number.isInteger(value) && value >= 1 && value <= 12;
 }
 
 function isImageSetStructureMode(value: string): value is ProductImageSetStructureMode {
@@ -87,7 +92,7 @@ function normalizeCustomStructure(value: unknown): ProductImageSetCustomStructur
 
   for (const key of CUSTOM_STRUCTURE_KEYS) {
     const rawValue = Number(source[key] || 0);
-    structure[key] = Number.isFinite(rawValue) ? Math.min(Math.max(Math.trunc(rawValue), 0), 8) : 0;
+    structure[key] = Number.isFinite(rawValue) ? Math.min(Math.max(Math.trunc(rawValue), 0), 12) : 0;
   }
 
   return structure;
@@ -108,7 +113,7 @@ function parseJsonResponse(response: string) {
   return JSON.parse(withoutFence) as ProductImageSetPlan;
 }
 
-function getFallbackImageType(index: number, count: ProductImageSetCount): ProductImageSetImageType {
+function getFallbackImageType(index: number, count: ProductImageSetPlanCount): ProductImageSetImageType {
   if (index === 0) {
     return "hero";
   }
@@ -120,7 +125,7 @@ function getFallbackImageType(index: number, count: ProductImageSetCount): Produ
   return (["selling-point", "usage-scene", "detail-closeup", "four-grid-detail", "size-spec", "multi-angle"] as ProductImageSetImageType[])[index - 1] || "selling-point";
 }
 
-function normalizePlanImage(value: unknown, index: number, count: ProductImageSetCount): ProductImageSetPlanImage {
+function normalizePlanImage(value: unknown, index: number, count: ProductImageSetPlanCount): ProductImageSetPlanImage {
   const image = value && typeof value === "object" ? (value as Partial<ProductImageSetPlanImage>) : {};
   const imageIndex = index + 1;
   const imageType = normalizeText(image.imageType);
@@ -142,7 +147,7 @@ function normalizePlanImage(value: unknown, index: number, count: ProductImageSe
   };
 }
 
-function normalizePlan(plan: ProductImageSetPlan, purpose: ProductImageSetPurpose, count: ProductImageSetCount): ProductImageSetPlan {
+function normalizePlan(plan: ProductImageSetPlan, purpose: ProductImageSetPurpose, count: ProductImageSetPlanCount): ProductImageSetPlan {
   const images = Array.isArray(plan.images) ? plan.images.slice(0, count).map((image, index) => normalizePlanImage(image, index, count)) : [];
 
   if (images.length !== count) {
@@ -167,8 +172,8 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ProductImageSetPlanRequestBody;
     const analysisHistoryId = body.analysisHistoryId?.trim();
     const purpose = body.purpose?.trim() || "detail-page";
-    const count = Number(body.count || 7);
     const structureModeInput = body.structureMode?.trim() || "smart";
+    const count = Number(body.count || 7);
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
 
     if (!analysisHistoryId) {
@@ -179,15 +184,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "套图用途无效，请重新选择。" }, { status: 400 });
     }
 
-    if (!isImageSetCount(count)) {
-      return NextResponse.json({ error: "套图数量无效，请选择 3、5、7 或 8 张。" }, { status: 400 });
-    }
-
     if (!isImageSetStructureMode(structureModeInput)) {
       return NextResponse.json({ error: "套图结构模式无效，请重新选择。" }, { status: 400 });
     }
 
     const structureMode = structureModeInput;
+
+    if (structureMode === "smart" && !isImageSetSmartCount(count)) {
+      return NextResponse.json({ error: "套图数量无效，请选择 3、5、7 或 8 张。" }, { status: 400 });
+    }
+
+    if (structureMode === "custom" && !isCustomImageSetCount(count)) {
+      return NextResponse.json({ error: "自定义套图数量无效，请选择 1 到 12 张。" }, { status: 400 });
+    }
+
     const customStructure = structureMode === "custom" ? normalizeCustomStructure(body.customStructure) : null;
 
     if (customStructure && getCustomStructureTotal(customStructure) !== count) {

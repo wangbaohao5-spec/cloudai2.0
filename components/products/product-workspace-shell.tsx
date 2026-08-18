@@ -334,6 +334,7 @@ export function ProductWorkspaceShell() {
           creationCenterError={creationCenterError}
           isAnalyzing={isAnalyzing}
           isCreationCenterLoading={isCreationCenterLoading}
+          isUploading={isUploading}
           result={result}
           uploadedAsset={uploadedAsset}
           onAnalyze={() => void handleAnalyze()}

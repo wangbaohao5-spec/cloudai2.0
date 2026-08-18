@@ -5,11 +5,11 @@ import { ProductGenerationCostHint } from "@/components/products/product-generat
 import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type {
-  ProductImageSetCount,
   ProductImageSetCustomStructure,
   ProductImageSetPlan,
   ProductImageSetPlanImage,
   ProductImageSetPurpose,
+  ProductImageSetSmartCount,
   ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
@@ -71,7 +71,7 @@ const purposeOptions: Array<{ description: string; label: string; structure: str
   },
 ];
 
-const countOptions: Array<{ description: string; label: string; value: ProductImageSetCount }> = [
+const countOptions: Array<{ description: string; label: string; value: ProductImageSetSmartCount }> = [
   { value: 3, label: "3 张", description: "快速测试" },
   { value: 5, label: "5 张", description: "基础套图" },
   { value: 7, label: "7 张", description: "常见商品套图" },
@@ -91,18 +91,26 @@ const customStructureOptions: Array<{ key: keyof ProductImageSetCustomStructure;
   { key: "other", label: "其他" },
 ];
 
+const customStructureDescriptions: Record<string, string> = {
+  detailCloseup: "展示材质、结构或局部细节",
+  other: "尺寸、对比、参数或补充图",
+  sellingPoint: "突出核心卖点",
+  usageScene: "展示使用场景和氛围",
+  whiteBackground: "适合主图和商品基础展示",
+};
+
 const customStructureDefaults = {
   3: { detailCloseup: 0, other: 0, sellingPoint: 1, usageScene: 1, whiteBackground: 1 },
   5: { detailCloseup: 1, other: 0, sellingPoint: 2, usageScene: 1, whiteBackground: 1 },
   7: { detailCloseup: 1, other: 1, sellingPoint: 2, usageScene: 2, whiteBackground: 1 },
   8: { detailCloseup: 2, other: 1, sellingPoint: 2, usageScene: 2, whiteBackground: 1 },
-} satisfies Record<ProductImageSetCount, ProductImageSetCustomStructure>;
+} satisfies Record<ProductImageSetSmartCount, ProductImageSetCustomStructure>;
 
 function getPurposeLabel(value: ProductImageSetPurpose) {
   return purposeOptions.find((option) => option.value === value)?.label || "商品套图";
 }
 
-function getDefaultCustomStructure(count: ProductImageSetCount): ProductImageSetCustomStructure {
+function getDefaultCustomStructure(count: ProductImageSetSmartCount): ProductImageSetCustomStructure {
   return {
     comparison: 0,
     sizeSpec: 0,
@@ -129,7 +137,7 @@ function formatCustomStructure(structure: ProductImageSetCustomStructure | null)
 }
 
 export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
-  const [count, setCount] = useState<ProductImageSetCount>(7);
+  const [count, setCount] = useState<ProductImageSetSmartCount>(7);
   const [customStructure, setCustomStructure] = useState<ProductImageSetCustomStructure>(() => getDefaultCustomStructure(7));
   const [error, setError] = useState("");
   const [generatingImageIndex, setGeneratingImageIndex] = useState<number | null>(null);
@@ -145,7 +153,14 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   const [riskScan, setRiskScan] = useState<ProductRiskScan | null>(null);
   const [structureMode, setStructureMode] = useState<ProductImageSetStructureMode>("smart");
   const customStructureTotal = getCustomStructureTotal(customStructure);
-  const isCustomStructureValid = structureMode === "smart" || customStructureTotal === count;
+  const planCount = structureMode === "custom" ? customStructureTotal : count;
+  const isCustomStructureValid = structureMode === "smart" || (customStructureTotal >= 1 && customStructureTotal <= 12);
+  const customStructureWarning =
+    structureMode === "custom" && customStructureTotal > 12
+      ? "当前最多支持 12 张，请减少部分类型数量。"
+      : structureMode === "custom" && customStructureTotal < 1
+        ? "当前至少需要 1 张，请增加一种图片类型。"
+        : "";
   const remainingImages = plan?.images.filter((image) => !imageResults[image.imageIndex]).sort((left, right) => left.imageIndex - right.imageIndex) || [];
   const failedImages = plan?.images.filter((image) => !imageResults[image.imageIndex] && Boolean(imageErrors[image.imageIndex])).sort((left, right) => left.imageIndex - right.imageIndex) || [];
   const generatedCount = plan ? plan.images.length - remainingImages.length : 0;
@@ -193,7 +208,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
     return "先规划，再生成。每张图片都有明确任务，减少重复和无效生成。";
   }
 
-  function handleCountChange(nextCount: ProductImageSetCount) {
+  function handleCountChange(nextCount: ProductImageSetSmartCount) {
     setCount(nextCount);
     if (structureMode === "custom") {
       setCustomStructure(getDefaultCustomStructure(nextCount));
@@ -215,7 +230,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   function updateCustomStructure(key: keyof ProductImageSetCustomStructure, delta: number) {
     setCustomStructure((current) => ({
       ...current,
-      [key]: Math.min(Math.max((current[key] || 0) + delta, 0), 8),
+      [key]: Math.min(Math.max((current[key] || 0) + delta, 0), 12),
     }));
   }
 
@@ -226,7 +241,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
     }
 
     if (!isCustomStructureValid) {
-      setError(`当前配置共 ${customStructureTotal} 张，请调整为 ${count} 张后再生成规划。`);
+      setError(customStructureWarning || "请调整自定义结构数量后再生成规划。");
       return;
     }
 
@@ -242,7 +257,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         },
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
-          count,
+          count: planCount,
           customStructure: structureMode === "custom" ? customStructure : undefined,
           generationBrief: generationBrief || undefined,
           purpose,
@@ -451,41 +466,43 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend>套图用途</legend>
-          <div className="product-image-set-purpose-grid">
-            {purposeOptions.map((option) => (
-              <label className={`product-image-set-purpose-card ${purpose === option.value ? "is-active active" : ""}`.trim()} key={option.value}>
-                <input checked={purpose === option.value} name="imageSetPurpose" type="radio" value={option.value} onChange={() => setPurpose(option.value)} />
-                <span className="product-image-set-purpose-card-header">
-                  <strong>{option.label}</strong>
-                  {purpose === option.value ? <em>当前选择</em> : null}
-                </span>
-                <span>{option.description}</span>
-                <span className="product-image-set-purpose-structure" aria-label={`${option.label}推荐结构`}>
-                  {option.structure.slice(0, 4).map((item) => (
-                    <i key={item}>{item}</i>
-                  ))}
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        {structureMode === "smart" ? (
+          <>
+            <fieldset>
+              <legend>套图用途</legend>
+              <div className="product-image-set-purpose-grid">
+                {purposeOptions.map((option) => (
+                  <label className={`product-image-set-purpose-card ${purpose === option.value ? "is-active active" : ""}`.trim()} key={option.value}>
+                    <input checked={purpose === option.value} name="imageSetPurpose" type="radio" value={option.value} onChange={() => setPurpose(option.value)} />
+                    <span className="product-image-set-purpose-card-header">
+                      <strong>{option.label}</strong>
+                      {purpose === option.value ? <em>当前选择</em> : null}
+                    </span>
+                    <span>{option.description}</span>
+                    <span className="product-image-set-purpose-structure" aria-label={`${option.label}推荐结构`}>
+                      {option.structure.slice(0, 4).map((item) => (
+                        <i key={item}>{item}</i>
+                      ))}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
-        <fieldset>
-          <legend>套图数量</legend>
-          <div className="product-image-set-count-options product-image-set-count-grid">
-            {countOptions.map((option) => (
-              <label className={`product-image-set-count-option ${count === option.value ? "is-active active" : ""}`.trim()} key={option.value}>
-                <input checked={count === option.value} name="imageSetCount" type="radio" value={option.value} onChange={() => handleCountChange(option.value)} />
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {structureMode === "custom" ? (
+            <fieldset>
+              <legend>套图数量</legend>
+              <div className="product-image-set-count-options product-image-set-count-grid">
+                {countOptions.map((option) => (
+                  <label className={`product-image-set-count-option ${count === option.value ? "is-active active" : ""}`.trim()} key={option.value}>
+                    <input checked={count === option.value} name="imageSetCount" type="radio" value={option.value} onChange={() => handleCountChange(option.value)} />
+                    <strong>{option.label}</strong>
+                    <span>{option.description}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </>
+        ) : (
           <fieldset>
             <legend>自定义结构</legend>
             <div className="product-image-set-custom-structure">
@@ -494,13 +511,16 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
 
                 return (
                   <div className="product-image-set-custom-row" key={option.key}>
-                    <span>{option.label}</span>
+                    <span>
+                      <strong>{option.label}</strong>
+                      <small>{customStructureDescriptions[option.key]}</small>
+                    </span>
                     <div>
                       <button type="button" aria-label={`减少${option.label}`} disabled={value <= 0} onClick={() => updateCustomStructure(option.key, -1)}>
                         -
                       </button>
                       <strong>{value}</strong>
-                      <button type="button" aria-label={`增加${option.label}`} disabled={value >= 8} onClick={() => updateCustomStructure(option.key, 1)}>
+                      <button type="button" aria-label={`增加${option.label}`} disabled={value >= 12} onClick={() => updateCustomStructure(option.key, 1)}>
                         +
                       </button>
                     </div>
@@ -509,10 +529,11 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
               })}
             </div>
             <p className={`product-image-set-custom-total ${isCustomStructureValid ? "" : "is-warning"}`.trim()}>
-              当前配置：{customStructureTotal} 张，需与所选张数 {count} 张一致。
+              当前配置：{customStructureTotal} 张。预计消耗：{customStructureTotal} 张图片额度。
+              {customStructureWarning ? ` ${customStructureWarning}` : null}
             </p>
           </fieldset>
-        ) : null}
+        )}
       </div>
 
       <div className="product-image-set-plan-entry">
