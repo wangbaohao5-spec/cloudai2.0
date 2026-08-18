@@ -3862,6 +3862,31 @@ h3 {
   min-width: 0;
 }
 
+.product-risk-alert-suggestions {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.product-risk-alert-suggestion-title {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.product-risk-alert-suggestion-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.product-risk-alert-suggestion-list li {
+  min-width: 0;
+}
+
 .product-risk-alert-groups {
   display: grid;
   gap: 10px;

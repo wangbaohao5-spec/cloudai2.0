@@ -1,5 +1,7 @@
 "use client";
 
+import { getRiskCategorySuggestion } from "@/lib/ai/product-risk-suggestion";
+
 type RiskLevel = "none" | "low" | "medium" | "high";
 
 type ProductRiskScanAlertProps = {
@@ -88,6 +90,7 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
           {categoryEntries.map(([category, categoryMatches]) => {
             const visibleMatches = categoryMatches.slice(0, CATEGORY_KEYWORD_LIMIT);
             const hiddenCount = Math.max(categoryMatches.length - CATEGORY_KEYWORD_LIMIT, 0);
+            const suggestions = getRiskCategorySuggestion(category).slice(0, 3);
 
             return (
               <section className="product-risk-alert-group" key={category}>
@@ -103,6 +106,16 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
                   ))}
                   {hiddenCount ? <span className="product-risk-alert-chip">+{hiddenCount} 项</span> : null}
                 </div>
+                {suggestions.length ? (
+                  <div className="product-risk-alert-suggestions">
+                    <span className="product-risk-alert-suggestion-title">建议改法：</span>
+                    <ul className="product-risk-alert-suggestion-list">
+                      {suggestions.map((suggestion) => (
+                        <li key={suggestion}>{suggestion}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </section>
             );
           })}
