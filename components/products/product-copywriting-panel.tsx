@@ -1,6 +1,7 @@
 "use client";
 
 import { AiThinkingLoading } from "@/components/ui/loading";
+import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import type { CopywritingResult } from "@/lib/types";
@@ -9,6 +10,21 @@ import { useState } from "react";
 type ProductCopywritingPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   onGenerated?: () => void;
+};
+
+type ProductRiskScan = {
+  level: "none" | "low" | "medium" | "high";
+  matches?: Array<{
+    category: string;
+    keyword: string;
+    level: string;
+  }>;
+  summary?: string;
+};
+
+type ProductCopywritingResponse = CopywritingResult & {
+  riskScan?: ProductRiskScan;
+  warnings?: string[];
 };
 
 const platformOptions = [
@@ -263,7 +279,7 @@ function ProductCopywritingResultSections({
 
 export function ProductCopywritingPanel({ analysisResult, onGenerated }: ProductCopywritingPanelProps) {
   const [copywritingError, setCopywritingError] = useState("");
-  const [copywritingResult, setCopywritingResult] = useState<CopywritingResult | null>(null);
+  const [copywritingResult, setCopywritingResult] = useState<ProductCopywritingResponse | null>(null);
   const [copiedKey, setCopiedKey] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [isCopywritingLoading, setIsCopywritingLoading] = useState(false);
@@ -310,7 +326,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
         throw new Error(errorData?.error || "基于商品分析生成文案失败，请稍后再试。");
       }
 
-      const data = (await response.json()) as CopywritingResult & { warnings?: string[] };
+      const data = (await response.json()) as ProductCopywritingResponse;
       setCopywritingResult(data);
 
       if (!data.warnings?.length) {
@@ -414,6 +430,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated }: Product
 
       {copywritingResult ? (
         <div className="product-copywriting-result">
+          <ProductRiskScanAlert riskScan={copywritingResult.riskScan} />
           <ProductCopywritingResultSections copiedKey={copiedKey} result={copywritingResult} onCopy={(text, key) => void handleCopyText(text, key)} />
         </div>
       ) : null}

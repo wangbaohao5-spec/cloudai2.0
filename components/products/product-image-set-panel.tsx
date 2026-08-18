@@ -2,6 +2,7 @@
 
 import { ProductImageSetPlanPreview, type ProductImageSetImageResult } from "@/components/products/product-image-set-plan-preview";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
+import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type { ProductImageSetCount, ProductImageSetPlan, ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
@@ -19,6 +20,20 @@ type BatchProgress = {
   completed: number;
   failed: number;
   total: number;
+};
+
+type ProductRiskScan = {
+  level: "none" | "low" | "medium" | "high";
+  matches?: Array<{
+    category: string;
+    keyword: string;
+    level: string;
+  }>;
+  summary?: string;
+};
+
+type ProductImageSetPlanResponse = ProductImageSetPlan & {
+  riskScan?: ProductRiskScan;
 };
 
 const purposeOptions: Array<{ description: string; label: string; structure: string[]; value: ProductImageSetPurpose }> = [
@@ -70,6 +85,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<ProductImageSetPlan | null>(null);
   const [purpose, setPurpose] = useState<ProductImageSetPurpose>("detail-page");
+  const [riskScan, setRiskScan] = useState<ProductRiskScan | null>(null);
   const remainingImages = plan?.images.filter((image) => !imageResults[image.imageIndex]).sort((left, right) => left.imageIndex - right.imageIndex) || [];
   const failedImages = plan?.images.filter((image) => !imageResults[image.imageIndex] && Boolean(imageErrors[image.imageIndex])).sort((left, right) => left.imageIndex - right.imageIndex) || [];
   const generatedCount = plan ? plan.images.length - remainingImages.length : 0;
@@ -120,6 +136,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
   function handleCountChange(nextCount: ProductImageSetCount) {
     setCount(nextCount);
     setPlan(null);
+    setRiskScan(null);
     setImageErrors({});
     setImageResults({});
     setBatchProgress({ completed: 0, failed: 0, total: 0 });
@@ -132,6 +149,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
     }
 
     setError("");
+    setRiskScan(null);
     setIsPlanning(true);
 
     try {
@@ -152,13 +170,14 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         throw new Error("生成套图规划失败，请稍后重试。");
       }
 
-      const data = (await response.json()) as ProductImageSetPlan;
+      const data = (await response.json()) as ProductImageSetPlanResponse;
 
       setPlan({
         count: data.count,
         images: Array.isArray(data.images) ? data.images : [],
         purpose: data.purpose,
       });
+      setRiskScan(data.riskScan || null);
       setImageErrors({});
       setImageResults({});
       setBatchProgress({ completed: 0, failed: 0, total: 0 });
@@ -431,6 +450,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
               </div>
             </div>
           ) : null}
+          <ProductRiskScanAlert riskScan={riskScan} />
           {batchProgress.total ? (
             <div className={`product-image-set-batch-status ${batchProgress.failed ? "warning" : batchProgress.completed === batchProgress.total ? "complete" : ""}`.trim()} aria-live="polite">
               <strong>

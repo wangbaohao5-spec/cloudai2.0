@@ -2,6 +2,7 @@
 
 import { ProductDetailPagePlanPreview, type DetailPageImageResult } from "@/components/products/product-detail-page-plan-preview";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
+import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import type {
   ProductDetailPageCount,
@@ -16,6 +17,20 @@ type ProductDetailPagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
   onGenerated?: () => void;
+};
+
+type ProductRiskScan = {
+  level: "none" | "low" | "medium" | "high";
+  matches?: Array<{
+    category: string;
+    keyword: string;
+    level: string;
+  }>;
+  summary?: string;
+};
+
+type ProductDetailPagePlanResponse = ProductDetailPagePlan & {
+  riskScan?: ProductRiskScan;
 };
 
 const styleOptions: Array<{ description: string; label: string; value: ProductDetailPageStyle }> = [
@@ -53,11 +68,13 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
   const [pageErrors, setPageErrors] = useState<Record<number, string>>({});
   const [pageResults, setPageResults] = useState<Record<number, DetailPageImageResult>>({});
   const [plan, setPlan] = useState<ProductDetailPagePlan | null>(null);
+  const [riskScan, setRiskScan] = useState<ProductRiskScan | null>(null);
   const [style, setStyle] = useState<ProductDetailPageStyle>("ecommerce");
 
   function handleCountChange(nextCount: ProductDetailPageCount) {
     setCount(nextCount);
     setPlan(null);
+    setRiskScan(null);
     setPageErrors({});
     setPageResults({});
   }
@@ -69,6 +86,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
     }
 
     setError("");
+    setRiskScan(null);
     setIsPlanning(true);
 
     try {
@@ -89,9 +107,10 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
         throw new Error("生成详情页规划失败，请稍后重试。");
       }
 
-      const data = (await response.json()) as ProductDetailPagePlan;
+      const data = (await response.json()) as ProductDetailPagePlanResponse;
 
       setPlan({ pages: Array.isArray(data.pages) ? data.pages : [] });
+      setRiskScan(data.riskScan || null);
       setPageErrors({});
       setPageResults({});
     } catch {
@@ -246,6 +265,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
 
       {plan ? (
         <>
+          <ProductRiskScanAlert riskScan={riskScan} />
           <ProductDetailPagePlanPreview
             generatingPageIndex={generatingPageIndex}
             pageErrors={pageErrors}
