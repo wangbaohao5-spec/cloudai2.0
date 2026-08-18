@@ -95,6 +95,14 @@ function logTextEnvSnapshot() {
   });
 }
 
+function logTextDebug(message: string, payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  console.info(message, payload);
+}
+
 function normalizeProviderName(provider: string): TextProviderName {
   return provider.toLowerCase() === "openai-compatible" ? "openai-compatible" : "deepseek";
 }
@@ -178,7 +186,7 @@ export async function generateAIResponse(messages: AIMessage[], options?: Genera
   const requestId = options?.requestId || createTextRequestId();
 
   logTextEnvSnapshot();
-  console.info("[text-router] resolved model", {
+  logTextDebug("[text-router] resolved model", {
     model: config.model,
     modelSource: config.modelSource,
     provider: config.provider,

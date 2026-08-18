@@ -30,6 +30,14 @@ function getCauseSummary(error: unknown) {
   };
 }
 
+function logTextDebug(message: string, payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  console.info(message, payload);
+}
+
 export const deepseekProvider: AIProvider = {
   async generateAIResponse(messages: AIMessage[], options: GenerateAIResponseOptions = {}) {
     const apiKey = getRequiredEnv("DEEPSEEK_API_KEY");
@@ -38,7 +46,7 @@ export const deepseekProvider: AIProvider = {
     let response: Response;
 
     try {
-      console.info("[deepseek] request model", {
+      logTextDebug("[deepseek] request model", {
         model,
         requestId: options.requestId || "unknown",
         task: options.task || "default",

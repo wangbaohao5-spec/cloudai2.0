@@ -31,6 +31,14 @@ function getChatCompletionsEndpoint(baseUrl: string) {
   return `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
 }
 
+function logTextDebug(message: string, payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  console.info(message, payload);
+}
+
 export function getOpenAICompatibleTextModelId() {
   return getRequiredEnv("OPENAI_TEXT_MODEL");
 }
@@ -45,7 +53,7 @@ export const openAICompatibleTextProvider: AIProvider = {
     let response: Response;
 
     try {
-      console.info("[openai-compatible-text] request model", {
+      logTextDebug("[openai-compatible-text] request model", {
         endpoint,
         model,
         requestId: options.requestId || "unknown",
