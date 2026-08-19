@@ -13,12 +13,13 @@ import type {
   ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
-import type { ProductAnalysisResponse, ProductGenerationBrief } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductImageSetPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
+  outputSettings?: ProductOutputSettings | null;
   onGenerated?: () => void;
   onOpenRiskConfirmations?: () => void;
   onViewAssets?: () => void;
@@ -136,7 +137,7 @@ function formatCustomStructure(structure: ProductImageSetCustomStructure | null)
     .join(" / ");
 }
 
-export function ProductImageSetPanel({ analysisResult, generationBrief, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
+export function ProductImageSetPanel({ analysisResult, generationBrief, outputSettings, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetSmartCount>(7);
   const [customStructure, setCustomStructure] = useState<ProductImageSetCustomStructure>(() => getDefaultCustomStructure(7));
   const [error, setError] = useState("");
@@ -260,6 +261,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
           count: planCount,
           customStructure: structureMode === "custom" ? customStructure : undefined,
           generationBrief: generationBrief || undefined,
+          outputSettings: outputSettings || undefined,
           purpose,
           structureMode,
         }),
@@ -323,10 +325,11 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, onGenera
         },
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
-          count,
+          count: plan?.count || planCount,
           generationBrief: generationBrief || undefined,
           generationMode: image.suggestedGenerationMode || "faithful",
           image,
+          outputSettings: outputSettings || undefined,
           purpose,
         }),
       });

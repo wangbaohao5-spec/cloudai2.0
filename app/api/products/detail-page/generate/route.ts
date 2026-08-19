@@ -7,6 +7,7 @@ import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
@@ -19,6 +20,7 @@ type ProductDetailPageGenerateRequestBody = {
   analysisHistoryId?: string;
   generationMode?: string;
   generationBrief?: unknown;
+  outputSettings?: unknown;
   page?: Partial<ProductDetailPagePlanPage>;
   style?: string;
 };
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
     const style = body.style?.trim() || "ecommerce";
     const page = normalizePage(body.page);
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -162,6 +165,7 @@ export async function POST(request: Request) {
       buildProductDetailPageImagePrompt({
         analysis: analysisRecord.output,
         generationBrief,
+        outputSettings,
         page,
         productTitle: analysisRecord.title,
         style,
@@ -226,6 +230,7 @@ export async function POST(request: Request) {
           style,
           generationMode,
           ...(generationBrief ? { generationBrief } : {}),
+          ...(outputSettings ? { outputSettings } : {}),
           mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
           avoidChanges: analysisRecord.output.avoidChanges || [],
           page,

@@ -3,12 +3,13 @@
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
-import type { ProductAnalysisResponse } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductOutputSettings } from "@/lib/product-types";
 import type { CopywritingResult } from "@/lib/types";
 import { useState } from "react";
 
 type ProductCopywritingPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  outputSettings?: ProductOutputSettings | null;
   onGenerated?: () => void;
   onOpenRiskConfirmations?: () => void;
 };
@@ -278,7 +279,7 @@ function ProductCopywritingResultSections({
   );
 }
 
-export function ProductCopywritingPanel({ analysisResult, onGenerated, onOpenRiskConfirmations }: ProductCopywritingPanelProps) {
+export function ProductCopywritingPanel({ analysisResult, outputSettings, onGenerated, onOpenRiskConfirmations }: ProductCopywritingPanelProps) {
   const [copywritingError, setCopywritingError] = useState("");
   const [copywritingResult, setCopywritingResult] = useState<ProductCopywritingResponse | null>(null);
   const [copiedKey, setCopiedKey] = useState("");
@@ -319,6 +320,7 @@ export function ProductCopywritingPanel({ analysisResult, onGenerated, onOpenRis
           outputType,
           outputTypes: [outputType],
           generationMode: "single",
+          outputSettings: outputSettings || undefined,
         }),
       });
 

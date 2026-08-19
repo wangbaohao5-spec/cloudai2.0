@@ -1,4 +1,4 @@
-import type { ProductImageAnalysis } from "@/lib/product-types";
+import type { ProductImageAnalysis, ProductOutputSettings } from "@/lib/product-types";
 import type { CopywritingFormData } from "@/lib/types";
 
 export type ProductCopywritingOptions = {
@@ -8,6 +8,7 @@ export type ProductCopywritingOptions = {
   outputType?: string;
   outputTypes?: string[];
   generationMode?: "single" | "marketing-plan";
+  outputSettings?: ProductOutputSettings | null;
 };
 
 export function isProductImageAnalysis(value: unknown): value is ProductImageAnalysis {
@@ -65,5 +66,6 @@ export function buildCopywritingDataFromAnalysis(analysis: ProductImageAnalysis,
     goal: options.goal || "conversion",
     outputTypes,
     generationMode,
+    outputSettings: options.outputSettings || null,
   };
 }

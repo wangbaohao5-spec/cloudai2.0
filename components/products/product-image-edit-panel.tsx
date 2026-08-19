@@ -8,11 +8,12 @@ import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
 import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
-import type { ProductAnalysisResponse } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductOutputSettings } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductImageEditPanelProps = {
   analysisResult: ProductAnalysisResponse | null;
+  outputSettings?: ProductOutputSettings | null;
   onGenerated?: () => void;
 };
 
@@ -22,7 +23,7 @@ type ProductImageEditResult = {
   warnings?: string[];
 };
 
-export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductImageEditPanelProps) {
+export function ProductImageEditPanel({ analysisResult, outputSettings, onGenerated }: ProductImageEditPanelProps) {
   const defaultGoalId: ProductImageEditGoalId = "main-image";
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
@@ -75,6 +76,7 @@ export function ProductImageEditPanel({ analysisResult, onGenerated }: ProductIm
           analysisHistoryId: analysisResult.historyId,
           prompt: nextPrompt,
           model: "gpt-image-2",
+          outputSettings: outputSettings || undefined,
         }),
       });
 

@@ -1,5 +1,6 @@
 import type { CopywritingFormData } from "@/lib/types";
 import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
 import { getPlatformPromptGuide, getPromptTemplate, getPromptTemplates } from "@/lib/prompt-templates";
 
 export const COPYWRITING_SYSTEM_PROMPT = "你是专业电商运营专家。";
@@ -29,6 +30,7 @@ function getGoalPromptGuide(goal?: string) {
 export function buildCopywritingPrompt(data: CopywritingFormData) {
   const outputTypes = data.generationMode === "marketing-plan" ? ["marketing-plan"] : data.outputTypes?.length ? data.outputTypes : [data.outputType];
   const templates = data.generationMode === "marketing-plan" ? [getPromptTemplate(data.platform, "marketing-plan")] : getPromptTemplates(data.platform, outputTypes);
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(data.outputSettings);
 
   return `
 请根据以下商品信息生成电商文案：
@@ -47,6 +49,8 @@ ${getPlatformPromptGuide(data.platform)}
 
 商品目标策略：
 ${getGoalPromptGuide(data.goal)}
+
+${outputSettingsPrompt}
 
 当前 Prompt 模板：
 ${templates

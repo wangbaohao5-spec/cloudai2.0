@@ -1,12 +1,13 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
-import type { ProductGenerationBrief, ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
+import type { ProductGenerationBrief, ProductImageAnalysis, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
 
 export type ProductImageSetPurpose = "quick-listing" | "detail-page" | "social-seeding" | "platform-listing";
 export type ProductImageSetSmartCount = 3 | 5 | 7 | 8;
-export type ProductImageSetCount = ProductImageSetSmartCount;
 export type ProductImageSetPlanCount = number;
+export type ProductImageSetCount = ProductImageSetPlanCount;
 export type ProductImageSetStructureMode = "custom" | "smart";
 export type ProductImageSetCustomStructure = {
   comparison?: number;
@@ -57,6 +58,7 @@ type ProductImageSetPlanPromptInput = {
   count: ProductImageSetPlanCount;
   customStructure?: ProductImageSetCustomStructure | null;
   generationBrief?: ProductGenerationBrief | null;
+  outputSettings?: ProductOutputSettings | null;
   productTitle: string;
   purpose: ProductImageSetPurpose;
   structureMode?: ProductImageSetStructureMode;
@@ -148,6 +150,7 @@ export function buildProductImageSetPlanPrompt({
   count,
   customStructure,
   generationBrief,
+  outputSettings,
   productTitle,
   purpose,
   structureMode = "smart",
@@ -158,6 +161,7 @@ export function buildProductImageSetPlanPrompt({
     productName,
   });
   const generationBriefPrompt = buildProductGenerationBriefPrompt(generationBrief);
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
 
   return [
     `你是 CloudAI 的电商商品套图策划助手，请规划 ${count} 张商品图片结构。`,
@@ -199,6 +203,7 @@ export function buildProductImageSetPlanPrompt({
     `类目保真规则：${categoryStrategy.fidelityRules.join(" ")}`,
     `类目避免事项：${categoryStrategy.avoidRules.join(" ")}`,
     generationBriefPrompt,
+    outputSettingsPrompt,
     PRODUCT_GENERATION_RULES_BLOCK,
     "优先级：用户保存的「商品卖点 & 生成要求」 > 商品补充信息 productHint > 商品分析结果 > AI 合理推测。",
     "如果用户任务书中有必须保留或避免改动，每张相关图片的 mustKeep / avoid 都要体现。",

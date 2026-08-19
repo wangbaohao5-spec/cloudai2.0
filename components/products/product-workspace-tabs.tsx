@@ -8,10 +8,12 @@ import { ProductDetailPagePanel } from "@/components/products/product-detail-pag
 import { ProductGenerationBriefEditor } from "@/components/products/product-generation-brief";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductImageSetPanel } from "@/components/products/product-image-set-panel";
+import { ProductOutputSettingsEditor } from "@/components/products/product-output-settings";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
+import { DEFAULT_PRODUCT_OUTPUT_SETTINGS } from "@/lib/product-output-settings";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
-import type { ProductAnalysisResponse, ProductGenerationBrief } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -120,6 +122,7 @@ export function ProductWorkspaceTabs({
 }: ProductWorkspaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("analysis");
   const [generationBrief, setGenerationBrief] = useState<ProductGenerationBrief | null>(null);
+  const [outputSettings, setOutputSettings] = useState<ProductOutputSettings>(DEFAULT_PRODUCT_OUTPUT_SETTINGS);
   const copywritingCount = creationCenterData?.copywriting.length || 0;
   const detailPageCount = creationCenterData?.detailPages.length || 0;
   const imageEditCount = creationCenterData?.imageEdits.length || 0;
@@ -222,6 +225,7 @@ export function ProductWorkspaceTabs({
         {result ? (
           <>
             <ProductGenerationBriefEditor analysis={result.analysis} analysisHistoryId={result.historyId} onBriefChange={setGenerationBrief} />
+            <ProductOutputSettingsEditor analysisHistoryId={result.historyId} onSettingsChange={setOutputSettings} />
             <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
           </>
         ) : null}
@@ -287,7 +291,12 @@ export function ProductWorkspaceTabs({
             actions={[{ label: "开始生成文案", onClick: () => scrollToPanel("product-copywriting-panel"), tone: "primary" }]}
           />
         ) : null}
-        <ProductCopywritingPanel analysisResult={result} onGenerated={onGenerated} onOpenRiskConfirmations={openRiskConfirmations} />
+        <ProductCopywritingPanel
+          analysisResult={result}
+          outputSettings={outputSettings}
+          onGenerated={onGenerated}
+          onOpenRiskConfirmations={openRiskConfirmations}
+        />
       </div>
 
       <div
@@ -309,7 +318,7 @@ export function ProductWorkspaceTabs({
             ]}
           />
         ) : null}
-        <ProductImageEditPanel analysisResult={result} onGenerated={onGenerated} />
+        <ProductImageEditPanel analysisResult={result} outputSettings={outputSettings} onGenerated={onGenerated} />
       </div>
 
       <div
@@ -328,7 +337,7 @@ export function ProductWorkspaceTabs({
             actions={[{ label: "开始生成场景图", onClick: () => scrollToPanel("product-scene-image-panel"), tone: "primary" }]}
           />
         ) : null}
-        <ProductSceneImagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} />
+        <ProductSceneImagePanel analysisResult={result} generationBrief={generationBrief} outputSettings={outputSettings} onGenerated={onGenerated} />
       </div>
 
       <div
@@ -347,7 +356,13 @@ export function ProductWorkspaceTabs({
             actions={[{ label: "配置详情页素材", onClick: () => scrollToPanel("product-workspace-panel-detailPage"), tone: "primary" }]}
           />
         ) : null}
-        <ProductDetailPagePanel analysisResult={result} generationBrief={generationBrief} onGenerated={onGenerated} onOpenRiskConfirmations={openRiskConfirmations} />
+        <ProductDetailPagePanel
+          analysisResult={result}
+          generationBrief={generationBrief}
+          outputSettings={outputSettings}
+          onGenerated={onGenerated}
+          onOpenRiskConfirmations={openRiskConfirmations}
+        />
       </div>
 
       <div
@@ -369,6 +384,7 @@ export function ProductWorkspaceTabs({
         <ProductImageSetPanel
           analysisResult={result}
           generationBrief={generationBrief}
+          outputSettings={outputSettings}
           onGenerated={onGenerated}
           onOpenRiskConfirmations={openRiskConfirmations}
           onViewAssets={() => switchTabAndFocus("assets", "product-workspace-panel-assets")}

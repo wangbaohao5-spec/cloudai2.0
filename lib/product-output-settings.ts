@@ -1,0 +1,113 @@
+import type { ProductOutputSettings } from "@/lib/product-types";
+
+export const DEFAULT_PRODUCT_OUTPUT_SETTINGS: ProductOutputSettings = {
+  targetPlatform: "taobao",
+  targetMarket: "china",
+  outputLanguage: "zh-CN",
+  outputRatio: "1:1",
+};
+
+export const PRODUCT_OUTPUT_PLATFORM_OPTIONS = [
+  { value: "general", label: "通用电商" },
+  { value: "taobao", label: "淘宝" },
+  { value: "douyin", label: "抖音电商" },
+  { value: "xiaohongshu", label: "小红书" },
+  { value: "jd", label: "京东" },
+  { value: "pinduoduo", label: "拼多多" },
+  { value: "amazon", label: "Amazon" },
+  { value: "shopee", label: "Shopee" },
+  { value: "tiktok-shop", label: "TikTok Shop" },
+  { value: "independent-site", label: "独立站" },
+] as const;
+
+export const PRODUCT_OUTPUT_MARKET_OPTIONS = [
+  { value: "china", label: "中国" },
+  { value: "north-america", label: "北美" },
+  { value: "europe", label: "欧洲" },
+  { value: "japan", label: "日本" },
+  { value: "southeast-asia", label: "东南亚" },
+  { value: "global", label: "全球" },
+] as const;
+
+export const PRODUCT_OUTPUT_LANGUAGE_OPTIONS = [
+  { value: "zh-CN", label: "中文" },
+  { value: "en", label: "English" },
+  { value: "ja", label: "日本語" },
+] as const;
+
+export const PRODUCT_OUTPUT_RATIO_OPTIONS = [
+  { value: "1:1", label: "1:1" },
+  { value: "4:5", label: "4:5" },
+  { value: "3:4", label: "3:4" },
+  { value: "16:9", label: "16:9" },
+] as const;
+
+const optionValues = {
+  targetPlatform: PRODUCT_OUTPUT_PLATFORM_OPTIONS.map((option) => option.value),
+  targetMarket: PRODUCT_OUTPUT_MARKET_OPTIONS.map((option) => option.value),
+  outputLanguage: PRODUCT_OUTPUT_LANGUAGE_OPTIONS.map((option) => option.value),
+  outputRatio: PRODUCT_OUTPUT_RATIO_OPTIONS.map((option) => option.value),
+} satisfies Record<keyof ProductOutputSettings, readonly string[]>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function sanitizeOption(value: unknown, key: keyof ProductOutputSettings) {
+  const text = typeof value === "string" ? value.trim() : "";
+
+  return (optionValues[key] as readonly string[]).includes(text) ? text : DEFAULT_PRODUCT_OUTPUT_SETTINGS[key];
+}
+
+export function getProductOutputSettingsSessionKey(analysisHistoryId?: string) {
+  return analysisHistoryId ? `cloudai:products:output-settings:${analysisHistoryId}` : "";
+}
+
+export function sanitizeProductOutputSettings(value: unknown): ProductOutputSettings | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return {
+    targetPlatform: sanitizeOption(value.targetPlatform, "targetPlatform"),
+    targetMarket: sanitizeOption(value.targetMarket, "targetMarket"),
+    outputLanguage: sanitizeOption(value.outputLanguage, "outputLanguage"),
+    outputRatio: sanitizeOption(value.outputRatio, "outputRatio"),
+  };
+}
+
+export function getProductOutputSettingsFromSession(analysisHistoryId?: string) {
+  const storageKey = getProductOutputSettingsSessionKey(analysisHistoryId);
+
+  if (!storageKey || typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawValue = sessionStorage.getItem(storageKey);
+
+    return rawValue ? sanitizeProductOutputSettings(JSON.parse(rawValue)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getProductOutputSettingsLabel(settings: ProductOutputSettings, key: keyof ProductOutputSettings) {
+  const options = {
+    targetPlatform: PRODUCT_OUTPUT_PLATFORM_OPTIONS,
+    targetMarket: PRODUCT_OUTPUT_MARKET_OPTIONS,
+    outputLanguage: PRODUCT_OUTPUT_LANGUAGE_OPTIONS,
+    outputRatio: PRODUCT_OUTPUT_RATIO_OPTIONS,
+  }[key];
+
+  return options.find((option) => option.value === settings[key])?.label || settings[key];
+}
+
+export function formatProductOutputSettingsSummary(settings: ProductOutputSettings) {
+  return [
+    getProductOutputSettingsLabel(settings, "targetPlatform"),
+    getProductOutputSettingsLabel(settings, "targetMarket"),
+    getProductOutputSettingsLabel(settings, "outputLanguage"),
+    getProductOutputSettingsLabel(settings, "outputRatio"),
+  ].join(" · ");
+}

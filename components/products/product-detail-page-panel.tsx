@@ -10,12 +10,13 @@ import type {
   ProductDetailPagePlanPage,
   ProductDetailPageStyle,
 } from "@/lib/ai/product-detail-page-plan-prompt-builder";
-import type { ProductAnalysisResponse, ProductGenerationBrief, ProductVisualGenerationMode } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductDetailPagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
+  outputSettings?: ProductOutputSettings | null;
   onGenerated?: () => void;
   onOpenRiskConfirmations?: () => void;
 };
@@ -60,7 +61,7 @@ const generationModeOptions: Array<{ description: string; label: string; value: 
   },
 ];
 
-export function ProductDetailPagePanel({ analysisResult, generationBrief, onGenerated, onOpenRiskConfirmations }: ProductDetailPagePanelProps) {
+export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings, onGenerated, onOpenRiskConfirmations }: ProductDetailPagePanelProps) {
   const [count, setCount] = useState<ProductDetailPageCount>(3);
   const [error, setError] = useState("");
   const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
@@ -100,6 +101,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
           analysisHistoryId: analysisResult.historyId,
           count,
           generationBrief: generationBrief || undefined,
+          outputSettings: outputSettings || undefined,
           style,
         }),
       });
@@ -149,6 +151,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, onGene
           analysisHistoryId: analysisResult.historyId,
           generationMode,
           generationBrief: generationBrief || undefined,
+          outputSettings: outputSettings || undefined,
           page,
           style,
         }),

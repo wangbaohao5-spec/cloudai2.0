@@ -1,11 +1,13 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { ABSOLUTE_CLAIMS_RULES, BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
-import type { ProductImageAnalysis } from "@/lib/product-types";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
+import type { ProductImageAnalysis, ProductOutputSettings } from "@/lib/product-types";
 
 export type ProductScenePromptInput = {
   analysis: ProductImageAnalysis;
   scene: string;
   platform: string;
+  outputSettings?: ProductOutputSettings | null;
   style: string;
 };
 
@@ -30,7 +32,7 @@ function joinList(items?: string[]) {
   return items?.filter(Boolean).join("、") || "无明确补充";
 }
 
-export function buildProductScenePrompt({ analysis, scene, platform, style }: ProductScenePromptInput) {
+export function buildProductScenePrompt({ analysis, scene, platform, outputSettings, style }: ProductScenePromptInput) {
   const productName = analysis.productNameSuggestions[0] || analysis.category || "商品";
   const platformGuide = platformGuides[platform] || "适合通用电商平台，突出商品主体、使用场景和商业转化";
   const styleGuide = styleGuides[style] || style || "高质量电商商业摄影风格";
@@ -39,6 +41,7 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
     category: analysis.category,
     productName,
   });
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
 
   return [
     "高质量电商商品场景图",
@@ -50,6 +53,7 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
     `推荐使用场景：${joinList(analysis.scenes)}`,
     `用户选择营销场景：${scene}`,
     `目标平台：${platformGuide}`,
+    outputSettingsPrompt,
     `视觉风格：${styleGuide}`,
     `材质和颜色参考：${materialColor}`,
     `视觉分析参考：${analysis.visualStyle || "专业电商视觉"}`,
@@ -66,7 +70,7 @@ export function buildProductScenePrompt({ analysis, scene, platform, style }: Pr
   ].join("，");
 }
 
-export function buildProductSceneEditPrompt({ analysis, scene, platform, style }: ProductScenePromptInput) {
+export function buildProductSceneEditPrompt({ analysis, scene, platform, outputSettings, style }: ProductScenePromptInput) {
   const productName = analysis.productNameSuggestions[0] || analysis.category || "商品";
   const platformGuide = platformGuides[platform] || "适合通用电商平台，突出商品主体、使用场景和商业转化";
   const styleGuide = styleGuides[style] || style || "高质量电商商业摄影风格";
@@ -75,6 +79,7 @@ export function buildProductSceneEditPrompt({ analysis, scene, platform, style }
     category: analysis.category,
     productName,
   });
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
 
   return [
     "请基于用户上传的商品图片进行电商营销场景图编辑",
@@ -90,6 +95,7 @@ export function buildProductSceneEditPrompt({ analysis, scene, platform, style }
     `推荐使用场景：${joinList(analysis.scenes)}`,
     `用户选择营销场景：${scene}`,
     `目标平台：${platformGuide}`,
+    outputSettingsPrompt,
     `视觉风格：${styleGuide}`,
     `材质和颜色参考：${materialColor}`,
     `视觉分析参考：${analysis.visualStyle || "专业电商视觉"}`,

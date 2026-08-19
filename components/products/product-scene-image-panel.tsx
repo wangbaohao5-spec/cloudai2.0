@@ -6,12 +6,13 @@ import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
-import type { ProductAnalysisResponse, ProductGenerationBrief, ProductVisualGenerationMode } from "@/lib/product-types";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
 type ProductSceneImagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
   generationBrief?: ProductGenerationBrief | null;
+  outputSettings?: ProductOutputSettings | null;
   onGenerated?: () => void;
 };
 
@@ -57,7 +58,7 @@ function getOptionLabel(options: { value: string; label: string }[], value: stri
   return options.find((option) => option.value === value)?.label || value;
 }
 
-export function ProductSceneImagePanel({ analysisResult, generationBrief, onGenerated }: ProductSceneImagePanelProps) {
+export function ProductSceneImagePanel({ analysisResult, generationBrief, outputSettings, onGenerated }: ProductSceneImagePanelProps) {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
@@ -101,6 +102,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, onGene
           generationBrief: generationBrief || undefined,
           scene,
           platform,
+          outputSettings: outputSettings || undefined,
           style,
         }),
       });

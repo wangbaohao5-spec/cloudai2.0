@@ -5,6 +5,7 @@ import { jsonError, settleTask } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { buildCopywritingDataFromAnalysis, isProductImageAnalysis, type ProductCopywritingOptions } from "@/lib/product-copywriting";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
@@ -12,6 +13,7 @@ export const runtime = "nodejs";
 
 type ProductCopywritingRequestBody = ProductCopywritingOptions & {
   analysisHistoryId?: string;
+  outputSettings?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -24,6 +26,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ProductCopywritingRequestBody;
     const analysisHistoryId = body.analysisHistoryId?.trim();
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -50,6 +53,7 @@ export async function POST(request: Request) {
       outputType: body.outputType,
       outputTypes: body.outputTypes,
       generationMode: body.generationMode,
+      outputSettings,
     });
 
     await enforceUsageLimitAndRecord({
@@ -82,6 +86,7 @@ export async function POST(request: Request) {
           source: "product-analysis",
           analysisHistoryId: analysisRecord.id,
           assetId: analysisRecord.assetId,
+          ...(outputSettings ? { outputSettings } : {}),
           formData: copywritingData,
           analysis: analysisRecord.output,
         },

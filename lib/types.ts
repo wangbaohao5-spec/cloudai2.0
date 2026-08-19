@@ -1,4 +1,5 @@
 import type { ProductContentRiskScanResult } from "@/lib/ai/product-content-risk-scanner";
+import type { ProductOutputSettings } from "@/lib/product-types";
 
 export type CopywritingFormData = {
   productName: string;
@@ -10,6 +11,7 @@ export type CopywritingFormData = {
   goal?: string;
   outputTypes?: string[];
   generationMode?: "single" | "marketing-plan";
+  outputSettings?: ProductOutputSettings | null;
 };
 
 export type CopywritingResult = {

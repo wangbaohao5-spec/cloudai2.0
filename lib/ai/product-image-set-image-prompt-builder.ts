@@ -1,15 +1,17 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import { ABSOLUTE_CLAIMS_RULES, BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
 import type { ProductImageSetPlanImage, ProductImageSetPurpose } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
-import type { ProductGenerationBrief, ProductImageAnalysis, ProductVisualGenerationMode } from "@/lib/product-types";
+import type { ProductGenerationBrief, ProductImageAnalysis, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
 
 type ProductImageSetImagePromptInput = {
   analysis: ProductImageAnalysis;
   generationBrief?: ProductGenerationBrief | null;
   generationMode: ProductVisualGenerationMode;
   image: ProductImageSetPlanImage;
+  outputSettings?: ProductOutputSettings | null;
   productTitle: string;
   purpose: ProductImageSetPurpose;
 };
@@ -45,6 +47,7 @@ export function buildProductImageSetImagePrompt({
   generationBrief,
   generationMode,
   image,
+  outputSettings,
   productTitle,
   purpose,
 }: ProductImageSetImagePromptInput) {
@@ -53,6 +56,7 @@ export function buildProductImageSetImagePrompt({
     category: analysis.category,
     productName,
   });
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
 
   return [
     "请基于用户上传的原商品图，生成一张商品套图图片。",
@@ -87,6 +91,7 @@ export function buildProductImageSetImagePrompt({
     `避免改动：${joinList(image.avoid)}`,
     "",
     `图片类型专项要求：${IMAGE_TYPE_VISUAL_GUIDES[image.imageType]}`,
+    outputSettingsPrompt,
     `类目策略：${categoryStrategy.categoryKey}`,
     `类目视觉建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
     buildProductGenerationBriefPrompt(generationBrief),

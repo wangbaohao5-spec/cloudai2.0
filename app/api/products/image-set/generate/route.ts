@@ -11,6 +11,7 @@ import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
@@ -25,11 +26,11 @@ type ProductImageSetGenerateRequestBody = {
   generationBrief?: unknown;
   generationMode?: string;
   image?: Partial<ProductImageSetPlanImage>;
+  outputSettings?: unknown;
   purpose?: string;
 };
 
 const IMAGE_SET_PURPOSES = ["detail-page", "platform-listing", "quick-listing", "social-seeding"] as const;
-const IMAGE_SET_COUNTS = [3, 5, 7, 8] as const;
 const IMAGE_SET_IMAGE_TYPES = [
   "brand-story",
   "comparison",
@@ -51,7 +52,7 @@ function isImageSetPurpose(value: string): value is ProductImageSetPurpose {
 }
 
 function isImageSetCount(value: number): value is ProductImageSetCount {
-  return IMAGE_SET_COUNTS.includes(value as ProductImageSetCount);
+  return Number.isInteger(value) && value >= 1 && value <= 12;
 }
 
 function isImageSetImageType(value: string): value is ProductImageSetImageType {
@@ -142,6 +143,7 @@ export async function POST(request: Request) {
     const purpose = body.purpose?.trim() || "detail-page";
     const count = Number(body.count || 7);
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -152,7 +154,7 @@ export async function POST(request: Request) {
     }
 
     if (!isImageSetCount(count)) {
-      return NextResponse.json({ error: "套图数量无效，请选择 3、5、7 或 8 张。" }, { status: 400 });
+      return NextResponse.json({ error: "套图数量无效，请选择 1 到 12 张。" }, { status: 400 });
     }
 
     const image = normalizeImage(body.image, count);
@@ -200,6 +202,7 @@ export async function POST(request: Request) {
       generationBrief,
       generationMode,
       image,
+      outputSettings,
       productTitle: analysisRecord.title,
       purpose,
     });
@@ -261,6 +264,7 @@ export async function POST(request: Request) {
           imageType: image.imageType,
           generationMode,
           ...(generationBrief ? { generationBrief } : {}),
+          ...(outputSettings ? { outputSettings } : {}),
           mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
           avoidChanges: analysisRecord.output.avoidChanges || [],
           image,

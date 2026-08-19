@@ -3,6 +3,8 @@ import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { getFileUrl, uploadFile } from "@/lib/storage";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
@@ -14,6 +16,7 @@ type ImageEditRequestBody = {
   prompt?: string;
   model?: string;
   analysisHistoryId?: string;
+  outputSettings?: unknown;
 };
 
 function sanitizeAssetName(name: string) {
@@ -39,6 +42,7 @@ export async function POST(request: Request) {
     const prompt = body.prompt?.trim();
     const model = body.model?.trim() || "gpt-image-2";
     const analysisHistoryId = body.analysisHistoryId?.trim();
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!sourceAssetId) {
       return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
@@ -80,11 +84,12 @@ export async function POST(request: Request) {
       model,
     });
 
+    const finalPrompt = [prompt, buildProductOutputSettingsPrompt(outputSettings)].filter(Boolean).join("\n\n");
     const sourceImageUrl = await getFileUrl(sourceAsset.url);
     const editedImage = await editImage({
       imageUrl: sourceImageUrl,
       fileName: sourceAsset.name,
-      prompt,
+      prompt: finalPrompt,
       model,
     });
     const imageBuffer = decodeBase64Image(editedImage.b64Json);
@@ -107,6 +112,7 @@ export async function POST(request: Request) {
       sourceAssetId,
       ...(analysisHistoryId ? { analysisHistoryId } : {}),
       prompt,
+      ...(outputSettings ? { outputSettings } : {}),
       model,
     };
     const historyResult = await settleTask(

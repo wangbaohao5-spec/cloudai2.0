@@ -12,6 +12,7 @@ import { jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import { NextResponse } from "next/server";
 
@@ -21,6 +22,7 @@ type ProductDetailPagePlanRequestBody = {
   analysisHistoryId?: string;
   count?: number;
   generationBrief?: unknown;
+  outputSettings?: unknown;
   style?: string;
 };
 
@@ -135,6 +137,7 @@ export async function POST(request: Request) {
     const style = body.style?.trim() || "ecommerce";
     const count = Number(body.count || 3);
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -173,6 +176,7 @@ export async function POST(request: Request) {
       copywritingRecords,
       count,
       generationBrief,
+      outputSettings,
       productTitle: analysisRecord.title,
       style,
     });

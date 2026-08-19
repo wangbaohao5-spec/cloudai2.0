@@ -1,5 +1,12 @@
 export type ProductVisualGenerationMode = "faithful" | "creative";
 
+export type ProductOutputSettings = {
+  targetPlatform: string;
+  targetMarket: string;
+  outputLanguage: string;
+  outputRatio: string;
+};
+
 export type ProductGenerationBrief = {
   productName: string;
   coreSellingPoints: string[];

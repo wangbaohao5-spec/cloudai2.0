@@ -15,6 +15,7 @@ import { jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { NextResponse } from "next/server";
@@ -26,6 +27,7 @@ type ProductImageSetPlanRequestBody = {
   count?: number;
   customStructure?: unknown;
   generationBrief?: unknown;
+  outputSettings?: unknown;
   purpose?: string;
   structureMode?: string;
 };
@@ -175,6 +177,7 @@ export async function POST(request: Request) {
     const structureModeInput = body.structureMode?.trim() || "smart";
     const count = Number(body.count || 7);
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
@@ -223,6 +226,7 @@ export async function POST(request: Request) {
       count,
       customStructure,
       generationBrief,
+      outputSettings,
       productTitle: analysisRecord.title,
       purpose,
       structureMode,

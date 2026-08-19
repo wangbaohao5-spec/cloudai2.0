@@ -1,12 +1,14 @@
 import { getProductCategoryVisualStrategy } from "@/lib/ai/product-category-visual-strategy";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import { ABSOLUTE_CLAIMS_RULES, BRAND_AND_AUTHORIZATION_RULES, PRODUCT_VISUAL_FIDELITY_RULES } from "@/lib/ai/product-generation-rules";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
-import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
+import type { ProductGenerationBrief, ProductImageAnalysis, ProductOutputSettings } from "@/lib/product-types";
 
 type ProductDetailPageImagePromptInput = {
   analysis: ProductImageAnalysis;
   generationBrief?: ProductGenerationBrief | null;
+  outputSettings?: ProductOutputSettings | null;
   page: ProductDetailPagePlanPage;
   productTitle: string;
   style: ProductDetailPageStyle;
@@ -37,10 +39,11 @@ const SECTION_VISUAL_GUIDES: Partial<Record<ProductDetailPagePlanPage["sectionTy
   "usage-scene": "Create a realistic usage scene that shows how the product fits into the user's life or work context.",
 };
 
-export function buildProductDetailPageImagePrompt({ analysis, generationBrief, page, productTitle, style }: ProductDetailPageImagePromptInput) {
+export function buildProductDetailPageImagePrompt({ analysis, generationBrief, outputSettings, page, productTitle, style }: ProductDetailPageImagePromptInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
   const materialColor = [analysis.material, analysis.color].filter(Boolean).join(" / ") || "以原商品图可见材质和颜色为准";
   const generationBriefPrompt = buildProductGenerationBriefPrompt(generationBrief);
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
   const categoryStrategy = getProductCategoryVisualStrategy({
     category: analysis.category,
     productName,
@@ -64,6 +67,7 @@ export function buildProductDetailPageImagePrompt({ analysis, generationBrief, p
     `材质和颜色参考：${materialColor}`,
     `视觉风格参考：${analysis.visualStyle || "专业电商视觉"}`,
     `详情页风格：${STYLE_GUIDES[style]}`,
+    outputSettingsPrompt,
     `类目策略：${categoryStrategy.categoryKey}`,
     `类目详情页建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
     `当前页面类型视觉要求：${SECTION_VISUAL_GUIDES[page.sectionType] || "根据当前页面标题和卖点生成清晰、专业的详情页单屏视觉。"}`,

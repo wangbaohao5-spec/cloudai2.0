@@ -1,6 +1,7 @@
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
-import type { ProductGenerationBrief, ProductImageAnalysis } from "@/lib/product-types";
+import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
+import type { ProductGenerationBrief, ProductImageAnalysis, ProductOutputSettings } from "@/lib/product-types";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
 
 export type ProductDetailPageStyle = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
@@ -26,6 +27,7 @@ export type ProductDetailPagePlanInput = {
   copywritingRecords: HistoryRecord[];
   count: ProductDetailPageCount;
   generationBrief?: ProductGenerationBrief | null;
+  outputSettings?: ProductOutputSettings | null;
   productTitle: string;
   style: ProductDetailPageStyle;
 };
@@ -152,9 +154,10 @@ function formatCopywritingRecords(records: HistoryRecord[]) {
   return snippets || "当前还没有生成商品文案，请基于商品分析自行规划自然文案。";
 }
 
-export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords, count, generationBrief, productTitle, style }: ProductDetailPagePlanInput) {
+export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords, count, generationBrief, outputSettings, productTitle, style }: ProductDetailPagePlanInput) {
   const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
   const generationBriefPrompt = buildProductGenerationBriefPrompt(generationBrief);
+  const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
 
   return [
     `你是专业电商详情页策划，请基于商品分析和已有文案，规划 ${count} 张商品详情页图片的图文结构。`,
@@ -184,6 +187,7 @@ export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords,
     getPageStructureGuide(count),
     getCategoryPlanningGuide(analysis),
     generationBriefPrompt,
+    outputSettingsPrompt,
     PRODUCT_GENERATION_RULES_BLOCK,
     "每页作用必须不同，headline / sellingPoint / visualDirection 不要重复。",
     "不要把同一个卖点硬拆成很多重复页面。卖点不足时，自动补充使用场景、细节特写、四宫格细节、佩戴/上身/使用效果、多色/多规格展示、总结 CTA。",
