@@ -1,4 +1,5 @@
 import { analyzeProductImageAsset } from "@/lib/ai/product-analysis";
+import { DashScopeVisionError } from "@/lib/ai/providers/dashscope-vision";
 import { getAssetForUser } from "@/lib/assets";
 import { ApiError, jsonError, settleTask } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
@@ -11,6 +12,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 const PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE = "商品图片分析服务暂时不可用，请稍后重试。";
 const PRODUCT_ANALYSIS_FALLBACK_MESSAGE = "商品分析失败，请稍后重试。";
+const PRODUCT_ANALYSIS_STORAGE_MESSAGE = "商品图片读取失败，请重新上传后再试。";
 
 type ProductAnalyzeRequestBody = {
   assetId?: string;
@@ -45,6 +47,26 @@ function getErrorCauseDetails(error: unknown) {
   };
 }
 
+function isDevelopment() {
+  return process.env.NODE_ENV === "development";
+}
+
+function getSafeDebug(error: unknown) {
+  if (error instanceof DashScopeVisionError) {
+    return error.safeDebug || [error.status, error.code].filter(Boolean).join(" ");
+  }
+
+  return undefined;
+}
+
+function getAnalysisErrorStatus(error: unknown) {
+  if (error instanceof DashScopeVisionError) {
+    return error.status === 401 || error.status === 403 || error.status === 429 ? error.status : 500;
+  }
+
+  return 500;
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -58,7 +80,7 @@ export async function POST(request: Request) {
     const productHint = typeof body.productHint === "string" ? body.productHint.trim() : "";
 
     if (!assetId) {
-      return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
+      return NextResponse.json({ error: "请先上传商品图片。" }, { status: 400 });
     }
 
     if (productHint.length > 1000) {
@@ -67,8 +89,18 @@ export async function POST(request: Request) {
 
     const asset = await getAssetForUser(user.id, assetId);
 
+    if (isDevelopment()) {
+      console.info("[product-analyze] request", {
+        hasUser: Boolean(user),
+        hasAssetId: Boolean(assetId),
+        assetFound: Boolean(asset),
+        assetType: asset?.type,
+        hasStoragePath: Boolean(asset?.url),
+      });
+    }
+
     if (!asset || asset.type !== "upload") {
-      return NextResponse.json({ error: "Product image asset not found." }, { status: 404 });
+      return NextResponse.json({ error: "商品图片不存在或无权访问，请重新上传。" }, { status: 404 });
     }
 
     await enforceUsageLimit({
@@ -77,7 +109,27 @@ export async function POST(request: Request) {
       model: "dashscope-vision",
     });
 
-    const imageUrl = await getFileUrl(asset.url, 30 * 60);
+    let imageUrl: string;
+
+    try {
+      imageUrl = await getFileUrl(asset.url, 30 * 60);
+
+      if (isDevelopment()) {
+        console.info("[product-analyze] storage", {
+          hasStoragePath: Boolean(asset.url),
+          signedUrlGenerated: Boolean(imageUrl),
+        });
+      }
+    } catch (error) {
+      console.error("[product-analyze] signed url failed", {
+        hasStoragePath: Boolean(asset.url),
+        errorMessage: error instanceof Error ? error.message : String(error),
+        ...getErrorCauseDetails(error),
+      });
+
+      return NextResponse.json({ error: PRODUCT_ANALYSIS_STORAGE_MESSAGE }, { status: 500 });
+    }
+
     const analysis = await analyzeProductImageAsset(imageUrl, productHint);
     const title = getAnalysisTitle(analysis);
     const [historyResult, usageResult] = await Promise.all([
@@ -122,8 +174,20 @@ export async function POST(request: Request) {
       ...getErrorCauseDetails(error),
     });
 
-    const message = error instanceof Error && error.message === PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE ? error.message : PRODUCT_ANALYSIS_FALLBACK_MESSAGE;
+    const message =
+      error instanceof DashScopeVisionError
+        ? error.message
+        : error instanceof Error && error.message === PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE
+          ? error.message
+          : PRODUCT_ANALYSIS_FALLBACK_MESSAGE;
+    const debug = isDevelopment() ? getSafeDebug(error) : undefined;
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: message,
+        ...(debug ? { debug } : {}),
+      },
+      { status: getAnalysisErrorStatus(error) },
+    );
   }
 }

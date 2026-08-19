@@ -1,10 +1,13 @@
 import type { ProductImageAnalysis } from "@/lib/product-types";
 import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
-import { getOptionalEnv, getRequiredEnv } from "@/lib/server-env";
+import { getOptionalEnv } from "@/lib/server-env";
 
 const DASHSCOPE_VISION_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 const DASHSCOPE_VISION_MODEL = getOptionalEnv("DASHSCOPE_VISION_MODEL") || "qwen-vl-plus";
 const PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE = "商品图片分析服务暂时不可用，请稍后重试。";
+const PRODUCT_ANALYSIS_CONFIG_MESSAGE = "商品分析服务未配置，请检查 DASHSCOPE_API_KEY。";
+const PRODUCT_ANALYSIS_AUTH_MESSAGE = "商品分析服务授权失败，请检查 DashScope 配置。";
+const PRODUCT_ANALYSIS_RATE_LIMIT_MESSAGE = "商品分析服务请求过于频繁，请稍后再试。";
 
 type DashScopeVisionResponse = {
   choices?: Array<{
@@ -13,9 +16,46 @@ type DashScopeVisionResponse = {
     };
   }>;
   error?: {
+    code?: string;
+    status?: string;
     message?: string;
+    details?: unknown;
   };
 };
+
+export class DashScopeVisionError extends Error {
+  status?: number;
+  code?: string;
+  safeDebug?: string;
+
+  constructor(message: string, details?: { status?: number; code?: string; safeDebug?: string }) {
+    super(message);
+    this.name = "DashScopeVisionError";
+    this.status = details?.status;
+    this.code = details?.code;
+    this.safeDebug = details?.safeDebug;
+  }
+}
+
+function isDevelopment() {
+  return process.env.NODE_ENV === "development";
+}
+
+function getSafeEndpoint() {
+  try {
+    const endpoint = new URL(DASHSCOPE_VISION_API_URL);
+
+    return {
+      endpointHost: endpoint.host,
+      endpointPath: endpoint.pathname,
+    };
+  } catch {
+    return {
+      endpointHost: "dashscope.aliyuncs.com",
+      endpointPath: "/compatible-mode/v1/chat/completions",
+    };
+  }
+}
 
 function stripJsonFence(content: string) {
   return content
@@ -106,10 +146,49 @@ function truncateLogBody(value: unknown) {
   }
 }
 
+function parseDashScopeError(data: DashScopeVisionResponse | null) {
+  const upstreamError = data?.error;
+
+  return {
+    code: typeof upstreamError?.code === "string" ? upstreamError.code : typeof upstreamError?.status === "string" ? upstreamError.status : undefined,
+    message: typeof upstreamError?.message === "string" ? upstreamError.message : undefined,
+    details: upstreamError?.details,
+  };
+}
+
+function getDashScopeErrorMessage(status: number) {
+  if (status === 401 || status === 403) {
+    return PRODUCT_ANALYSIS_AUTH_MESSAGE;
+  }
+
+  if (status === 429) {
+    return PRODUCT_ANALYSIS_RATE_LIMIT_MESSAGE;
+  }
+
+  return PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE;
+}
+
 export async function analyzeDashScopeProductImage(imageUrl: string, productHint?: string): Promise<ProductImageAnalysis> {
-  const apiKey = getRequiredEnv("DASHSCOPE_API_KEY");
+  const apiKey = getOptionalEnv("DASHSCOPE_API_KEY");
+
+  if (!apiKey) {
+    throw new DashScopeVisionError(PRODUCT_ANALYSIS_CONFIG_MESSAGE, {
+      code: "MISSING_DASHSCOPE_API_KEY",
+      safeDebug: "Missing DASHSCOPE_API_KEY",
+    });
+  }
+
   const normalizedProductHint = productHint?.trim();
   let response: Response;
+
+  if (isDevelopment()) {
+    console.info("[dashscope-vision] request", {
+      ...getSafeEndpoint(),
+      model: DASHSCOPE_VISION_MODEL,
+      hasApiKey: Boolean(apiKey),
+      hasImageUrl: Boolean(imageUrl),
+    });
+  }
 
   try {
     response = await fetch(DASHSCOPE_VISION_API_URL, {
@@ -181,27 +260,40 @@ ${normalizedProductHint || "用户未提供补充信息，请仅基于图片可�
     });
   } catch (error) {
     console.error("[dashscope-vision] fetch failed", {
-      endpoint: DASHSCOPE_VISION_API_URL,
+      ...getSafeEndpoint(),
       model: DASHSCOPE_VISION_MODEL,
       errorMessage: error instanceof Error ? error.message : String(error),
       ...getErrorCauseDetails(error),
     });
 
-    throw new Error(PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE);
+    throw new DashScopeVisionError(PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE, {
+      code: "FETCH_FAILED",
+      safeDebug: error instanceof Error ? error.message : "fetch failed",
+    });
   }
 
   const data = (await response.json().catch(() => null)) as DashScopeVisionResponse | null;
 
   if (!response.ok) {
+    const upstreamError = parseDashScopeError(data);
+    const safeDebug = `DashScope Vision ${response.status} ${upstreamError.message || response.statusText}`;
+
     console.error("[dashscope-vision] http error", {
-      endpoint: DASHSCOPE_VISION_API_URL,
+      ...getSafeEndpoint(),
       model: DASHSCOPE_VISION_MODEL,
       status: response.status,
       statusText: response.statusText,
-      responseBody: truncateLogBody(data),
+      upstreamCode: upstreamError.code,
+      upstreamMessage: upstreamError.message,
+      upstreamDetails: isDevelopment() ? truncateLogBody(upstreamError.details) : undefined,
+      responseBody: isDevelopment() ? truncateLogBody(data) : undefined,
     });
 
-    throw new Error(PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE);
+    throw new DashScopeVisionError(getDashScopeErrorMessage(response.status), {
+      status: response.status,
+      code: upstreamError.code,
+      safeDebug,
+    });
   }
 
   const content = data?.choices?.[0]?.message?.content;

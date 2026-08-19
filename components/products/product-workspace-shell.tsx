@@ -263,7 +263,7 @@ export function ProductWorkspaceShell() {
 
   async function handleAnalyze() {
     if (!uploadedAsset) {
-      setError("Please upload a product image first.");
+      setError("请先上传商品图片。");
       return;
     }
 
@@ -287,7 +287,7 @@ export function ProductWorkspaceShell() {
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorData?.error || "Product image analysis failed. Please try again later.");
+        throw new Error(errorData?.error || "商品分析失败，请稍后重试。");
       }
 
       const data = (await response.json()) as ProductAnalysisResponse;
@@ -300,7 +300,7 @@ export function ProductWorkspaceShell() {
       }
       showToast("商品分析完成，可以继续生成素材");
     } catch (caughtError) {
-      const message = caughtError instanceof Error ? caughtError.message : "Product image analysis failed. Please try again later.";
+      const message = caughtError instanceof Error ? caughtError.message : "商品分析失败，请稍后重试。";
       setError(message);
       showToast(message, "error");
     } finally {
