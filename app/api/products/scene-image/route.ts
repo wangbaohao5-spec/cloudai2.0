@@ -49,6 +49,14 @@ function decodeBase64Image(b64Json: string) {
   return Buffer.from(base64Payload || b64Json, "base64");
 }
 
+function getScenePlatform(platform: string | undefined, outputSettings: ReturnType<typeof sanitizeProductOutputSettings>) {
+  if (outputSettings?.targetPlatform) {
+    return outputSettings.targetPlatform;
+  }
+
+  return platform?.trim() || "taobao";
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -60,11 +68,11 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ProductSceneImageRequestBody;
     const analysisHistoryId = body.analysisHistoryId?.trim();
     const scene = body.scene?.trim();
-    const platform = body.platform?.trim() || "taobao";
     const style = body.style?.trim() || "lifestyle";
     const generationMode = typeof body.generationMode === "string" ? body.generationMode.trim() || "faithful" : "faithful";
     const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
     const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
+    const platform = getScenePlatform(body.platform, outputSettings);
 
     if (!analysisHistoryId) {
       return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });

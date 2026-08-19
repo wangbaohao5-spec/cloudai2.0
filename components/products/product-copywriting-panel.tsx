@@ -3,6 +3,7 @@
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { formatProductOutputSettingsSummary } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse, ProductOutputSettings } from "@/lib/product-types";
 import type { CopywritingResult } from "@/lib/types";
 import { useState } from "react";
@@ -28,12 +29,6 @@ type ProductCopywritingResponse = CopywritingResult & {
   riskScan?: ProductRiskScan;
   warnings?: string[];
 };
-
-const platformOptions = [
-  { value: "taobao", label: "淘宝" },
-  { value: "amazon", label: "Amazon" },
-  { value: "tiktok", label: "TikTok Shop" },
-];
 
 const toneOptions = [
   { value: "专业", label: "专业" },
@@ -315,7 +310,7 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
         },
         body: JSON.stringify({
           analysisHistoryId: analysisResult.historyId,
-          platform: String(formData.get("platform") || ""),
+          platform: outputSettings?.targetPlatform,
           tone: String(formData.get("tone") || ""),
           outputType,
           outputTypes: [outputType],
@@ -387,16 +382,12 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
       </div>
 
       <form className="product-copywriting-form" onSubmit={(event) => void handleGenerateCopywriting(event)}>
-        <label>
-          平台选择
-          <select name="platform" defaultValue="taobao">
-            {platformOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {outputSettings ? (
+          <div className="product-inherited-output-target">
+            <strong>当前发布目标</strong>
+            <span>文案将按「{formatProductOutputSettingsSummary(outputSettings)}」生成。</span>
+          </div>
+        ) : null}
         <label>
           文案风格选择
           <select name="tone" defaultValue="专业">

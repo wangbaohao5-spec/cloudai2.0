@@ -1857,7 +1857,6 @@ h3 {
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-workflow-mini-steps,
-.product-workspace-rail .product-platform-selector,
 .product-workspace-rail .product-workspace-future-feature,
 .product-workspace-rail .product-creation-summary {
   border: 1px solid var(--card-border);
@@ -1881,7 +1880,6 @@ h3 {
 .product-workspace-rail .product-workspace-pending-summary:hover,
 .product-workspace-rail .product-workspace-status:hover,
 .product-workspace-rail .product-workflow-mini-steps:hover,
-.product-workspace-rail .product-platform-selector:hover,
 .product-workspace-rail .product-workspace-future-feature:hover,
 .product-workspace-rail .product-creation-summary:hover {
   border-color: var(--selected-border);
@@ -1899,15 +1897,10 @@ h3 {
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-workflow-mini-steps,
-.product-workspace-rail .product-platform-selector,
 .product-workspace-rail .product-workspace-future-feature,
 .product-workspace-rail .product-creation-summary {
   border-radius: 22px;
   padding: 16px;
-}
-
-.product-workspace-rail .product-platform-selector {
-  border-top: 1px solid var(--card-border);
 }
 
 .continue-product-media,
@@ -2009,7 +2002,6 @@ h3 {
   gap: 12px;
 }
 
-.product-workspace-secondary-settings .product-platform-selector,
 .product-workspace-secondary-settings .product-workspace-future-feature {
   margin-top: 10px;
 }
@@ -2263,8 +2255,7 @@ h3 {
   .button,
   .glass-card,
   .recent-product-card,
-  .product-workspace-tab,
-  .product-platform-selector button {
+  .product-workspace-tab {
     transition: none;
   }
 }
@@ -3708,36 +3699,6 @@ h3 {
   background: var(--surface);
   font-size: 0.9rem;
   white-space: nowrap;
-}
-
-.product-platform-selector {
-  display: grid;
-  gap: 12px;
-  border-top: 1px solid var(--workspace-border);
-  padding-top: 20px;
-}
-
-.product-platform-selector > div:last-child {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.product-platform-selector button {
-  border: 1px solid var(--workspace-border);
-  border-radius: 999px;
-  padding: 8px 11px;
-  color: var(--muted);
-  background: var(--surface);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.product-platform-selector button.active,
-.product-platform-selector button:hover {
-  border-color: var(--selected-border);
-  color: var(--text);
-  background: var(--surface-hover);
 }
 
 .product-workspace-future-feature {
@@ -6297,6 +6258,32 @@ h3 {
   padding-top: 24px;
 }
 
+.product-inherited-output-target {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--workspace-border);
+  border-radius: 14px;
+  padding: 9px 11px;
+  background: var(--workspace-surface);
+}
+
+.product-inherited-output-target strong {
+  color: var(--text);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.product-inherited-output-target span {
+  min-width: min(100%, 280px);
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .product-copywriting-form h3 {
   margin-bottom: 0;
   font-size: 1.4rem;
@@ -6503,7 +6490,7 @@ h3 {
 
 .product-scene-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 

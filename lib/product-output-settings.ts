@@ -42,6 +42,40 @@ export const PRODUCT_OUTPUT_RATIO_OPTIONS = [
   { value: "16:9", label: "16:9" },
 ] as const;
 
+const summaryLabels: Record<keyof ProductOutputSettings, Record<string, string>> = {
+  targetPlatform: {
+    amazon: "Amazon",
+    douyin: "抖音电商",
+    general: "通用电商",
+    "independent-site": "独立站",
+    jd: "京东",
+    pinduoduo: "拼多多",
+    shopee: "Shopee",
+    taobao: "淘宝平台",
+    "tiktok-shop": "TikTok Shop",
+    xiaohongshu: "小红书",
+  },
+  targetMarket: {
+    china: "中国市场",
+    europe: "欧洲市场",
+    global: "全球市场",
+    japan: "日本市场",
+    "north-america": "北美市场",
+    "southeast-asia": "东南亚市场",
+  },
+  outputLanguage: {
+    "zh-CN": "中文输出",
+    en: "英文输出",
+    ja: "日文输出",
+  },
+  outputRatio: {
+    "1:1": "1:1 方图",
+    "3:4": "3:4 商品图",
+    "4:5": "4:5 竖图",
+    "16:9": "16:9 横图",
+  },
+};
+
 const optionValues = {
   targetPlatform: PRODUCT_OUTPUT_PLATFORM_OPTIONS.map((option) => option.value),
   targetMarket: PRODUCT_OUTPUT_MARKET_OPTIONS.map((option) => option.value),
@@ -105,9 +139,9 @@ export function getProductOutputSettingsLabel(settings: ProductOutputSettings, k
 
 export function formatProductOutputSettingsSummary(settings: ProductOutputSettings) {
   return [
-    getProductOutputSettingsLabel(settings, "targetPlatform"),
-    getProductOutputSettingsLabel(settings, "targetMarket"),
-    getProductOutputSettingsLabel(settings, "outputLanguage"),
-    getProductOutputSettingsLabel(settings, "outputRatio"),
+    summaryLabels.targetPlatform[settings.targetPlatform] || getProductOutputSettingsLabel(settings, "targetPlatform"),
+    summaryLabels.targetMarket[settings.targetMarket] || getProductOutputSettingsLabel(settings, "targetMarket"),
+    summaryLabels.outputLanguage[settings.outputLanguage] || getProductOutputSettingsLabel(settings, "outputLanguage"),
+    summaryLabels.outputRatio[settings.outputRatio] || getProductOutputSettingsLabel(settings, "outputRatio"),
   ].join(" · ");
 }

@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const copywritingData = buildCopywritingDataFromAnalysis(analysisRecord.output, {
-      platform: body.platform,
+      platform: outputSettings?.targetPlatform || body.platform,
       tone: body.tone,
       goal: body.goal,
       outputType: body.outputType,

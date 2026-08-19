@@ -6,7 +6,6 @@ import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
-import { useState } from "react";
 
 type UploadedAsset = {
   assetId: string;
@@ -27,8 +26,6 @@ type ProductWorkspaceRailProps = {
   result: ProductAnalysisResponse | null;
   uploadedAsset: UploadedAsset | null;
 };
-
-const platformOptions = ["通用", "Amazon", "Shopee", "TikTok Shop"];
 
 function getGeneratedCount(creationCenterData: ProductCreationCenterData | null) {
   if (!creationCenterData) {
@@ -95,7 +92,6 @@ export function ProductWorkspaceRail({
   result,
   uploadedAsset,
 }: ProductWorkspaceRailProps) {
-  const [platform, setPlatform] = useState(platformOptions[0]);
   const status = getWorkspaceStatus({ creationCenterData, result, uploadedAsset });
   const analyzeLabel = result ? "重新分析商品" : "分析商品";
   const isPrimaryActionLoading = isUploading || isAnalyzing || isRestoring;
@@ -202,27 +198,6 @@ export function ProductWorkspaceRail({
 
       <details className="product-workspace-secondary-settings">
         <summary>更多设置</summary>
-        <div className="product-platform-selector" aria-label="目标平台">
-          <div className="product-creation-section-header">
-            <div>
-              <strong>目标平台</strong>
-              <span>用于后续模板适配</span>
-            </div>
-          </div>
-          <div>
-            {platformOptions.map((option) => (
-              <button
-                className={platform === option ? "active" : undefined}
-                key={option}
-                onClick={() => setPlatform(option)}
-                type="button"
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="product-workspace-future-feature" aria-disabled="true">
           <div>
             <strong>详情页素材</strong>
@@ -240,7 +215,7 @@ export function ProductWorkspaceRail({
         {isUploading ? "正在上传..." : isAnalyzing ? "正在分析..." : isRestoring ? "正在恢复..." : analyzeLabel}
       </button>
 
-      <p className="image-generation-helper">当前平台选择仅影响工作台展示，暂不改变生成提示词。</p>
+      <p className="image-generation-helper">发布目标可在右侧分析 Tab 中统一设置，后续生成任务会继承该设置。</p>
       {error ? <p className="image-generation-error">{error}</p> : null}
     </aside>
   );

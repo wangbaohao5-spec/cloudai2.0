@@ -5,6 +5,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
+import { formatProductOutputSettingsSummary, getProductOutputSettingsLabel } from "@/lib/product-output-settings";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
@@ -23,12 +24,6 @@ type SceneImageResult = {
   style: string;
   warnings?: string[];
 };
-
-const platformOptions = [
-  { value: "taobao", label: "淘宝" },
-  { value: "amazon", label: "Amazon" },
-  { value: "tiktok", label: "TikTok Shop" },
-];
 
 const styleOptions = [
   { value: "minimal", label: "简约" },
@@ -54,8 +49,8 @@ function getSceneName(sceneId: string) {
   return PRODUCT_VISUAL_SCENES.find((scene) => scene.id === sceneId)?.name || sceneId;
 }
 
-function getOptionLabel(options: { value: string; label: string }[], value: string) {
-  return options.find((option) => option.value === value)?.label || value;
+function getStyleLabel(value: string) {
+  return styleOptions.find((option) => option.value === value)?.label || value;
 }
 
 export function ProductSceneImagePanel({ analysisResult, generationBrief, outputSettings, onGenerated }: ProductSceneImagePanelProps) {
@@ -84,7 +79,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
 
     const formData = new FormData(event.currentTarget);
     const scene = String(formData.get("scene") || selectedScene);
-    const platform = String(formData.get("platform") || platformOptions[0].value);
+    const platform = outputSettings?.targetPlatform;
     const style = String(formData.get("style") || styleOptions[0].value);
 
     setError("");
@@ -121,7 +116,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
       setResult({
         imageUrl: data.imageUrl,
         scene,
-        platform,
+        platform: platform || "",
         style,
         warnings: data.warnings,
       });
@@ -144,7 +139,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
       <section className="product-scene-image-panel glass-card" id="product-scene-image-panel">
         <p className="eyebrow">Visual Workflow</p>
         <h2>AI 商品营销场景图</h2>
-        <p className="image-generation-intro">完成商品图片分析后，可以选择营销场景、平台和视觉风格，生成适合投放或上架的场景图。</p>
+        <p className="image-generation-intro">完成商品图片分析后，可以选择营销场景和视觉风格，生成适合投放或上架的场景图。</p>
       </section>
     );
   }
@@ -178,17 +173,14 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
           ))}
         </div>
 
+        {outputSettings ? (
+          <div className="product-inherited-output-target">
+            <strong>当前发布目标</strong>
+            <span>场景图会参考「{formatProductOutputSettingsSummary(outputSettings)}」生成画面风格、语言和比例。</span>
+          </div>
+        ) : null}
+
         <div className="product-scene-controls">
-          <label>
-            平台选择
-            <select name="platform" defaultValue="taobao">
-              {platformOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
           <label>
             风格选择
             <select name="style" defaultValue="minimal">
@@ -224,7 +216,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
           compact
           type="scene-image"
           label="预计消耗 1 张图片额度"
-          description="生成前请确认场景、平台、风格和保真模式；实际记录以额度中心为准。"
+          description="生成前请确认场景、风格和保真模式；实际记录以额度中心为准。"
         />
         <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
           {isGenerating ? (
@@ -262,12 +254,12 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
               <dd>{getSceneName(result.scene)}</dd>
             </div>
             <div>
-              <dt>平台</dt>
-              <dd>{getOptionLabel(platformOptions, result.platform)}</dd>
+              <dt>发布目标</dt>
+              <dd>{outputSettings ? getProductOutputSettingsLabel(outputSettings, "targetPlatform") : result.platform || "通用电商"}</dd>
             </div>
             <div>
               <dt>风格</dt>
-              <dd>{getOptionLabel(styleOptions, result.style)}</dd>
+              <dd>{getStyleLabel(result.style)}</dd>
             </div>
           </dl>
         </div>

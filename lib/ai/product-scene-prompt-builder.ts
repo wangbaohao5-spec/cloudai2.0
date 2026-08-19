@@ -12,12 +12,17 @@ export type ProductScenePromptInput = {
 };
 
 const platformGuides: Record<string, string> = {
+  general: "适合通用电商视觉，突出商品主体、使用场景和清晰购买理由",
   taobao: "适合淘宝电商视觉，主体清晰，转化卖点明确，适合商品详情和主图氛围延展",
+  jd: "适合京东电商视觉，表达专业可信，突出商品品质、参数和细节说明",
   pinduoduo: "适合拼多多电商视觉，强调实用、直接、性价比和明确购买动机",
   douyin: "适合抖音电商短视频和直播带货场景，画面需要强吸引力、强情绪触发和快速理解",
+  xiaohongshu: "适合小红书种草视觉，画面自然、有生活方式感，轻文案和场景氛围更重要",
   tiktok: "适合 TikTok Shop 海外短视频电商，画面具备国际化视觉吸引力，适合社交种草",
+  "tiktok-shop": "适合 TikTok Shop 海外短视频电商，画面具备国际化视觉吸引力，适合社交种草",
   amazon: "适合 Amazon 商品页和广告图，画面专业可信，构图干净，产品细节清晰",
   shopee: "适合 Shopee 跨境电商，画面轻快、移动端友好，突出使用场景和购买理由",
+  "independent-site": "适合独立站品牌视觉，画面简洁、质感更强，突出商品价值和品牌调性",
 };
 
 const styleGuides: Record<string, string> = {

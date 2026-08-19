@@ -502,6 +502,13 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
         <span>只生成规划</span>
       </div>
 
+      {outputSettings ? (
+        <div className="product-inherited-output-target">
+          <strong>当前发布目标</strong>
+          <span>套图规划和生成会参考「{formatProductOutputSettingsSummary(outputSettings)}」。套图用途仍用于决定这组图片的任务类型。</span>
+        </div>
+      ) : null}
+
       <div className="product-image-set-config product-image-set-settings">
         <fieldset>
           <legend>结构模式</legend>
