@@ -1,4 +1,5 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
+import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
@@ -40,9 +41,15 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ImageEditRequestBody;
     const sourceAssetId = body.assetId?.trim();
     const prompt = body.prompt?.trim();
-    const model = body.model?.trim() || "gpt-image-2";
+    const requestedModel = body.model?.trim();
     const analysisHistoryId = body.analysisHistoryId?.trim();
     const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
+    const imageEditTask = analysisHistoryId ? "product-image-edit" : "image-edit";
+    const imageEditRoute = resolveImageEditRoute({
+      task: imageEditTask,
+      model: analysisHistoryId ? undefined : requestedModel,
+      outputSettings,
+    }, { log: false });
 
     if (!sourceAssetId) {
       return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
@@ -81,7 +88,7 @@ export async function POST(request: Request) {
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "image-enhance",
-      model,
+      model: imageEditRoute.modelId,
     });
 
     const finalPrompt = [prompt, buildProductOutputSettingsPrompt(outputSettings)].filter(Boolean).join("\n\n");
@@ -90,7 +97,9 @@ export async function POST(request: Request) {
       imageUrl: sourceImageUrl,
       fileName: sourceAsset.name,
       prompt: finalPrompt,
-      model,
+      task: imageEditTask,
+      model: imageEditRoute.model,
+      outputSettings,
     });
     const imageBuffer = decodeBase64Image(editedImage.b64Json);
     const fileName = `${sanitizeAssetName(sourceAsset.name)}-edit-${Date.now()}.png`;
@@ -113,7 +122,10 @@ export async function POST(request: Request) {
       ...(analysisHistoryId ? { analysisHistoryId } : {}),
       prompt,
       ...(outputSettings ? { outputSettings } : {}),
-      model,
+      model: imageEditRoute.model,
+      modelId: imageEditRoute.modelId,
+      provider: imageEditRoute.provider,
+      ...(requestedModel ? { requestedModel } : {}),
     };
     const historyResult = await settleTask(
       saveHistory({
@@ -126,6 +138,7 @@ export async function POST(request: Request) {
           assetId: asset.id,
           provider: editedImage.provider,
           model: editedImage.model,
+          modelId: editedImage.modelId,
         },
       }),
     );

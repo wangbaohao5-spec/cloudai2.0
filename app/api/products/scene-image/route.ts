@@ -1,4 +1,5 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
+import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
 import { buildProductGenerationBriefPrompt } from "@/lib/ai/product-generation-brief-prompt-builder";
 import { buildProductSceneEditPrompt } from "@/lib/ai/product-scene-prompt-builder";
 import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
@@ -119,12 +120,15 @@ export async function POST(request: Request) {
         generationMode,
       }),
     ].join("\n\n");
-    const model = "gpt-image-2";
+    const imageEditRoute = resolveImageEditRoute({
+      task: "product-scene-image",
+      outputSettings,
+    }, { log: false });
 
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "image",
-      model: "gpt-image-2:product-scene",
+      model: imageEditRoute.modelId,
     });
 
     const sourceImageUrl = await getFileUrl(sourceAsset.url);
@@ -132,7 +136,9 @@ export async function POST(request: Request) {
       imageUrl: sourceImageUrl,
       fileName: sourceAsset.name,
       prompt,
-      model,
+      task: "product-scene-image",
+      model: imageEditRoute.model,
+      outputSettings,
     });
     const title = getProductTitle(analysisRecord.output, scene);
     const imageBuffer = decodeBase64Image(editedImage.b64Json);
@@ -157,7 +163,7 @@ export async function POST(request: Request) {
       prompt,
       provider: editedImage.provider,
       model: editedImage.model,
-      modelId: "run-api-gpt-image-2-product-scene",
+      modelId: editedImage.modelId || imageEditRoute.modelId,
       limitation: "基于原商品图编辑生成，尽量保持商品主体一致",
     };
     const historyResult = await settleTask(
@@ -173,6 +179,10 @@ export async function POST(request: Request) {
           scene,
           platform,
           style,
+          imageEditTask: "product-scene-image",
+          imageProvider: imageEditRoute.provider,
+          imageModel: imageEditRoute.model,
+          imageModelId: imageEditRoute.modelId,
           generationMode,
           ...(generationBrief ? { generationBrief } : {}),
           ...(outputSettings ? { outputSettings } : {}),

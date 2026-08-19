@@ -1,4 +1,5 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
+import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
 import { buildProductDetailPageImagePrompt } from "@/lib/ai/product-detail-page-image-prompt-builder";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
@@ -175,12 +176,15 @@ export async function POST(request: Request) {
         generationMode,
       }),
     ].join("\n\n");
-    const model = "gpt-image-2";
+    const imageEditRoute = resolveImageEditRoute({
+      task: "product-detail-page",
+      outputSettings,
+    }, { log: false });
 
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "image",
-      model: "gpt-image-2:product-detail-page",
+      model: imageEditRoute.modelId,
     });
 
     const sourceImageUrl = await getFileUrl(sourceAsset.url);
@@ -188,7 +192,9 @@ export async function POST(request: Request) {
       imageUrl: sourceImageUrl,
       fileName: sourceAsset.name,
       prompt,
-      model,
+      task: "product-detail-page",
+      model: imageEditRoute.model,
+      outputSettings,
     });
     const imageBuffer = decodeBase64Image(editedImage.b64Json);
     const fileName = `${sanitizeAssetName(sourceAsset.name)}-detail-page-${page.pageIndex}-${Date.now()}.png`;
@@ -213,7 +219,7 @@ export async function POST(request: Request) {
       page,
       provider: editedImage.provider,
       model: editedImage.model,
-      modelId: "run-api-gpt-image-2-product-detail-page",
+      modelId: editedImage.modelId || imageEditRoute.modelId,
       limitation: "AI 生成图中文字可能需要人工检查",
     };
     const historyResult = await settleTask(
@@ -228,6 +234,10 @@ export async function POST(request: Request) {
           sourceAssetId: analysisRecord.assetId,
           pageIndex: page.pageIndex,
           style,
+          imageEditTask: "product-detail-page",
+          imageProvider: imageEditRoute.provider,
+          imageModel: imageEditRoute.model,
+          imageModelId: imageEditRoute.modelId,
           generationMode,
           ...(generationBrief ? { generationBrief } : {}),
           ...(outputSettings ? { outputSettings } : {}),

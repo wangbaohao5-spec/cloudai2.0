@@ -1,4 +1,5 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
+import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
 import { buildProductImageSetImagePrompt } from "@/lib/ai/product-image-set-image-prompt-builder";
 import {
   type ProductImageSetCount,
@@ -206,12 +207,15 @@ export async function POST(request: Request) {
       productTitle: analysisRecord.title,
       purpose,
     });
-    const model = "gpt-image-2";
+    const imageEditRoute = resolveImageEditRoute({
+      task: "product-image-set",
+      outputSettings,
+    }, { log: false });
 
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "image",
-      model: "gpt-image-2:product-image-set",
+      model: imageEditRoute.modelId,
     });
 
     const sourceImageUrl = await getFileUrl(sourceAsset.url);
@@ -219,7 +223,9 @@ export async function POST(request: Request) {
       imageUrl: sourceImageUrl,
       fileName: sourceAsset.name,
       prompt,
-      model,
+      task: "product-image-set",
+      model: imageEditRoute.model,
+      outputSettings,
     });
     const imageBuffer = decodeBase64Image(editedImage.b64Json);
     const fileName = `${sanitizeAssetName(sourceAsset.name)}-image-set-${image.imageIndex}-${Date.now()}.png`;
@@ -245,7 +251,7 @@ export async function POST(request: Request) {
       purpose,
       provider: editedImage.provider,
       model: editedImage.model,
-      modelId: "run-api-gpt-image-2-product-image-set",
+      modelId: editedImage.modelId || imageEditRoute.modelId,
       limitation: "AI 生成图中文字可能需要人工检查",
     };
     const historyResult = await settleTask(
@@ -260,6 +266,10 @@ export async function POST(request: Request) {
           sourceAssetId: analysisRecord.assetId,
           purpose,
           count,
+          imageEditTask: "product-image-set",
+          imageProvider: imageEditRoute.provider,
+          imageModel: imageEditRoute.model,
+          imageModelId: imageEditRoute.modelId,
           imageIndex: image.imageIndex,
           imageType: image.imageType,
           generationMode,
