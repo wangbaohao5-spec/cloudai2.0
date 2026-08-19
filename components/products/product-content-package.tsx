@@ -3,7 +3,16 @@
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { getRiskCategoryLabel } from "@/lib/ai/product-risk-labels";
 import type { ProductContentRiskScanResult } from "@/lib/ai/product-content-risk-scanner";
+import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
+import {
+  formatProductOutputSettingsSummary,
+  getOutputLanguageLabel,
+  getOutputRatioLabel,
+  getTargetMarketLabel,
+  getTargetPlatformLabel,
+  sanitizeProductOutputSettings,
+} from "@/lib/product-output-settings";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
 import { useMemo, useState } from "react";
 
@@ -15,6 +24,13 @@ type RiskSummaryItem = {
   category: string;
   keyword: string;
   sources: Set<string>;
+};
+
+type ImageSetStructureSummary = {
+  customStructure: string;
+  generatedCount: number;
+  purpose: string;
+  structureMode: string;
 };
 
 function isCopywritingResult(output: unknown): output is CopywritingResult {
@@ -68,6 +84,51 @@ function getNumberField(value: unknown, key: string) {
   return typeof field === "number" && Number.isFinite(field) ? field : null;
 }
 
+function getLatestRecord(records: HistoryRecord[]) {
+  return records.reduce<HistoryRecord | null>((latestRecord, record) => {
+    if (!latestRecord) {
+      return record;
+    }
+
+    return new Date(record.createdAt).getTime() > new Date(latestRecord.createdAt).getTime() ? record : latestRecord;
+  }, null);
+}
+
+function getLatestOutputSettings(data: ProductCreationCenterData) {
+  const records = [...data.copywriting, ...data.imageSetImages, ...data.detailPages, ...data.sceneImages, ...data.imageEdits].sort(
+    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  );
+
+  for (const record of records) {
+    const inputSettings = sanitizeProductOutputSettings(getObjectField(record.input, "outputSettings"));
+    const outputSettings = sanitizeProductOutputSettings(getObjectField(record.output, "outputSettings"));
+    const settings = inputSettings || outputSettings;
+
+    if (settings) {
+      return settings;
+    }
+  }
+
+  return null;
+}
+
+function getImageSetStructureSummary(records: HistoryRecord[]): ImageSetStructureSummary | null {
+  const latestRecord = getLatestRecord(records);
+
+  if (!latestRecord) {
+    return null;
+  }
+
+  const customStructure = getObjectField(latestRecord.input, "customStructure");
+
+  return {
+    customStructure: formatCustomStructure(customStructure && typeof customStructure === "object" ? customStructure : null),
+    generatedCount: records.length,
+    purpose: getImageSetPurposeLabel(getStringField(latestRecord.input, "purpose")),
+    structureMode: getImageSetStructureModeLabel(getStringField(latestRecord.input, "structureMode")),
+  };
+}
+
 function formatList(items?: string[]) {
   const visibleItems = items?.filter(Boolean) || [];
 
@@ -94,6 +155,34 @@ function formatRiskScanMarkdown(riskScan: CopywritingResult["riskScan"]) {
   }
 
   return ["### 风险提示", "", "检测到可能需要确认的表述：", formatList(keywords)].join("\n");
+}
+
+function buildOutputSettingsMarkdown(data: ProductCreationCenterData) {
+  const outputSettings = getLatestOutputSettings(data);
+
+  if (!outputSettings) {
+    return [
+      "## 发布目标",
+      "",
+      "- 目标平台：未记录",
+      "- 目标市场：未记录",
+      "- 输出语言：未记录",
+      "- 输出比例：未记录",
+      "",
+      "后续商品文案、详情页、套图和图片素材均会参考发布目标生成。",
+    ].join("\n");
+  }
+
+  return [
+    "## 发布目标",
+    "",
+    `- 目标平台：${getTargetPlatformLabel(outputSettings.targetPlatform)}`,
+    `- 目标市场：${getTargetMarketLabel(outputSettings.targetMarket)}`,
+    `- 输出语言：${getOutputLanguageLabel(outputSettings.outputLanguage)}`,
+    `- 输出比例：${getOutputRatioLabel(outputSettings.outputRatio)}`,
+    "",
+    "后续商品文案、详情页、套图和图片素材均会参考该发布目标生成。",
+  ].join("\n");
 }
 
 function collectRiskScanItems(records: HistoryRecord[], source: string, items: Map<string, RiskSummaryItem>) {
@@ -285,6 +374,26 @@ function buildImageSetMarkdown(records: HistoryRecord[]) {
   ].join("\n");
 }
 
+function buildImageSetStructureMarkdown(records: HistoryRecord[]) {
+  const summary = getImageSetStructureSummary(records);
+
+  if (!summary) {
+    return "";
+  }
+
+  return [
+    "",
+    "## 商品套图结构",
+    "",
+    `- 套图用途：${summary.purpose}`,
+    `- 结构模式：${summary.structureMode}`,
+    summary.customStructure ? `- 图片结构：${summary.customStructure}` : "",
+    `- 已生成：${summary.generatedCount} 张`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function buildProductPackageMarkdown(data: ProductCreationCenterData) {
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "未命名商品";
   const originalAssets = data.originalAsset ? [{ title: data.originalAsset.name, url: data.originalAsset.url }] : [];
@@ -304,6 +413,8 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     `- 商品名称：${productName}`,
     `- 商品类别：${data.analysis.category || "暂无"}`,
     `- 目标用户：${data.analysis.targetAudience || "暂无"}`,
+    "",
+    buildOutputSettingsMarkdown(data),
     "",
     "## 生成规范说明",
     "以下内容由 CloudAI 根据商品图片、商品分析结果和用户填写的生成要求辅助生成。发布或上架前，请人工确认品牌授权、材质、成分、功效、认证、检测报告、价格、销量、用户评价等信息真实、准确、可证明。",
@@ -334,6 +445,7 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     "",
     buildImageAssetMarkdown("营销场景图", sceneImageAssets),
     buildDetailPageMarkdown(data.detailPages),
+    buildImageSetStructureMarkdown(data.imageSetImages),
     buildImageSetMarkdown(data.imageSetImages),
   ].join("\n");
 }
@@ -345,6 +457,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "商品";
   const copywritingCount = data.copywriting.length;
   const imageCount = Number(Boolean(data.originalAsset)) + data.imageEdits.length + data.sceneImages.length + data.detailPages.length + data.imageSetImages.length;
+  const outputSettings = getLatestOutputSettings(data);
 
   function showFeedback(message: string, tone: "error" | "success" = "success") {
     setFeedback({ message, tone });
@@ -393,6 +506,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
       <div className="product-content-package-summary" aria-label="商品素材包内容概览">
         <span>文案 {copywritingCount}</span>
         <span>图片素材 {imageCount}</span>
+        <span>{outputSettings ? formatProductOutputSettingsSummary(outputSettings) : "发布目标未记录"}</span>
         <span>Markdown</span>
       </div>
 

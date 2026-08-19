@@ -13,6 +13,7 @@ import type {
   ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import type { ImageSetStructureValidationResult } from "@/lib/ai/product-image-set-structure-validation";
+import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
 import { formatProductOutputSettingsSummary } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
@@ -112,10 +113,6 @@ const customStructureDefaults = {
   8: { detailCloseup: 2, other: 1, sellingPoint: 2, usageScene: 2, whiteBackground: 1 },
 } satisfies Record<ProductImageSetSmartCount, ProductImageSetCustomStructure>;
 
-function getPurposeLabel(value: ProductImageSetPurpose) {
-  return purposeOptions.find((option) => option.value === value)?.label || "商品套图";
-}
-
 function getDefaultCustomStructure(count: ProductImageSetSmartCount): ProductImageSetCustomStructure {
   return {
     comparison: 0,
@@ -126,20 +123,6 @@ function getDefaultCustomStructure(count: ProductImageSetSmartCount): ProductIma
 
 function getCustomStructureTotal(structure: ProductImageSetCustomStructure) {
   return Object.values(structure).reduce((total, value) => total + (typeof value === "number" ? value : 0), 0);
-}
-
-function formatCustomStructure(structure: ProductImageSetCustomStructure | null) {
-  if (!structure) {
-    return "";
-  }
-
-  return customStructureOptions
-    .map((option) => {
-      const value = structure[option.key] || 0;
-      return value ? `${option.label} ${value}` : "";
-    })
-    .filter(Boolean)
-    .join(" / ");
 }
 
 function ImageSetStructureValidationNotice({
@@ -381,7 +364,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
           generationMode: image.suggestedGenerationMode || "faithful",
           image,
           outputSettings: outputSettings || undefined,
-          purpose,
+          purpose: plan?.purpose || purpose,
         }),
       });
 
@@ -624,8 +607,8 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
               <div className="product-image-set-summary-copy">
                 <p>商品套图 · {plan.images.length} 张</p>
                 <div className="product-image-set-summary-metrics">
-                  <span>用途：{getPurposeLabel(plan.purpose)}</span>
-                  <span>模式：{plannedStructureMode === "custom" ? "自定义配置" : "智能匹配"}</span>
+                  <span>用途：{getImageSetPurposeLabel(plan.purpose)}</span>
+                  <span>模式：{getImageSetStructureModeLabel(plannedStructureMode)}</span>
                   {plannedStructureMode === "custom" && plannedCustomStructure ? <span>{formatCustomStructure(plannedCustomStructure)}</span> : null}
                   {plannedOutputSettings ? <span>发布目标：{formatProductOutputSettingsSummary(plannedOutputSettings)}</span> : null}
                   <span>

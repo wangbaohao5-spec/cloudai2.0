@@ -2,6 +2,8 @@
 
 import type { ProductCreationCenterAsset } from "@/lib/product-creation-center";
 import type { HistoryRecord } from "@/lib/types";
+import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
+import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useState } from "react";
@@ -28,6 +30,12 @@ type SelectedImage = {
   alt: string;
   title: string;
   url: string;
+};
+
+type ImageSetDeliveryInfo = {
+  customStructure: string;
+  purpose: string;
+  structureMode: string;
 };
 
 function getOutputUrl(output: unknown) {
@@ -59,6 +67,49 @@ function getNumberField(value: unknown, key: string) {
   const field = getObjectField(value, key);
 
   return typeof field === "number" && Number.isFinite(field) ? field : null;
+}
+
+function getLatestRecord(records: HistoryRecord[]) {
+  return records.reduce<HistoryRecord | null>((latestRecord, record) => {
+    if (!latestRecord) {
+      return record;
+    }
+
+    return new Date(record.createdAt).getTime() > new Date(latestRecord.createdAt).getTime() ? record : latestRecord;
+  }, null);
+}
+
+function getLatestOutputSettings(records: HistoryRecord[]) {
+  const sortedRecords = [...records].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+  for (const record of sortedRecords) {
+    const inputSettings = sanitizeProductOutputSettings(getObjectField(record.input, "outputSettings"));
+    const outputSettings = sanitizeProductOutputSettings(getObjectField(record.output, "outputSettings"));
+    const settings = inputSettings || outputSettings;
+
+    if (settings) {
+      return settings;
+    }
+  }
+
+  return null;
+}
+
+function getLatestImageSetDeliveryInfo(records: HistoryRecord[]): ImageSetDeliveryInfo | null {
+  const record = getLatestRecord(records);
+
+  if (!record) {
+    return null;
+  }
+
+  const customStructure = getObjectField(record.input, "customStructure");
+  const structureMode = getStringField(record.input, "structureMode");
+
+  return {
+    customStructure: formatCustomStructure(customStructure && typeof customStructure === "object" ? customStructure : null),
+    purpose: getImageSetPurposeLabel(getStringField(record.input, "purpose")),
+    structureMode: getImageSetStructureModeLabel(structureMode),
+  };
 }
 
 function getDetailPageInfo(record: HistoryRecord) {
@@ -205,6 +256,8 @@ function AssetGroup({
 
 export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, originalAsset, sceneImages }: ProductAssetGalleryProps) {
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+  const outputSettings = getLatestOutputSettings([...imageSetImages, ...detailPages, ...sceneImages, ...imageEdits]);
+  const imageSetDeliveryInfo = getLatestImageSetDeliveryInfo(imageSetImages);
   const originalAssets = originalAsset
     ? [
         {
@@ -270,6 +323,11 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
         <span>{totalAssets ? `已生成 ${totalAssets} 张素材` : "等待素材生成"}</span>
       </div>
       {!totalAssets ? <p className="product-asset-gallery-helper">上传并分析商品后，生成的图片会自动汇总到这里。</p> : null}
+      <div className="product-asset-delivery-meta">
+        <strong>发布目标</strong>
+        <span>{outputSettings ? formatProductOutputSettingsSummary(outputSettings) : "发布目标未记录"}</span>
+        <p>这些素材会按当前发布目标进行整理和展示。</p>
+      </div>
 
       <div className="product-asset-groups">
         <AssetGroup
@@ -304,7 +362,20 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
           assets={imageSetAssets}
           description="用于上架、详情页、社媒或平台 Listing 的成套图片。"
           emptyText="暂无商品套图，可前往「套图」Tab 生成。"
-          notice={imageSetAssets.length ? "套图已生成，可单张预览或下载。后续可在「导出」Tab 汇总为商品素材包。" : undefined}
+          notice={
+            imageSetAssets.length
+              ? [
+                  "套图已生成，可单张预览或下载。后续可在「导出」Tab 汇总为商品素材包。",
+                  imageSetDeliveryInfo
+                    ? `套图信息：用途：${imageSetDeliveryInfo.purpose}；模式：${imageSetDeliveryInfo.structureMode}${
+                        imageSetDeliveryInfo.customStructure ? `；结构：${imageSetDeliveryInfo.customStructure}` : ""
+                      }。`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+              : undefined
+          }
           onPreview={setSelectedImage}
           title="商品套图"
         />

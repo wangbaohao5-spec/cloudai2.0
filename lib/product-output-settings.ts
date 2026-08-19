@@ -76,6 +76,40 @@ const summaryLabels: Record<keyof ProductOutputSettings, Record<string, string>>
   },
 };
 
+const compactLabels: Record<keyof ProductOutputSettings, Record<string, string>> = {
+  targetPlatform: {
+    amazon: "Amazon",
+    douyin: "抖音",
+    general: "通用",
+    "independent-site": "独立站",
+    jd: "京东",
+    pinduoduo: "拼多多",
+    shopee: "Shopee",
+    taobao: "淘宝",
+    "tiktok-shop": "TikTok Shop",
+    xiaohongshu: "小红书",
+  },
+  targetMarket: {
+    china: "中国",
+    europe: "欧洲",
+    global: "全球",
+    japan: "日本",
+    "north-america": "北美",
+    "southeast-asia": "东南亚",
+  },
+  outputLanguage: {
+    "zh-CN": "中文",
+    en: "English",
+    ja: "日本語",
+  },
+  outputRatio: {
+    "1:1": "1:1",
+    "3:4": "3:4",
+    "4:5": "4:5",
+    "16:9": "16:9",
+  },
+};
+
 const optionValues = {
   targetPlatform: PRODUCT_OUTPUT_PLATFORM_OPTIONS.map((option) => option.value),
   targetMarket: PRODUCT_OUTPUT_MARKET_OPTIONS.map((option) => option.value),
@@ -137,11 +171,33 @@ export function getProductOutputSettingsLabel(settings: ProductOutputSettings, k
   return options.find((option) => option.value === settings[key])?.label || settings[key];
 }
 
+export function getTargetPlatformLabel(value?: string | null) {
+  return value ? summaryLabels.targetPlatform[value] || value : "未记录";
+}
+
+export function getTargetMarketLabel(value?: string | null) {
+  return value ? summaryLabels.targetMarket[value] || value : "未记录";
+}
+
+export function getOutputLanguageLabel(value?: string | null) {
+  return value ? summaryLabels.outputLanguage[value] || value : "未记录";
+}
+
+export function getOutputRatioLabel(value?: string | null) {
+  return value ? summaryLabels.outputRatio[value] || value : "未记录";
+}
+
+export function getProductOutputSettingsCompactLabel(settings: ProductOutputSettings, key: keyof ProductOutputSettings) {
+  return compactLabels[key][settings[key]] || getProductOutputSettingsLabel(settings, key);
+}
+
 export function formatProductOutputSettingsSummary(settings: ProductOutputSettings) {
   return [
-    summaryLabels.targetPlatform[settings.targetPlatform] || getProductOutputSettingsLabel(settings, "targetPlatform"),
-    summaryLabels.targetMarket[settings.targetMarket] || getProductOutputSettingsLabel(settings, "targetMarket"),
-    summaryLabels.outputLanguage[settings.outputLanguage] || getProductOutputSettingsLabel(settings, "outputLanguage"),
-    summaryLabels.outputRatio[settings.outputRatio] || getProductOutputSettingsLabel(settings, "outputRatio"),
+    getTargetPlatformLabel(settings.targetPlatform),
+    getTargetMarketLabel(settings.targetMarket),
+    getOutputLanguageLabel(settings.outputLanguage),
+    getOutputRatioLabel(settings.outputRatio),
   ].join(" · ");
 }
+
+export const getProductOutputSettingsSummary = formatProductOutputSettingsSummary;
