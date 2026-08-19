@@ -2565,6 +2565,122 @@ h3 {
   font-size: 0.9rem;
 }
 
+.model-lab-image-section {
+  border-radius: 28px;
+  padding: 28px;
+}
+
+.model-lab-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.model-lab-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.model-lab-card > span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.model-lab-card h3,
+.model-lab-card h4,
+.model-lab-subsection h3 {
+  margin: 0;
+}
+
+.model-lab-card p,
+.model-lab-card small,
+.model-lab-subsection p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.model-lab-card small {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.model-lab-subsection {
+  display: grid;
+  gap: 12px;
+}
+
+.model-lab-dimension-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.model-lab-dimension-card {
+  padding: 14px;
+}
+
+.model-lab-dimension-card h4 {
+  font-size: 0.92rem;
+}
+
+.model-lab-dimension-card p {
+  font-size: 0.84rem;
+}
+
+.model-lab-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.model-lab-chip-list span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--text);
+  background: var(--bg-elevated);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.model-image-test-table {
+  min-width: 1120px;
+}
+
+.model-lab-env-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 14px;
+}
+
+.model-lab-code-block {
+  overflow-x: auto;
+  margin: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px;
+  color: var(--text);
+  background: var(--bg-elevated);
+  font-size: 0.84rem;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.model-lab-note ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .model-test-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--card-border);
@@ -8267,6 +8383,9 @@ h3 {
   .usage-center-grid,
   .generation-qa-grid,
   .generation-qa-checklist,
+  .model-lab-dimension-grid,
+  .model-lab-env-grid,
+  .model-lab-grid,
   .model-strategy-grid,
   .quick-action-grid {
     grid-template-columns: 1fr;
