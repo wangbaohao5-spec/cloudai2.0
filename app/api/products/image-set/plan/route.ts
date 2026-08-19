@@ -240,6 +240,7 @@ export async function POST(request: Request) {
         { role: "user", content: prompt },
       ],
       jsonMode: true,
+      outputSettings,
       task: "image-set-plan",
       temperature: 0.62,
     });

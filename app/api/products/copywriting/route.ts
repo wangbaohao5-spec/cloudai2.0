@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "copywriting",
-      model: getTextProviderModelId("product-copywriting"),
+      model: getTextProviderModelId("product-copywriting", outputSettings),
     });
 
     const result = await generateCopywriting(copywritingData, "product-copywriting");

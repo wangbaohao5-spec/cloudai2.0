@@ -1,3 +1,5 @@
+import type { ProductOutputSettings } from "@/lib/product-types";
+
 export type AIMessage = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -8,6 +10,7 @@ export type TextGenerationTask = "copywriting" | "detail-page-plan" | "image-set
 export type GenerateAIResponseOptions = {
   jsonMode?: boolean;
   model?: string;
+  outputSettings?: ProductOutputSettings | null;
   requestId?: string;
   task?: TextGenerationTask;
   temperature?: number;
@@ -18,7 +21,7 @@ export type AIProvider = {
 };
 
 type TextProviderName = "deepseek" | "openai-compatible";
-type TextConfigSource = "default" | "fallback" | "global-env" | "provider-default-env" | "task-env";
+type TextConfigSource = "default" | "fallback" | "global-env" | "multilingual-env" | "provider-default-env" | "task-env";
 
 const DEEPSEEK_MODEL_ID = "deepseek-v4-pro";
 
@@ -29,6 +32,8 @@ type TextEnvName =
   | "DETAIL_PAGE_PLAN_TEXT_PROVIDER"
   | "IMAGE_SET_PLAN_TEXT_MODEL"
   | "IMAGE_SET_PLAN_TEXT_PROVIDER"
+  | "MULTILINGUAL_TEXT_MODEL"
+  | "MULTILINGUAL_TEXT_PROVIDER"
   | "OPENAI_TEXT_API_KEY"
   | "OPENAI_TEXT_BASE_URL"
   | "OPENAI_TEXT_MODEL"
@@ -59,6 +64,7 @@ const TASK_ENV_MAP = {
 type TextProviderConfig = {
   model: string;
   modelSource: TextConfigSource;
+  outputLanguage: string;
   provider: TextProviderName;
   providerSource: TextConfigSource;
   task?: TextGenerationTask;
@@ -88,6 +94,8 @@ function logTextEnvSnapshot() {
     DETAIL_PAGE_PLAN_TEXT_PROVIDER: getOptionalTextEnv("DETAIL_PAGE_PLAN_TEXT_PROVIDER"),
     IMAGE_SET_PLAN_TEXT_MODEL: getOptionalTextEnv("IMAGE_SET_PLAN_TEXT_MODEL"),
     IMAGE_SET_PLAN_TEXT_PROVIDER: getOptionalTextEnv("IMAGE_SET_PLAN_TEXT_PROVIDER"),
+    MULTILINGUAL_TEXT_MODEL: getOptionalTextEnv("MULTILINGUAL_TEXT_MODEL"),
+    MULTILINGUAL_TEXT_PROVIDER: getOptionalTextEnv("MULTILINGUAL_TEXT_PROVIDER"),
     PRODUCT_COPYWRITING_TEXT_MODEL: getOptionalTextEnv("PRODUCT_COPYWRITING_TEXT_MODEL"),
     PRODUCT_COPYWRITING_TEXT_PROVIDER: getOptionalTextEnv("PRODUCT_COPYWRITING_TEXT_PROVIDER"),
     TEXT_MODEL: getOptionalTextEnv("TEXT_MODEL"),
@@ -111,7 +119,31 @@ function getTaskTextEnv(task: TextGenerationTask | undefined, field: "model" | "
   return task ? getOptionalTextEnv(TASK_ENV_MAP[task][field]) : "";
 }
 
-function getResolvedTextProviderConfig(task?: TextGenerationTask): TextProviderConfig {
+function getOutputLanguage(outputSettings?: ProductOutputSettings | null) {
+  return outputSettings?.outputLanguage?.trim() || "zh-CN";
+}
+
+function isMultilingualTask(task?: TextGenerationTask) {
+  return Boolean(task && ["copywriting", "product-copywriting", "detail-page-plan", "image-set-plan"].includes(task));
+}
+
+function getResolvedTextProviderConfig(task?: TextGenerationTask, outputSettings?: ProductOutputSettings | null): TextProviderConfig {
+  const outputLanguage = getOutputLanguage(outputSettings);
+  const multilingualProvider = getOptionalTextEnv("MULTILINGUAL_TEXT_PROVIDER");
+  const multilingualModel = getOptionalTextEnv("MULTILINGUAL_TEXT_MODEL");
+  const shouldUseMultilingual = outputLanguage !== "zh-CN" && isMultilingualTask(task) && Boolean(multilingualProvider && multilingualModel);
+
+  if (shouldUseMultilingual) {
+    return {
+      model: multilingualModel,
+      modelSource: "multilingual-env",
+      outputLanguage,
+      provider: normalizeProviderName(multilingualProvider),
+      providerSource: "multilingual-env",
+      task,
+    };
+  }
+
   const taskProvider = getTaskTextEnv(task, "provider");
   const globalProvider = getOptionalTextEnv("TEXT_PROVIDER");
   const provider = normalizeProviderName(taskProvider || globalProvider);
@@ -131,6 +163,7 @@ function getResolvedTextProviderConfig(task?: TextGenerationTask): TextProviderC
   return {
     model,
     modelSource,
+    outputLanguage,
     provider,
     providerSource,
     task,
@@ -141,8 +174,8 @@ function isOpenAICompatibleTextConfigured(model: string) {
   return Boolean(getOptionalTextEnv("OPENAI_TEXT_API_KEY") && getOptionalTextEnv("OPENAI_TEXT_BASE_URL") && model);
 }
 
-function getRunnableTextProviderConfig(task?: TextGenerationTask): TextProviderConfig {
-  const config = getResolvedTextProviderConfig(task);
+function getRunnableTextProviderConfig(task?: TextGenerationTask, outputSettings?: ProductOutputSettings | null): TextProviderConfig {
+  const config = getResolvedTextProviderConfig(task, outputSettings);
 
   if (config.provider === "openai-compatible") {
     if (isOpenAICompatibleTextConfigured(config.model)) {
@@ -161,6 +194,7 @@ function getRunnableTextProviderConfig(task?: TextGenerationTask): TextProviderC
   return {
     model: DEEPSEEK_MODEL_ID,
     modelSource: "fallback",
+    outputLanguage: config.outputLanguage,
     provider: "deepseek",
     providerSource: "fallback",
     task,
@@ -171,8 +205,8 @@ export function getTextProviderName(task?: TextGenerationTask): TextProviderName
   return getRunnableTextProviderConfig(task).provider;
 }
 
-export function getTextProviderModelId(task?: TextGenerationTask) {
-  const config = getRunnableTextProviderConfig(task);
+export function getTextProviderModelId(task?: TextGenerationTask, outputSettings?: ProductOutputSettings | null) {
+  const config = getRunnableTextProviderConfig(task, outputSettings);
 
   if (config.provider === "openai-compatible") {
     return `openai-compatible:${config.model}`;
@@ -182,13 +216,15 @@ export function getTextProviderModelId(task?: TextGenerationTask) {
 }
 
 export async function generateAIResponse(messages: AIMessage[], options?: GenerateAIResponseOptions) {
-  const config = getRunnableTextProviderConfig(options?.task);
+  const config = getRunnableTextProviderConfig(options?.task, options?.outputSettings);
   const requestId = options?.requestId || createTextRequestId();
 
   logTextEnvSnapshot();
   logTextDebug("[text-router] resolved model", {
     model: config.model,
     modelSource: config.modelSource,
+    outputLanguage: config.outputLanguage,
+    isMultilingual: config.outputLanguage !== "zh-CN" && config.providerSource === "multilingual-env" && config.modelSource === "multilingual-env",
     provider: config.provider,
     providerSource: config.providerSource,
     requestId,
@@ -208,13 +244,15 @@ export async function generateAIResponse(messages: AIMessage[], options?: Genera
 export async function generateText({
   jsonMode,
   messages,
+  outputSettings,
   task,
   temperature,
 }: {
   jsonMode?: boolean;
   messages: AIMessage[];
+  outputSettings?: ProductOutputSettings | null;
   task: TextGenerationTask;
   temperature?: number;
 }) {
-  return generateAIResponse(messages, { jsonMode, task, temperature });
+  return generateAIResponse(messages, { jsonMode, outputSettings, task, temperature });
 }

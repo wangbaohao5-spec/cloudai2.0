@@ -189,6 +189,7 @@ export async function POST(request: Request) {
         { role: "user", content: prompt },
       ],
       jsonMode: true,
+      outputSettings,
       task: "detail-page-plan",
       temperature: 0.62,
     });

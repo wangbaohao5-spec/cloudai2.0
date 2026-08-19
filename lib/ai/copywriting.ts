@@ -11,6 +11,7 @@ export async function generateCopywriting(data: CopywritingFormData, task: Copyw
       { role: "user", content: buildCopywritingPrompt(data) },
     ],
     jsonMode: true,
+    outputSettings: data.outputSettings,
     task,
     temperature: 0.7,
   });

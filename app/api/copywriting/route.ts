@@ -3,6 +3,7 @@ import { getTextProviderModelId } from "@/lib/ai/text-router";
 import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
+import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import type { CopywritingFormData } from "@/lib/types";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
 import { NextResponse } from "next/server";
@@ -17,7 +18,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = (await request.json()) as CopywritingFormData;
+    const body = (await request.json()) as CopywritingFormData;
+    const data: CopywritingFormData = {
+      ...body,
+      outputSettings: sanitizeProductOutputSettings(body.outputSettings),
+    };
 
     if (!data.productName?.trim()) {
       return NextResponse.json({ error: "Product name is required." }, { status: 400 });
@@ -26,7 +31,7 @@ export async function POST(request: Request) {
     await enforceUsageLimitAndRecord({
       userId: user.id,
       type: "copywriting",
-      model: getTextProviderModelId("copywriting"),
+      model: getTextProviderModelId("copywriting", data.outputSettings),
     });
 
     const result = await generateCopywriting(data, "copywriting");
