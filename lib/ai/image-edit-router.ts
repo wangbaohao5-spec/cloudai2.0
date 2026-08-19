@@ -1,8 +1,8 @@
 import { getOptionalEnv } from "@/lib/server-env";
 import type { ImageEditInput, ImageEditResult, ImageEditTask } from "@/lib/ai/image-edit-provider";
 
-type ImageEditProviderId = "run-api";
-type ImageEditRouteSource = "default" | "explicit" | "global-env" | "task-env";
+type ImageEditProviderId = "run-api" | "gemini-image";
+type ImageEditRouteSource = "default" | "explicit" | "global-env" | "provider-env" | "task-env";
 
 type ImageEditRoute = {
   task: ImageEditTask;
@@ -16,6 +16,7 @@ type ImageEditRoute = {
 
 const DEFAULT_IMAGE_EDIT_PROVIDER: ImageEditProviderId = "run-api";
 const DEFAULT_IMAGE_EDIT_MODEL = "gpt-image-2";
+const DEFAULT_GEMINI_IMAGE_MODEL = "gemini-3-pro-image-preview";
 
 const taskEnvMap: Record<ImageEditTask, { provider: Parameters<typeof getOptionalEnv>[0]; model: Parameters<typeof getOptionalEnv>[0] }> = {
   "image-edit": {
@@ -44,6 +45,22 @@ function getImageEditModelId(provider: string, model: string, task: ImageEditTas
   return `${provider}-${model}-${task}`;
 }
 
+function getProviderDefaultModel(provider: string) {
+  if (provider === "gemini-image") {
+    return getOptionalEnv("GEMINI_IMAGE_MODEL") || DEFAULT_GEMINI_IMAGE_MODEL;
+  }
+
+  return DEFAULT_IMAGE_EDIT_MODEL;
+}
+
+function getProviderDefaultModelSource(provider: string): ImageEditRouteSource {
+  if (provider === "gemini-image" && getOptionalEnv("GEMINI_IMAGE_MODEL")) {
+    return "provider-env";
+  }
+
+  return "default";
+}
+
 function logResolvedRoute(route: ImageEditRoute) {
   if (process.env.NODE_ENV !== "development") {
     return;
@@ -70,9 +87,18 @@ export function resolveImageEditRoute(
   const taskModel = getOptionalEnv(taskEnv.model);
   const globalModel = getOptionalEnv("IMAGE_EDIT_MODEL");
   const provider = taskProvider || globalProvider || DEFAULT_IMAGE_EDIT_PROVIDER;
-  const model = input.model || taskModel || globalModel || DEFAULT_IMAGE_EDIT_MODEL;
+  const providerDefaultModel = getProviderDefaultModel(provider);
+  const providerDefaultModelSource = getProviderDefaultModelSource(provider);
+  const globalModelForRoute = taskProvider ? undefined : globalModel;
+  const model = input.model || taskModel || globalModelForRoute || providerDefaultModel;
   const providerSource: ImageEditRouteSource = taskProvider ? "task-env" : globalProvider ? "global-env" : "default";
-  const modelSource: ImageEditRouteSource = input.model ? "explicit" : taskModel ? "task-env" : globalModel ? "global-env" : "default";
+  const modelSource: ImageEditRouteSource = input.model
+    ? "explicit"
+    : taskModel
+      ? "task-env"
+      : globalModelForRoute
+        ? "global-env"
+        : providerDefaultModelSource;
   const outputRatio = input.outputSettings?.outputRatio;
   const route = {
     task,
@@ -93,6 +119,24 @@ export function resolveImageEditRoute(
 
 export async function editImageWithRouter(input: ImageEditInput): Promise<ImageEditResult> {
   const route = resolveImageEditRoute(input);
+
+  if (route.provider === "gemini-image") {
+    const { editImageWithGemini } = await import("@/lib/ai/providers/gemini-image");
+    const result = await editImageWithGemini({
+      ...input,
+      model: route.model,
+    });
+
+    return {
+      ...result,
+      provider: route.provider,
+      model: route.model,
+      modelId: route.modelId,
+      providerSource: route.providerSource,
+      modelSource: route.modelSource,
+      outputRatio: route.outputRatio,
+    };
+  }
 
   if (route.provider !== "run-api") {
     throw new Error(`Unsupported image edit provider: ${route.provider}`);
