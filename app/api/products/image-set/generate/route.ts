@@ -131,6 +131,10 @@ function sanitizeAssetName(name: string) {
   return name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9._-]+/g, "-") || "product-image-set";
 }
 
+function isGeminiImageError(error: unknown) {
+  return error instanceof Error && error.message.startsWith("Gemini ");
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -297,6 +301,16 @@ export async function POST(request: Request) {
       warnings: warnings.length ? warnings : undefined,
     });
   } catch (error) {
+    if (isGeminiImageError(error)) {
+      return NextResponse.json(
+        {
+          error: "Gemini 图片模型生成失败，请切回默认模型或稍后重试。",
+          debug: process.env.NODE_ENV === "development" && error instanceof Error ? error.message : undefined,
+        },
+        { status: 500 },
+      );
+    }
+
     return jsonError(error, "Product image set image generation failed.");
   }
 }
