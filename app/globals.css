@@ -5249,6 +5249,81 @@ h3 {
   line-height: 1.25;
 }
 
+.product-image-set-structure-validation {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 14px;
+  padding: 9px 11px;
+  background: var(--workspace-surface);
+}
+
+.product-image-set-structure-validation.matched {
+  border-color: var(--selected-border);
+  background: var(--surface-hover);
+}
+
+.product-image-set-structure-validation.partial,
+.product-image-set-structure-validation.mismatched {
+  border-color: color-mix(in srgb, var(--warning) 70%, var(--workspace-border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--workspace-surface));
+}
+
+.product-image-set-structure-validation-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.product-image-set-structure-validation-main > div {
+  display: grid;
+  gap: 3px;
+  min-width: min(100%, 280px);
+}
+
+.product-image-set-structure-validation strong {
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.product-image-set-structure-validation span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.product-image-set-structure-validation .button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.product-image-set-structure-validation-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--workspace-border);
+  padding-top: 8px;
+}
+
+.product-image-set-structure-validation-items span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 4px 7px;
+  color: var(--text);
+  background: var(--surface);
+  font-weight: 850;
+}
+
+.product-image-set-structure-validation-items span.is-different {
+  border-color: color-mix(in srgb, var(--warning) 65%, var(--workspace-border));
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
 .product-image-set-batch-status {
   display: grid;
   gap: 4px;

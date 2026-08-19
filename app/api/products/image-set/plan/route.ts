@@ -1,5 +1,6 @@
 import { generateText } from "@/lib/ai/text-router";
 import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
+import { validateImageSetStructure } from "@/lib/ai/product-image-set-structure-validation";
 import {
   buildProductImageSetPlanPrompt,
   type ProductImageSetCustomStructure,
@@ -246,6 +247,11 @@ export async function POST(request: Request) {
     });
     const plan = normalizePlan(parseJsonResponse(response), purpose, count);
     const riskScan = scanProductContentRisk(JSON.stringify(plan));
+    const structureValidation = validateImageSetStructure({
+      customStructure,
+      images: plan.images,
+      structureMode,
+    });
 
     console.info("[product-risk-scan]", {
       source: "image-set-plan",
@@ -255,7 +261,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ...plan,
+      customStructure,
       riskScan,
+      structureMode,
+      structureValidation,
     });
   } catch (error) {
     return jsonError(error, "Product image set plan generation failed.");

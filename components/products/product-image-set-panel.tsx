@@ -12,7 +12,9 @@ import type {
   ProductImageSetSmartCount,
   ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
+import type { ImageSetStructureValidationResult } from "@/lib/ai/product-image-set-structure-validation";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
+import { formatProductOutputSettingsSummary } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
 import { useState } from "react";
 
@@ -42,7 +44,10 @@ type ProductRiskScan = {
 };
 
 type ProductImageSetPlanResponse = ProductImageSetPlan & {
+  customStructure?: ProductImageSetCustomStructure | null;
   riskScan?: ProductRiskScan;
+  structureMode?: ProductImageSetStructureMode;
+  structureValidation?: ImageSetStructureValidationResult;
 };
 
 const purposeOptions: Array<{ description: string; label: string; structure: string[]; value: ProductImageSetPurpose }> = [
@@ -137,6 +142,45 @@ function formatCustomStructure(structure: ProductImageSetCustomStructure | null)
     .join(" / ");
 }
 
+function ImageSetStructureValidationNotice({
+  structureValidation,
+}: {
+  structureValidation?: ImageSetStructureValidationResult | null;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!structureValidation || structureValidation.status === "not-needed") {
+    return null;
+  }
+
+  return (
+    <div className={`product-image-set-structure-validation ${structureValidation.status}`.trim()}>
+      <div className="product-image-set-structure-validation-main">
+        <div>
+          <strong>{structureValidation.summary}</strong>
+          <span>
+            期望 {structureValidation.totalExpected} 张 / 实际 {structureValidation.totalActual} 张。你可以继续生成，也可以重新生成套图规划。
+          </span>
+        </div>
+        {structureValidation.items.length ? (
+          <button className="button secondary" type="button" onClick={() => setIsOpen((current) => !current)}>
+            {isOpen ? "收起结构详情" : "查看结构详情"}
+          </button>
+        ) : null}
+      </div>
+      {isOpen && structureValidation.items.length ? (
+        <div className="product-image-set-structure-validation-items">
+          {structureValidation.items.map((item) => (
+            <span className={item.expected === item.actual ? "is-matched" : "is-different"} key={item.key}>
+              {item.label}：期望 {item.expected} / 实际 {item.actual}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ProductImageSetPanel({ analysisResult, generationBrief, outputSettings, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetSmartCount>(7);
   const [customStructure, setCustomStructure] = useState<ProductImageSetCustomStructure>(() => getDefaultCustomStructure(7));
@@ -149,9 +193,11 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
   const [isPlanning, setIsPlanning] = useState(false);
   const [plan, setPlan] = useState<ProductImageSetPlan | null>(null);
   const [plannedCustomStructure, setPlannedCustomStructure] = useState<ProductImageSetCustomStructure | null>(null);
+  const [plannedOutputSettings, setPlannedOutputSettings] = useState<ProductOutputSettings | null>(null);
   const [plannedStructureMode, setPlannedStructureMode] = useState<ProductImageSetStructureMode>("smart");
   const [purpose, setPurpose] = useState<ProductImageSetPurpose>("detail-page");
   const [riskScan, setRiskScan] = useState<ProductRiskScan | null>(null);
+  const [structureValidation, setStructureValidation] = useState<ImageSetStructureValidationResult | null>(null);
   const [structureMode, setStructureMode] = useState<ProductImageSetStructureMode>("smart");
   const customStructureTotal = getCustomStructureTotal(customStructure);
   const planCount = structureMode === "custom" ? customStructureTotal : count;
@@ -216,8 +262,10 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
     }
     setPlan(null);
     setPlannedCustomStructure(null);
+    setPlannedOutputSettings(null);
     setPlannedStructureMode(structureMode);
     setRiskScan(null);
+    setStructureValidation(null);
     setImageErrors({});
     setImageResults({});
     setBatchProgress({ completed: 0, failed: 0, total: 0 });
@@ -248,6 +296,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
 
     setError("");
     setRiskScan(null);
+    setStructureValidation(null);
     setIsPlanning(true);
 
     try {
@@ -279,8 +328,10 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
         purpose: data.purpose,
       });
       setPlannedCustomStructure(structureMode === "custom" ? customStructure : null);
+      setPlannedOutputSettings(outputSettings || null);
       setPlannedStructureMode(structureMode);
       setRiskScan(data.riskScan || null);
+      setStructureValidation(data.structureValidation || null);
       setImageErrors({});
       setImageResults({});
       setBatchProgress({ completed: 0, failed: 0, total: 0 });
@@ -569,6 +620,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
                   <span>用途：{getPurposeLabel(plan.purpose)}</span>
                   <span>模式：{plannedStructureMode === "custom" ? "自定义配置" : "智能匹配"}</span>
                   {plannedStructureMode === "custom" && plannedCustomStructure ? <span>{formatCustomStructure(plannedCustomStructure)}</span> : null}
+                  {plannedOutputSettings ? <span>发布目标：{formatProductOutputSettingsSummary(plannedOutputSettings)}</span> : null}
                   <span>
                     已生成：{generatedCount} / {plan.images.length}
                   </span>
@@ -609,6 +661,7 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
               </div>
             </div>
           ) : null}
+          <ImageSetStructureValidationNotice structureValidation={structureValidation} />
           {batchProgress.total ? (
             <div className={`product-image-set-batch-status ${batchProgress.failed ? "warning" : batchProgress.completed === batchProgress.total ? "complete" : ""}`.trim()} aria-live="polite">
               <strong>
