@@ -17,6 +17,33 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const WORKSPACE_PRODUCTS_PATH = "/dashboard/products";
+const PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY = "cloudai:products:last-analysis-history-id";
+
+function getStoredAnalysisHistoryId() {
+  try {
+    return sessionStorage.getItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY)?.trim() || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveStoredAnalysisHistoryId(analysisHistoryId: string) {
+  try {
+    sessionStorage.setItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY, analysisHistoryId);
+  } catch {
+    // Ignore storage errors so the detail page can still load from the URL.
+  }
+}
+
+function clearStoredAnalysisHistoryId(analysisHistoryId: string) {
+  try {
+    if (sessionStorage.getItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY)?.trim() === analysisHistoryId) {
+      sessionStorage.removeItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage errors so the user still sees the friendly error state.
+  }
+}
 
 function getObjectField(value: unknown, key: string) {
   if (!value || typeof value !== "object") {
@@ -101,6 +128,13 @@ function getAnalysisHistoryIdFromUrl() {
   }
 }
 
+function replaceDetailPageAnalysisUrl(analysisHistoryId: string) {
+  const url = new URL(window.location.href);
+
+  url.searchParams.set("analysis", analysisHistoryId);
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 function goToProductWorkspace(analysisHistoryId?: string) {
   const href = analysisHistoryId ? `${WORKSPACE_PRODUCTS_PATH}?analysis=${encodeURIComponent(analysisHistoryId)}` : WORKSPACE_PRODUCTS_PATH;
 
@@ -116,10 +150,26 @@ export function ProductDetailPageWorkspaceShell() {
   const [isLoading, setIsLoading] = useState(false);
   const [outputSettings, setOutputSettings] = useState<ProductOutputSettings>(DEFAULT_PRODUCT_OUTPUT_SETTINGS);
   const [refreshKey, setRefreshKey] = useState(0);
+  const restoredFromSessionRef = useRef(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setAnalysisHistoryId(getAnalysisHistoryIdFromUrl());
+    const urlAnalysisHistoryId = getAnalysisHistoryIdFromUrl();
+
+    if (urlAnalysisHistoryId) {
+      restoredFromSessionRef.current = false;
+      setAnalysisHistoryId(urlAnalysisHistoryId);
+    } else {
+      const storedAnalysisHistoryId = getStoredAnalysisHistoryId();
+
+      restoredFromSessionRef.current = Boolean(storedAnalysisHistoryId);
+
+      if (storedAnalysisHistoryId) {
+        replaceDetailPageAnalysisUrl(storedAnalysisHistoryId);
+      }
+
+      setAnalysisHistoryId(storedAnalysisHistoryId);
+    }
 
     return () => {
       if (toastTimerRef.current) {
@@ -161,6 +211,7 @@ export function ProductDetailPageWorkspaceShell() {
         setCreationCenterData(data);
         setGenerationBrief(sessionBrief || buildFallbackBriefFromAnalysis(data.analysis));
         setOutputSettings(sessionOutputSettings || historyOutputSettings || DEFAULT_PRODUCT_OUTPUT_SETTINGS);
+        saveStoredAnalysisHistoryId(data.product.analysisHistoryId);
       } catch (caughtError) {
         if (process.env.NODE_ENV === "development") {
           console.info("[product-detail-page-workspace] load failed", {
@@ -172,6 +223,10 @@ export function ProductDetailPageWorkspaceShell() {
         if (isMounted) {
           setCreationCenterData(null);
           setError("未找到商品分析记录");
+
+          if (restoredFromSessionRef.current && analysisHistoryId) {
+            clearStoredAnalysisHistoryId(analysisHistoryId);
+          }
         }
       } finally {
         if (isMounted) {
