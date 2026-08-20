@@ -1,6 +1,7 @@
 "use client";
 
 type ProductCreationProgressProps = {
+  analysisHistoryId?: string;
   copywritingCount: number;
   detailPageCount: number;
   imageEditCount: number;
@@ -16,6 +17,29 @@ type ProgressItem = {
   status: string;
   description: string;
 };
+
+function getProgressHref(analysisHistoryId: string | undefined, itemId: string) {
+  if (!analysisHistoryId || itemId === "analysis") {
+    return "";
+  }
+
+  const tabMap: Record<string, string> = {
+    assets: "assets",
+    copywriting: "copywriting",
+    export: "export",
+    images: "image",
+    "image-set": "image-set",
+  };
+  const tab = tabMap[itemId];
+
+  if (!tab) {
+    return "";
+  }
+
+  const params = new URLSearchParams({ analysis: analysisHistoryId, tab });
+
+  return `/dashboard/products?${params.toString()}`;
+}
 
 function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount }: ProductCreationProgressProps): ProgressItem[] {
   const generatedVisualCount = imageEditCount + imageSetCount + sceneImageCount + detailPageCount;
@@ -72,7 +96,14 @@ function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount,
   ];
 }
 
-export function ProductCreationProgress({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount }: ProductCreationProgressProps) {
+export function ProductCreationProgress({
+  analysisHistoryId,
+  copywritingCount,
+  detailPageCount,
+  imageEditCount,
+  imageSetCount,
+  sceneImageCount,
+}: ProductCreationProgressProps) {
   const progressItems = buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount });
   const completedCount = progressItems.filter((item) => item.done).length;
   const totalCount = progressItems.length;
@@ -90,18 +121,29 @@ export function ProductCreationProgress({ copywritingCount, detailPageCount, ima
       </div>
 
       <div className="product-creation-progress-list">
-        {progressItems.map((item, index) => (
-          <article className={item.done ? "done" : "pending"} key={item.id}>
-            <span aria-hidden="true">{item.done ? "✓" : index + 1}</span>
-            <div>
-              <div className="product-creation-progress-row">
-                <strong>{item.label}</strong>
-                <em>{item.status}</em>
+        {progressItems.map((item, index) => {
+          const href = getProgressHref(analysisHistoryId, item.id);
+
+          return (
+            <article className={item.done ? "done" : "pending"} key={item.id}>
+              <span aria-hidden="true">{item.done ? "✓" : index + 1}</span>
+              <div>
+                <div className="product-creation-progress-row">
+                  <strong>{item.label}</strong>
+                  <span>
+                    <em>{item.status}</em>
+                    {href ? (
+                      <a className="product-creation-progress-link" href={href}>
+                        查看
+                      </a>
+                    ) : null}
+                  </span>
+                </div>
+                <p>{item.description}</p>
               </div>
-              <p>{item.description}</p>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

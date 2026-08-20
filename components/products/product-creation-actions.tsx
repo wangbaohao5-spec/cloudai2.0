@@ -1,33 +1,49 @@
 "use client";
 
+type ProductCreationActionsProps = {
+  analysisHistoryId?: string;
+};
+
 const creationActions = [
   {
-    href: "#product-copywriting-panel",
+    tab: "copywriting",
     label: "生成商品文案",
-    description: "标题、卖点、详情和短视频口播",
+    description: "标题、卖点和商品描述",
   },
   {
-    href: "#product-image-edit-panel",
+    tab: "image",
     label: "优化商品原图",
-    description: "主图、详情图、种草图和广告视觉",
+    description: "生成更适合电商展示的商品图",
   },
   {
-    href: "#product-scene-image-panel",
-    label: "生成营销场景图",
-    description: "基于真实商品生成投放场景素材",
+    tab: "image-set",
+    label: "生成商品套图",
+    description: "规划并生成一组商品素材",
   },
 ];
 
-export function ProductCreationActions() {
+function getWorkspaceActionHref(analysisHistoryId: string | undefined, tab: string) {
+  const params = new URLSearchParams();
+
+  if (analysisHistoryId) {
+    params.set("analysis", analysisHistoryId);
+  }
+
+  params.set("tab", tab);
+
+  return `/dashboard/products?${params.toString()}`;
+}
+
+export function ProductCreationActions({ analysisHistoryId }: ProductCreationActionsProps) {
   return (
     <section className="product-creation-action-panel" aria-label="继续创作">
       <div className="product-creation-section-header">
         <strong>继续创作</strong>
-        <span>选择下一步，跳转到下方现有生成模块</span>
+        <span>选择下一步，继续完善当前商品内容</span>
       </div>
       <div className="product-creation-action-grid">
         {creationActions.map((action) => (
-          <a href={action.href} key={action.href}>
+          <a href={getWorkspaceActionHref(analysisHistoryId, action.tab)} key={action.tab}>
             <strong>{action.label}</strong>
             <span>{action.description}</span>
           </a>

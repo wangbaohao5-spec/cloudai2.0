@@ -79,6 +79,20 @@ function getWorkspaceStatus({
   };
 }
 
+function getWorkspaceTabHref(analysisHistoryId: string | undefined, tab: "assets" | "export" | "image-set") {
+  if (!analysisHistoryId) {
+    return "/dashboard/products";
+  }
+
+  const params = new URLSearchParams({ analysis: analysisHistoryId, tab });
+
+  return `/dashboard/products?${params.toString()}`;
+}
+
+function getDetailPageHref(analysisHistoryId?: string) {
+  return analysisHistoryId ? `/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}` : "/dashboard/detail-page";
+}
+
 export function ProductWorkspaceRail({
   creationCenterData,
   error,
@@ -95,6 +109,8 @@ export function ProductWorkspaceRail({
   const status = getWorkspaceStatus({ creationCenterData, result, uploadedAsset });
   const analyzeLabel = result ? "重新分析商品" : "分析商品";
   const isPrimaryActionLoading = isUploading || isAnalyzing || isRestoring;
+  const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
+  const generatedCount = getGeneratedCount(creationCenterData);
 
   return (
     <aside className="product-workspace-rail">
@@ -184,9 +200,33 @@ export function ProductWorkspaceRail({
         </div>
       </section>
 
+      {result ? (
+        <section className="product-workspace-rail-next" aria-label="下一步建议">
+          <div>
+            <strong>下一步建议</strong>
+            <span>{generatedCount ? `已生成 ${generatedCount} 项素材，可继续补充或导出。` : "建议先生成商品套图，再查看素材库并导出。"}</span>
+          </div>
+          <div className="product-workspace-rail-next-actions">
+            <a className="button primary" href={getWorkspaceTabHref(analysisHistoryId, "image-set")}>
+              生成套图
+            </a>
+            <a className="button secondary" href={getWorkspaceTabHref(analysisHistoryId, "assets")}>
+              查看素材库
+            </a>
+            <a className="button secondary" href={getWorkspaceTabHref(analysisHistoryId, "export")}>
+              导出
+            </a>
+          </div>
+          <a className="product-workspace-rail-detail-link" href={getDetailPageHref(analysisHistoryId)}>
+            需要详情页？前往详情页生成
+          </a>
+        </section>
+      ) : null}
+
       {creationCenterData ? (
         <div className="product-workspace-progress-wrap">
           <ProductCreationProgress
+            analysisHistoryId={creationCenterData.product.analysisHistoryId}
             copywritingCount={creationCenterData.copywriting.length}
             detailPageCount={creationCenterData.detailPages.length}
             imageEditCount={creationCenterData.imageEdits.length}
@@ -195,20 +235,6 @@ export function ProductWorkspaceRail({
           />
         </div>
       ) : null}
-
-      <details className="product-workspace-secondary-settings">
-        <summary>更多设置</summary>
-        <div className="product-workspace-future-feature" aria-disabled="true">
-          <div>
-            <strong>详情页生成</strong>
-            <span>后续独立工具</span>
-          </div>
-          <p>详情页生成将作为独立工具提供；已有详情页素材仍会在素材库和导出包中展示。</p>
-          <button disabled type="button">
-            即将提供
-          </button>
-        </div>
-      </details>
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>
         {isAnalyzing ? <AiThinkingLoading size="sm" /> : isPrimaryActionLoading ? <LoadingIndicator /> : null}

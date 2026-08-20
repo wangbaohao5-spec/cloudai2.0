@@ -37,6 +37,7 @@ type UploadedAsset = {
 type TabId = "analysis" | "assets" | "copywriting" | "export" | "imageSet" | "images";
 type RemovedTabId = "detail-page" | "detailPage" | "scene" | "scenes";
 type TabQueryValue = "analysis" | "assets" | "copywriting" | "export" | "image" | "image-set" | "imageSet" | "images";
+type WorkspaceTabQuery = "analysis" | "assets" | "copywriting" | "export" | "image" | "image-set";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "analysis", label: "分析" },
@@ -127,6 +128,50 @@ function getDetailPageHref(analysisHistoryId?: string) {
   return analysisHistoryId ? `/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}` : "/dashboard/detail-page";
 }
 
+function getWorkspaceTabQuery(tabId: TabId): WorkspaceTabQuery {
+  const tabMap: Record<TabId, WorkspaceTabQuery> = {
+    analysis: "analysis",
+    assets: "assets",
+    copywriting: "copywriting",
+    export: "export",
+    images: "image",
+    imageSet: "image-set",
+  };
+
+  return tabMap[tabId];
+}
+
+function replaceWorkspaceTabUrl(analysisHistoryId: string | undefined, tabId: TabId) {
+  const url = new URL(window.location.href);
+
+  if (analysisHistoryId) {
+    url.searchParams.set("analysis", analysisHistoryId);
+  }
+
+  url.searchParams.set("tab", getWorkspaceTabQuery(tabId));
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function ProductWorkspaceActionStrip({
+  actions,
+  description,
+  title,
+}: {
+  actions: ReactNode;
+  description: string;
+  title: string;
+}) {
+  return (
+    <section className="product-workspace-action-strip">
+      <div>
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      <div className="product-workspace-action-strip-actions">{actions}</div>
+    </section>
+  );
+}
+
 export function ProductWorkspaceTabs({
   creationCenterData,
   creationCenterError,
@@ -166,6 +211,7 @@ export function ProductWorkspaceTabs({
   const uploadEmptyAction = isUploading
     ? { disabled: true, label: "上传图片中...", onClick: scrollToUploadSection, tone: "primary" as const }
     : { label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
+  const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
 
   useEffect(() => {
     const nextTab = normalizeTabQuery(new URLSearchParams(window.location.search).get("tab"));
@@ -178,13 +224,17 @@ export function ProductWorkspaceTabs({
   }
 
   function switchTab(tabId: TabId | RemovedTabId) {
-    setActiveTab(normalizeTab(tabId));
+    const nextTab = normalizeTab(tabId);
+
+    setActiveTab(nextTab);
+    replaceWorkspaceTabUrl(analysisHistoryId, nextTab);
   }
 
   function switchTabAndFocus(tabId: TabId | RemovedTabId, panelId: string) {
     const nextTab = normalizeTab(tabId);
 
     setActiveTab(nextTab);
+    replaceWorkspaceTabUrl(analysisHistoryId, nextTab);
     scrollToPanel(nextTab === tabId ? panelId : `product-workspace-panel-${nextTab}`);
   }
 
@@ -254,10 +304,32 @@ export function ProductWorkspaceTabs({
           <>
             <ProductGenerationBriefEditor analysis={result.analysis} analysisHistoryId={result.historyId} onBriefChange={setGenerationBrief} />
             <ProductOutputSettingsEditor analysisHistoryId={result.historyId} onSettingsChange={setOutputSettings} />
+            {result.historyId ? (
+              <ProductWorkspaceActionStrip
+                title="下一步创作"
+                description="商品分析已完成。先确认生成要求和发布目标，再选择要生成的商品内容。"
+                actions={
+                  <>
+                    <button className="button secondary" type="button" onClick={() => switchTabAndFocus("copywriting", "product-copywriting-panel")}>
+                      生成商品文案
+                    </button>
+                    <button className="button secondary" type="button" onClick={() => switchTabAndFocus("images", "product-image-edit-panel")}>
+                      优化商品图片
+                    </button>
+                    <button className="button primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                      生成商品套图
+                    </button>
+                    <Link className="button secondary" href={getDetailPageHref(result.historyId)}>
+                      生成详情页
+                    </Link>
+                  </>
+                }
+              />
+            ) : null}
             <section className="product-detail-page-entry-card">
               <div>
-                <strong>需要详情页素材？</strong>
-                <p>基于当前商品生成详情页结构和详情页图片，生成后会回到素材库和导出包中汇总。</p>
+                <strong>详情页生成已独立</strong>
+                <p>详情页素材会在独立页面生成，完成后仍会回到当前商品的素材库和导出包中汇总。</p>
               </div>
               {result.historyId ? (
                 <Link className="button secondary" href={getDetailPageHref(result.historyId)}>
@@ -289,6 +361,41 @@ export function ProductWorkspaceTabs({
         >
           {(data) => (
             <>
+              <ProductWorkspaceActionStrip
+                title={generatedAssetCount ? "商品素材已准备" : "暂无生成素材"}
+                description={
+                  generatedAssetCount
+                    ? "你可以下载单张图片，或导出完整商品素材包。"
+                    : "你可以先生成商品文案、优化商品图片，或生成商品套图。"
+                }
+                actions={
+                  generatedAssetCount ? (
+                    <>
+                      <button className="button primary" type="button" onClick={() => switchTab("export")}>
+                        导出素材包
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                        继续生成套图
+                      </button>
+                      <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
+                        生成详情页
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <button className="button primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                        去生成套图
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => switchTabAndFocus("images", "product-image-edit-panel")}>
+                        去图片优化
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => switchTabAndFocus("copywriting", "product-copywriting-panel")}>
+                        去文案生成
+                      </button>
+                    </>
+                  )
+                }
+              />
               {!generatedAssetCount ? (
                 <ProductWorkspaceEmptyState
                   eyebrow="素材汇总"
@@ -296,13 +403,9 @@ export function ProductWorkspaceTabs({
                   title={hasOriginalAsset ? "素材会自动汇总到这里" : "还没有素材"}
                   description={
                     hasOriginalAsset
-                      ? "生成的优化图、历史场景图、历史详情页图和商品套图都会自动进入素材库，方便预览和下载。可先前往「套图」Tab 生成一套商品素材。"
+                      ? "生成的优化图、历史场景图、历史详情页图和商品套图都会自动进入素材库，方便预览和下载。"
                       : "生成文案、图片或套图后，素材会汇总在这里。"
                   }
-                  actions={[
-                    { label: "前往套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet"), tone: "primary" },
-                    { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
-                  ]}
                 />
               ) : null}
               <ProductAssetGallery
@@ -404,24 +507,62 @@ export function ProductWorkspaceTabs({
           isCreationCenterLoading={isCreationCenterLoading}
           onTabChange={switchTab}
         >
-          {(data) =>
-            isExportReady ? (
-              <ProductContentPackage data={data} />
-            ) : (
-              <ProductWorkspaceEmptyState
-                eyebrow="导出准备"
-                marker="MD"
-                title="生成内容会整理成素材包"
-                description="当文案、图片和套图生成后，可在这里复制或下载商品素材包 Markdown。建议先完成文案和至少一组视觉素材。"
-                checklist={exportChecklist}
-                actions={[
-                  { label: "前往文案", onClick: () => switchTab("copywriting"), tone: "primary" },
-                  { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
-                  { label: "前往套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet") },
-                ]}
-              />
-            )
-          }
+          {(data) => {
+            const hasCorePackage = copywritingCount > 0 && imageSetCount > 0;
+
+            return (
+              <>
+                <ProductWorkspaceActionStrip
+                  title={hasCorePackage ? "素材包可导出" : "素材还不完整"}
+                  description={
+                    hasCorePackage
+                      ? "当前商品已包含文案和套图素材，可复制或下载 Markdown 素材包。"
+                      : "你可以先生成商品套图或详情页素材，再导出更完整的商品包。"
+                  }
+                  actions={
+                    hasCorePackage ? (
+                      <>
+                        <button className="button secondary" type="button" onClick={() => switchTab("assets")}>
+                          查看素材库
+                        </button>
+                        <button className="button secondary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                          继续生成套图
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="button primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                          去生成套图
+                        </button>
+                        <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
+                          去详情页生成
+                        </Link>
+                        <button className="button secondary" type="button" onClick={() => switchTab("assets")}>
+                          查看素材库
+                        </button>
+                      </>
+                    )
+                  }
+                />
+                {isExportReady ? (
+                  <ProductContentPackage data={data} />
+                ) : (
+                  <ProductWorkspaceEmptyState
+                    eyebrow="导出准备"
+                    marker="MD"
+                    title="生成内容会整理成素材包"
+                    description="当文案、图片和套图生成后，可在这里复制或下载商品素材包 Markdown。建议先完成文案和至少一组视觉素材。"
+                    checklist={exportChecklist}
+                    actions={[
+                      { label: "前往文案", onClick: () => switchTab("copywriting"), tone: "primary" },
+                      { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
+                      { label: "前往套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet") },
+                    ]}
+                  />
+                )}
+              </>
+            );
+          }}
         </CreationCenterState>
       </div>
     </section>

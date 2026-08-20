@@ -1857,6 +1857,7 @@ h3 {
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-workflow-mini-steps,
+.product-workspace-rail .product-workspace-rail-next,
 .product-workspace-rail .product-workspace-future-feature,
 .product-workspace-rail .product-creation-summary {
   border: 1px solid var(--card-border);
@@ -1880,6 +1881,7 @@ h3 {
 .product-workspace-rail .product-workspace-pending-summary:hover,
 .product-workspace-rail .product-workspace-status:hover,
 .product-workspace-rail .product-workflow-mini-steps:hover,
+.product-workspace-rail .product-workspace-rail-next:hover,
 .product-workspace-rail .product-workspace-future-feature:hover,
 .product-workspace-rail .product-creation-summary:hover {
   border-color: var(--selected-border);
@@ -1897,6 +1899,7 @@ h3 {
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-workflow-mini-steps,
+.product-workspace-rail .product-workspace-rail-next,
 .product-workspace-rail .product-workspace-future-feature,
 .product-workspace-rail .product-creation-summary {
   border-radius: 22px;
@@ -2018,6 +2021,49 @@ h3 {
   color: var(--muted);
   background: color-mix(in srgb, var(--surface) 76%, transparent);
   font-size: 0.72rem;
+}
+
+.product-workspace-rail-next {
+  display: grid;
+  gap: 10px;
+}
+
+.product-workspace-rail-next > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.product-workspace-rail-next strong {
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.product-workspace-rail-next span,
+.product-workspace-rail-detail-link {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.product-workspace-rail-next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.product-workspace-rail-next-actions .button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.product-workspace-rail-detail-link {
+  justify-self: start;
+  text-decoration: none;
+}
+
+.product-workspace-rail-detail-link:hover {
+  color: var(--text);
 }
 
 .dashboard-quick-start {
@@ -4240,6 +4286,49 @@ h3 {
   gap: 18px;
 }
 
+.product-workspace-action-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--workspace-surface) 86%, transparent);
+}
+
+.product-workspace-action-strip > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.product-workspace-action-strip strong {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.product-workspace-action-strip p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.product-workspace-action-strip-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.product-workspace-action-strip-actions .button {
+  min-height: 36px;
+  padding: 8px 11px;
+  font-size: 0.82rem;
+}
+
 .product-detail-page-entry-card {
   display: flex;
   align-items: center;
@@ -5946,6 +6035,13 @@ h3 {
   gap: 10px;
 }
 
+.product-creation-progress-row > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
 .product-creation-progress-row em {
   flex: 0 0 auto;
   border: 1px solid var(--workspace-border);
@@ -5956,6 +6052,24 @@ h3 {
   font-size: 0.74rem;
   font-style: normal;
   font-weight: 900;
+}
+
+.product-creation-progress-link {
+  flex: 0 0 auto;
+  border: 1px solid var(--workspace-border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.product-creation-progress-link:hover {
+  border-color: var(--selected-border);
+  color: var(--text);
+  background: var(--surface-hover);
 }
 
 .product-creation-progress-list article.done .product-creation-progress-row em {
@@ -8907,6 +9021,19 @@ h3 {
   }
 
   .product-workspace-empty-actions .button {
+    width: 100%;
+  }
+
+  .product-workspace-action-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .product-workspace-action-strip-actions {
+    flex-direction: column;
+  }
+
+  .product-workspace-action-strip-actions .button {
     width: 100%;
   }
 
