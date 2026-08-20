@@ -202,10 +202,10 @@ export function ProductWorkspaceTabs({
     export: creationCenterData ? 1 : 0,
   };
   const exportChecklist = [
-    { label: "分析", done: Boolean(creationCenterData) },
-    { label: "文案", done: copywritingCount > 0 },
-    { label: "图片", done: imageEditCount > 0 },
-    { label: "套图", done: imageSetCount > 0 },
+    { label: "商品策划", done: Boolean(creationCenterData) },
+    { label: "上架文案", done: copywritingCount > 0 },
+    { label: "原图优化", done: imageEditCount > 0 },
+    { label: "商品套图", done: imageSetCount > 0 },
   ];
   const isExportReady = Boolean(creationCenterData) && (copywritingCount > 0 || generatedAssetCount > 0);
   const uploadEmptyAction = isUploading
@@ -281,7 +281,7 @@ export function ProductWorkspaceTabs({
             checklist={[
               { label: "上传清晰商品图", done: false },
               { label: "补充卖点或必须保留的细节", done: false },
-              { label: "生成套图和素材包", done: false },
+              { label: "生成商品套图和素材包", done: false },
             ]}
             actions={[uploadEmptyAction]}
           />
@@ -366,7 +366,7 @@ export function ProductWorkspaceTabs({
                 description={
                   generatedAssetCount
                     ? "你可以下载单张图片，或导出完整商品素材包。"
-                    : "你可以先生成商品文案、优化商品图片，或生成商品套图。"
+                    : "你可以先生成上架文案、原图优化，或生成商品套图。"
                 }
                 actions={
                   generatedAssetCount ? (

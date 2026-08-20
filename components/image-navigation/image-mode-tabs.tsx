@@ -17,6 +17,14 @@ const imageModeTabs = [
 export function ImageModeTabs() {
   const pathname = usePathname();
 
+  if (pathname === "/dashboard/image-edit") {
+    return (
+      <div className="image-mode-tabs image-mode-tabs-current">
+        <span>商品图精修</span>
+      </div>
+    );
+  }
+
   return (
     <div className="image-mode-tabs">
       {imageModeTabs.map((tab) => (

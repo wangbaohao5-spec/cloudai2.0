@@ -6,8 +6,8 @@ type TodayGeneratedSummaryProps = {
 
 const statItems = [
   { key: "productAnalysis", label: "商品分析" },
-  { key: "copywriting", label: "文案" },
-  { key: "image", label: "图片" },
+  { key: "copywriting", label: "上架文案" },
+  { key: "image", label: "商品图" },
   { key: "imageEnhance", label: "商品图精修" },
   { key: "sceneImage", label: "场景图" },
   { key: "video", label: "视频工坊" },

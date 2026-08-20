@@ -21,7 +21,7 @@ export function ContinueProductCard({ product }: ContinueProductCardProps) {
         <div className="dashboard-home-empty">
           <p className="eyebrow">继续创作</p>
           <h2>还没有商品项目</h2>
-          <p>上传一张商品图，CloudAI 会从分析、文案、图片到场景图帮你搭好商品创作工作台。</p>
+          <p>上传一张商品图，CloudAI 会从商品策划、上架文案、原图优化到商品套图和素材包帮你搭好商品创作工作台。</p>
           <Link className="button primary" href="/dashboard/products">
             进入商品工作台
           </Link>

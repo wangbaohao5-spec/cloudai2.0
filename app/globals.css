@@ -3375,6 +3375,15 @@ h3 {
   background: var(--primary-gradient);
 }
 
+.image-mode-tabs-current span {
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 10px 16px;
+  color: var(--text);
+  background: var(--surface);
+  font-weight: 900;
+}
+
 .legacy-image-tool-notice {
   display: flex;
   align-items: center;

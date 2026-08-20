@@ -540,7 +540,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
       </div>
 
       <div className="product-content-package-summary" aria-label="商品素材包内容概览">
-        <span>文案 {copywritingCount}</span>
+        <span>上架文案 {copywritingCount}</span>
         <span>图片素材 {imageCount}</span>
         <span>{outputSettings ? formatProductOutputSettingsSummary(outputSettings) : "发布目标未记录"}</span>
         <span>Markdown</span>

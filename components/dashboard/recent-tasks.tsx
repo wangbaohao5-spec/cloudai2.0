@@ -11,19 +11,19 @@ type RecentTasksProps = {
 
 const taskFilters: Array<{ label: string; value: RecentTaskFilter }> = [
   { label: "全部", value: "all" },
-  { label: "文案", value: "copywriting" },
-  { label: "图片", value: "image" },
-  { label: "视频", value: "video" },
-  { label: "聊天", value: "chat" },
+  { label: "上架文案", value: "copywriting" },
+  { label: "商品图", value: "image" },
+  { label: "视频工坊", value: "video" },
+  { label: "创作助手", value: "chat" },
   { label: "商品分析", value: "product-analysis" },
 ];
 
 const taskTypeLabels: Record<HistoryRecord["type"], string> = {
-  copywriting: "文案",
-  chat: "聊天",
-  image: "图片",
-  "image-enhance": "图片",
-  video: "视频",
+  copywriting: "上架文案",
+  chat: "创作助手",
+  image: "商品图",
+  "image-enhance": "商品图精修",
+  video: "视频工坊",
   "product-analysis": "商品分析",
 };
 
@@ -99,7 +99,7 @@ export function RecentTasks({ records }: RecentTasksProps) {
         </div>
       ) : (
         <div className="history-empty-state">
-          <p>{records.length ? "当前分类下暂无记录。" : "暂无生成历史。完成一次 AI 生成或商品分析后，这里会显示最新记录。"}</p>
+          <p>{records.length ? "当前分类下暂无记录。" : "暂无生成历史。完成一次商品内容任务或商品分析后，这里会显示最新记录。"}</p>
         </div>
       )}
     </section>

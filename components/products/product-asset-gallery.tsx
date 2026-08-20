@@ -399,7 +399,7 @@ export function ProductAssetGallery({ analysisHistoryId, detailPages, imageEdits
         <AssetGroup
           assets={imageEditAssets}
           description="用于保留商品主体的基础美化与电商展示。"
-          emptyText="暂无优化图，可前往「图片」Tab 生成。"
+          emptyText="暂无优化图，可前往「原图优化」生成。"
           onPreview={setSelectedImage}
           title="优化图"
         />
@@ -426,7 +426,7 @@ export function ProductAssetGallery({ analysisHistoryId, detailPages, imageEdits
           notice={
             imageSetAssets.length
               ? [
-                  "套图已生成，可单张预览或下载。后续可在「导出」Tab 汇总为商品素材包。",
+                  "套图已生成，可单张预览或下载。后续可在「素材包」中汇总为商品素材包。",
                   imageSetDeliveryInfo
                     ? `套图信息：用途：${imageSetDeliveryInfo.purpose}；模式：${imageSetDeliveryInfo.structureMode}${
                         imageSetDeliveryInfo.customStructure ? `；结构：${imageSetDeliveryInfo.customStructure}` : ""

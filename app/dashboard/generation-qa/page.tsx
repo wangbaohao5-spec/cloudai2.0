@@ -97,7 +97,7 @@ const qaScenarios: QaScenario[] = [
     scene: "详情页规划",
     input: "任意商品生成详情页规划。",
     expected: "详情页卖点不能编造检测报告、专利技术、认证、医疗功效。",
-    checkPoint: "详情页 Tab / 风险提示",
+    checkPoint: "详情页制作页 / 风险提示",
   },
   {
     scene: "风险词扫描",
