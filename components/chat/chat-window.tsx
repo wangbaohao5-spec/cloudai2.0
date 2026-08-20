@@ -64,8 +64,8 @@ export function ChatWindow() {
     <section className="chat-window glass-card">
       <div className="chat-window-header">
         <div>
-          <p className="eyebrow">AI Chat Assistant</p>
-          <h2>AI 电商助手</h2>
+          <p className="eyebrow">Creative Assistant</p>
+          <h2>创作助手</h2>
         </div>
         <span className="chat-status">DeepSeek</span>
       </div>

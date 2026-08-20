@@ -10,11 +10,11 @@ type HistoryFilter = "all" | HistoryRecord["type"];
 
 const historyFilters: Array<{ label: string; value: HistoryFilter }> = [
   { label: "全部", value: "all" },
-  { label: "文案", value: "copywriting" },
-  { label: "聊天", value: "chat" },
-  { label: "图片", value: "image" },
-  { label: "图片优化", value: "image-enhance" },
-  { label: "视频", value: "video" },
+  { label: "上架文案", value: "copywriting" },
+  { label: "创作助手", value: "chat" },
+  { label: "商品图", value: "image" },
+  { label: "商品图精修", value: "image-enhance" },
+  { label: "视频工坊", value: "video" },
   { label: "商品分析", value: "product-analysis" },
 ];
 
@@ -112,7 +112,7 @@ export function HistoryList() {
         <div>
           <p className="eyebrow">History Center</p>
           <h2>历史中心</h2>
-          <p>统一查看文案、聊天、图片、图片优化、视频和商品分析记录。媒体文件会通过云端资产生成临时访问链接。</p>
+          <p>统一查看上架文案、创作助手、商品图、商品图精修、视频工坊和商品分析记录。媒体文件会通过云端资产生成临时访问链接。</p>
         </div>
         <button className="history-clear-button" disabled={!records.length || isLoading} type="button" onClick={() => void handleClear()}>
           清空记录
@@ -165,7 +165,7 @@ export function HistoryList() {
         <EmptyState
           icon={records.length ? "🔎" : "🗂"}
           title={records.length ? "当前筛选下没有记录" : "还没有历史记录"}
-          description={records.length ? "换一个类型筛选，或者继续生成新的商品素材。" : "完成一次商品分析、文案生成或图片生成后，记录会自动保存到这里。"}
+          description={records.length ? "换一个类型筛选，或者继续制作新的商品素材。" : "完成一次商品分析、上架文案或商品图任务后，记录会自动保存到这里。"}
           actionHref="/dashboard/products"
           actionLabel="进入商品工作台"
         />

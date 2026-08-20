@@ -296,7 +296,7 @@ export function ProductDetailPageWorkspaceShell() {
     return (
       <main className="dashboard-content">
         <section className="product-detail-page-workspace">
-          <ProductWorkspaceEmptyState eyebrow="正在加载" marker="..." title="正在加载详情页生成上下文" description="CloudAI 正在读取当前商品分析记录，请稍等片刻。" />
+          <ProductWorkspaceEmptyState eyebrow="正在加载" marker="..." title="正在加载详情页制作上下文" description="CloudAI 正在读取当前商品分析记录，请稍等片刻。" />
         </section>
       </main>
     );
@@ -307,10 +307,10 @@ export function ProductDetailPageWorkspaceShell() {
       <main className="dashboard-content">
         <section className="product-detail-page-workspace">
           <ProductWorkspaceEmptyState
-            eyebrow="详情页生成"
+            eyebrow="详情页制作"
             marker="DTP"
-            title="请选择一个商品后生成详情页"
-            description="详情页生成需要先完成商品分析。请先在商品工作台上传商品图并完成分析，再进入详情页生成。"
+            title="请选择一个商品后制作详情页"
+            description="详情页制作需要先完成商品分析。请先在商品工作台上传商品图并完成分析，再进入详情页制作。"
             actions={[{ label: "前往商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
           />
         </section>
@@ -348,8 +348,8 @@ export function ProductDetailPageWorkspaceShell() {
         <section className="product-detail-page-hero glass-card">
           <div>
             <p className="eyebrow">Detail Page</p>
-            <h1>详情页生成</h1>
-            <p>基于已分析商品生成详情页结构和详情页图片素材。</p>
+            <h1>详情页制作</h1>
+            <p>基于已分析商品规划详情页结构，并生成详情页图片素材。</p>
           </div>
           <div className="product-detail-page-hero-actions">
             <Link className="button secondary" href={workspaceHref}>

@@ -7,12 +7,12 @@ type ProductCreationActionsProps = {
 const creationActions = [
   {
     tab: "copywriting",
-    label: "生成商品文案",
+    label: "生成上架文案",
     description: "标题、卖点和商品描述",
   },
   {
     tab: "image",
-    label: "优化商品原图",
+    label: "精修商品原图",
     description: "生成更适合电商展示的商品图",
   },
   {
@@ -39,7 +39,7 @@ export function ProductCreationActions({ analysisHistoryId }: ProductCreationAct
     <section className="product-creation-action-panel" aria-label="继续创作">
       <div className="product-creation-section-header">
         <strong>继续创作</strong>
-        <span>选择下一步，继续完善当前商品内容</span>
+        <span>选择下一步，继续完善当前商品内容资产</span>
       </div>
       <div className="product-creation-action-grid">
         {creationActions.map((action) => (

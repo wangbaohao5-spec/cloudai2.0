@@ -29,7 +29,7 @@ const capabilities = [
     description: "把商品分析转成可编辑的生成任务书，减少无效 prompt。",
   },
   {
-    title: "详情页生成",
+    title: "详情页制作",
     description: "规划并生成适合商品详情页的卖点图、细节图和购买理由图。",
   },
   {

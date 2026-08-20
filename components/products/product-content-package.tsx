@@ -473,7 +473,7 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     "## 图片素材",
     buildImageAssetMarkdown("原商品图", originalAssets),
     "",
-    buildImageAssetMarkdown("商品原图优化", imageEditAssets),
+    buildImageAssetMarkdown("商品图精修", imageEditAssets),
     "",
     buildImageAssetMarkdown("营销场景图", sceneImageAssets),
     buildDetailPageMarkdown(data.detailPages),
@@ -550,10 +550,10 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
         <div className="product-content-package-detail-hint">
           <div>
             <strong>暂未生成详情页素材</strong>
-            <p>需要详情页图片时，可前往详情页生成；这里的复制和下载内容不会受影响。</p>
+            <p>需要详情页图片时，可前往详情页制作；这里的复制和下载内容不会受影响。</p>
           </div>
           <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
-            前往详情页生成
+            前往详情页制作
           </Link>
         </div>
       ) : null}

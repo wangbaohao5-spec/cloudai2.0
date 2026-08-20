@@ -19,11 +19,11 @@ export const dashboardNavSections: DashboardNavSection[] = [
   {
     label: "AI 工具",
     items: [
-      { label: "文案生成", href: "/dashboard/copywriting" },
-      { label: "详情页生成", href: "/dashboard/detail-page" },
-      { label: "图片优化", href: "/dashboard/image-edit" },
-      { label: "视频生成", href: "/dashboard/video" },
-      { label: "AI 助手", href: "/dashboard/chat" },
+      { label: "上架文案", href: "/dashboard/copywriting" },
+      { label: "详情页制作", href: "/dashboard/detail-page" },
+      { label: "商品图精修", href: "/dashboard/image-edit" },
+      { label: "视频工坊", href: "/dashboard/video" },
+      { label: "创作助手", href: "/dashboard/chat" },
     ],
   },
   {

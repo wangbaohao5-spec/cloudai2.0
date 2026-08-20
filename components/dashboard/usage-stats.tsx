@@ -5,11 +5,11 @@ type UsageStatsProps = {
 };
 
 const usageTypeLabels = [
-  { label: "AI 助手", value: "chat" },
-  { label: "文案生成", value: "copywriting" },
-  { label: "图片生成", value: "image" },
-  { label: "图片优化", value: "image-enhance" },
-  { label: "视频生成", value: "video" },
+  { label: "创作助手", value: "chat" },
+  { label: "上架文案", value: "copywriting" },
+  { label: "商品图", value: "image" },
+  { label: "商品图精修", value: "image-enhance" },
+  { label: "视频工坊", value: "video" },
   { label: "商品分析", value: "product-analysis" },
 ] as const;
 

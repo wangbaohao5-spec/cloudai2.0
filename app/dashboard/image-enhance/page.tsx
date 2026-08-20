@@ -31,13 +31,13 @@ export default function ImageEnhancePage() {
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorData?.error || "图片优化请求失败，请稍后再试。");
+        throw new Error(errorData?.error || "商品图精修请求失败，请稍后再试。");
       }
 
       const nextResult = (await response.json()) as ImageEnhanceResult;
       setResult(nextResult);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "图片优化失败，请稍后再试。");
+      setError(caughtError instanceof Error ? caughtError.message : "商品图精修失败，请稍后再试。");
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +49,7 @@ export default function ImageEnhancePage() {
       <section className="image-enhance-shell">
         <div className="image-enhance-panel glass-card">
           <p className="eyebrow">Image Enhance</p>
-          <h2>商品图智能优化</h2>
+          <h2>商品图精修实验</h2>
           <p className="image-generation-intro">上传商品图，填写平台、用途和风格，第一阶段先生成 mock 优化任务。</p>
           <ImageUpload
             fileName={fileName}

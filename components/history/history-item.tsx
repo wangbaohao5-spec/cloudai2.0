@@ -17,7 +17,7 @@ const historyTypeLabels: Record<HistoryRecord["type"], string> = {
   copywriting: "文案",
   chat: "聊天",
   image: "图片",
-  "image-enhance": "图片优化",
+  "image-enhance": "商品图精修",
   video: "视频",
   "product-analysis": "商品分析",
 };

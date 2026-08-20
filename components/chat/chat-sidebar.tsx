@@ -16,7 +16,7 @@ export function ChatSidebar() {
   return (
     <aside className="chat-sidebar glass-card">
       <p className="eyebrow">Assistant Mode</p>
-      <h2>电商助手</h2>
+      <h2>创作助手</h2>
       <div className="chat-sidebar-section">
         <strong>可协助任务</strong>
         <div className="chat-scope-list">

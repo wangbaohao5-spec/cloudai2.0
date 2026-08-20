@@ -56,7 +56,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
     const nextPrompt = prompt.trim();
 
     if (!nextPrompt) {
-      const message = "请输入商品图片优化 Prompt。";
+      const message = "请输入商品图精修 Prompt。";
       setError(message);
       showFeedback(message, "error");
       return;
@@ -82,7 +82,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorData?.error || "商品图片优化失败，请稍后再试。");
+        throw new Error(errorData?.error || "商品图精修失败，请稍后再试。");
       }
 
       const data = (await response.json()) as ProductImageEditResult;
@@ -91,10 +91,10 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
 
       if (!data.warnings?.length) {
         onGenerated?.();
-        showFeedback("图片优化完成");
+        showFeedback("商品图精修完成");
       }
     } catch (caughtError) {
-      const message = caughtError instanceof Error ? caughtError.message : "商品图片优化失败，请稍后再试。";
+      const message = caughtError instanceof Error ? caughtError.message : "商品图精修失败，请稍后再试。";
       setError(message);
       showFeedback(message, "error");
     } finally {
@@ -106,7 +106,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
     return (
       <section className="product-scene-image-panel glass-card" id="product-image-edit-panel">
         <p className="eyebrow">Image Workflow</p>
-        <h2>AI 商品原图优化</h2>
+        <h2>商品图精修</h2>
         <p className="image-generation-intro">完成商品图片分析后，可以基于上传的原商品图生成主图、详情图、种草图或广告视觉图。</p>
       </section>
     );
@@ -118,7 +118,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Image Workflow</p>
-          <h2>AI 商品原图优化</h2>
+          <h2>商品图精修</h2>
           <p className="image-generation-intro">基于当前上传的原商品图进行 AI 编辑优化，尽量保持商品主体、颜色和结构一致。</p>
         </div>
         <span>已连接原图 Asset</span>
@@ -162,9 +162,9 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
       {result ? (
         <div className="product-scene-image-result">
           <div className="product-scene-image-preview">
-            <button className="product-image-preview-button" type="button" aria-label="放大查看商品原图优化结果" onClick={() => setLightboxImageUrl(result.imageUrl)}>
+            <button className="product-image-preview-button" type="button" aria-label="放大查看商品图精修结果" onClick={() => setLightboxImageUrl(result.imageUrl)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt="商品原图优化结果" src={result.imageUrl} />
+              <img alt="商品图精修结果" src={result.imageUrl} />
             </button>
           </div>
           <div className="product-preview-actions">
@@ -184,7 +184,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
       ) : null}
 
       {lightboxImageUrl ? (
-        <ImageLightbox alt="商品原图优化结果" imageUrl={lightboxImageUrl} title="商品原图优化结果" onClose={() => setLightboxImageUrl("")} />
+        <ImageLightbox alt="商品图精修结果" imageUrl={lightboxImageUrl} title="商品图精修结果" onClose={() => setLightboxImageUrl("")} />
       ) : null}
     </section>
   );

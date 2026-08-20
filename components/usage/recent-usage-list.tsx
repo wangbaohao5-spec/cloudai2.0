@@ -41,7 +41,7 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
         <EmptyState
           icon="📊"
           title="还没有额度记录"
-          description="完成一次商品分析、文案生成或图片生成后，这里会显示最近使用记录。"
+          description="完成一次商品分析、上架文案或商品图任务后，这里会显示最近使用记录。"
           actionHref="/dashboard/products"
           actionLabel="开始创作商品"
         />

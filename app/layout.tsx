@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "CloudAI - AI 电商商品创作工作台",
   description:
-    "CloudAI 是面向电商创作者的 AI 商品内容工作台，支持商品分析、营销文案、图片优化、场景图生成和商品素材包整理。",
+    "CloudAI 是面向电商创作者的商品内容创作工作台，支持商品策划、上架文案、商品图精修、商品套图和素材包整理。",
 };
 
 export default function RootLayout({

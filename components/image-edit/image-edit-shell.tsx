@@ -25,7 +25,7 @@ export function ImageEditShell() {
     }
 
     if (!data.prompt) {
-      setError("请输入商品图片优化 Prompt。");
+      setError("请输入商品图精修 Prompt。");
       return;
     }
 
@@ -72,9 +72,9 @@ export function ImageEditShell() {
       <ImageModeTabs />
       <section className="image-edit-shell">
         <div className="image-edit-panel glass-card">
-          <p className="eyebrow">Product Image Edit</p>
-          <h2>商品原图优化</h2>
-          <p className="image-generation-intro">上传商品图，选择优化目标，CloudAI 会生成可编辑 Prompt 并使用 GPT-image-2 优化图片。</p>
+          <p className="eyebrow">Product Image Studio</p>
+          <h2>商品图精修</h2>
+          <p className="image-generation-intro">优化商品原图的背景、光线、质感和展示效果，保持商品主体保真。</p>
           <ImageEditForm
             disabled={isLoading}
             error={error}

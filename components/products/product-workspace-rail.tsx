@@ -69,13 +69,13 @@ function getWorkspaceStatus({
   if (generatedCount > 0) {
     return {
       label: "已生成素材",
-      description: `当前商品已有 ${generatedCount} 个文案或视觉素材，可继续补充并导出素材包。`,
+      description: `当前商品已有 ${generatedCount} 个上架文案或视觉素材，可继续补充并导出素材包。`,
     };
   }
 
   return {
     label: "已分析",
-    description: "商品分析已完成，可以继续生成文案、图片优化和商品套图。",
+    description: "商品分析已完成，可以继续生成上架文案、原图优化和商品套图。",
   };
 }
 
@@ -218,7 +218,7 @@ export function ProductWorkspaceRail({
             </a>
           </div>
           <a className="product-workspace-rail-detail-link" href={getDetailPageHref(analysisHistoryId)}>
-            需要详情页？前往详情页生成
+            需要详情页？前往详情页制作
           </a>
         </section>
       ) : null}
@@ -241,7 +241,7 @@ export function ProductWorkspaceRail({
         {isUploading ? "正在上传..." : isAnalyzing ? "正在分析..." : isRestoring ? "正在恢复..." : analyzeLabel}
       </button>
 
-      <p className="image-generation-helper">发布目标可在右侧分析 Tab 中统一设置，后续生成任务会继承该设置。</p>
+      <p className="image-generation-helper">发布目标可在右侧「商品策划」中统一设置，后续生成任务会继承该设置。</p>
       {error ? <p className="image-generation-error">{error}</p> : null}
     </aside>
   );

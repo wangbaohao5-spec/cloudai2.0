@@ -101,17 +101,17 @@ export function ProductDetailPagePlanPreview({
                   <button
                     className="product-image-preview-button"
                     type="button"
-                    aria-label={`放大查看第 ${page.pageIndex} 张详情页生成结果`}
+                    aria-label={`放大查看第 ${page.pageIndex} 张详情页制作结果`}
                     onClick={() =>
                       setLightboxImage({
-                        alt: `第 ${page.pageIndex} 张详情页生成结果`,
+                        alt: `第 ${page.pageIndex} 张详情页制作结果`,
                         title: `第 ${page.pageIndex} 张详情页 · ${page.sectionTitle}`,
                         url: result.imageUrl,
                       })
                     }
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img alt={`第 ${page.pageIndex} 张详情页生成结果`} decoding="async" loading="lazy" src={result.imageUrl} />
+                    <img alt={`第 ${page.pageIndex} 张详情页制作结果`} decoding="async" loading="lazy" src={result.imageUrl} />
                   </button>
                 </div>
                 <span>已生成详情页图片，点击图片查看大图</span>

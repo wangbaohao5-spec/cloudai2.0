@@ -329,7 +329,7 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
 
       if (!data.warnings?.length) {
         onGenerated?.();
-        showFeedback("文案生成完成");
+        showFeedback("上架文案已完成");
       }
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "基于商品分析生成文案失败，请稍后再试。";

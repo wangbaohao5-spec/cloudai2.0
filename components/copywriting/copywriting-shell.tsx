@@ -24,13 +24,13 @@ export function CopywritingShell() {
       });
 
       if (!response.ok) {
-        throw new Error("文案生成请求失败，请稍后再试。");
+        throw new Error("上架文案请求失败，请稍后再试。");
       }
 
       const nextResult = (await response.json()) as CopywritingResultData;
       setResult(nextResult);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "文案生成失败，请稍后再试。");
+      setError(caughtError instanceof Error ? caughtError.message : "上架文案制作失败，请稍后再试。");
     } finally {
       setIsLoading(false);
     }
@@ -40,8 +40,9 @@ export function CopywritingShell() {
     <main className="dashboard-content">
       <section className="copywriting-shell">
         <div className="copywriting-panel glass-card">
-          <p className="eyebrow">AI Copywriting</p>
-          <h2>商品信息表单</h2>
+          <p className="eyebrow">Listing Copy</p>
+          <h2>上架文案</h2>
+          <p className="image-generation-intro">生成商品标题、卖点、详情描述、平台文案和短视频脚本。</p>
           <CopywritingForm error={error} isLoading={isLoading} onSubmit={handleSubmit} />
         </div>
         <CopywritingResult result={result} />

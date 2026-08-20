@@ -412,17 +412,17 @@ export function ProductAssetGallery({ analysisHistoryId, detailPages, imageEdits
         />
         <AssetGroup
           actionHref={getDetailPageHref(analysisHistoryId)}
-          actionLabel="前往详情页生成"
+          actionLabel="前往详情页制作"
           assets={detailPageAssets}
           description="用于商品详情页的卖点、细节和购买理由展示。"
-          emptyText="暂无详情页素材。你可以前往「详情页生成」为当前商品生成详情页图片。"
+          emptyText="暂无详情页素材。你可以前往「详情页制作」为当前商品生成详情页图片。"
           onPreview={setSelectedImage}
           title="详情页图"
         />
         <AssetGroup
           assets={imageSetAssets}
           description="用于上架、详情页、社媒或平台 Listing 的成套图片。"
-          emptyText="暂无商品套图，可前往「套图」Tab 生成。"
+          emptyText="暂无商品套图，可前往「商品套图」生成。"
           notice={
             imageSetAssets.length
               ? [

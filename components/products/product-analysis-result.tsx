@@ -110,7 +110,7 @@ function ProductAnalysisEnhancedFields({ analysis }: { analysis: ProductImageAna
     <div className="product-analysis-extra">
       <div className="product-analysis-extra-header">
         <strong>商品理解与生成约束</strong>
-        <span>这些信息会帮助后续图片、场景图和详情页生成保持商品一致性。</span>
+        <span>这些信息会帮助后续商品图、商品套图和详情页制作保持商品一致性。</span>
       </div>
 
       <div className="product-analysis-extra-grid">

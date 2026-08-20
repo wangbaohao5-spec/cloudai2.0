@@ -160,7 +160,7 @@ const imageModelTasks: ImageModelTask[] = [
     description: "默认 run-api / gpt-image-2，可通过 SCENE_IMAGE_PROVIDER 切换实验模型。",
   },
   {
-    name: "商品图片优化",
+    name: "商品图精修",
     defaultRoute: "run-api / gpt-image-2",
     envProvider: "PRODUCT_IMAGE_EDIT_PROVIDER",
     description: "默认 run-api / gpt-image-2，可通过 PRODUCT_IMAGE_EDIT_PROVIDER 切换实验模型。",

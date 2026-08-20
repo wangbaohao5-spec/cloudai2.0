@@ -70,14 +70,14 @@ export default function VideoGenerationPage() {
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorData?.error || "视频生成请求失败，请稍后再试。");
+        throw new Error(errorData?.error || "视频工坊任务请求失败，请稍后再试。");
       }
 
       const nextResult = (await response.json()) as VideoGenerateResponse;
       setResult(nextResult);
     } catch (caughtError) {
       setResult(null);
-      setError(caughtError instanceof Error ? caughtError.message : "视频生成失败，请稍后再试。");
+      setError(caughtError instanceof Error ? caughtError.message : "视频工坊任务失败，请稍后再试。");
     } finally {
       setIsLoading(false);
     }
@@ -99,8 +99,9 @@ export default function VideoGenerationPage() {
     <main className="dashboard-content">
       <section className="video-generation-shell">
         <div className="video-generation-panel glass-card">
-          <p className="eyebrow">AI Video Task</p>
-          <h2>AI 视频生成</h2>
+          <p className="eyebrow">Video Studio</p>
+          <h2>视频工坊</h2>
+          <p className="image-generation-intro">当前为视频能力测试入口，后续将扩展为商品短视频脚本、分镜和成片工作流。</p>
           <form className="video-generation-form" onSubmit={handleSubmit}>
             <label>
               商品名称
@@ -145,7 +146,7 @@ export default function VideoGenerationPage() {
                 重新生成
               </button>
             ) : null}
-            <p className="video-generation-helper">生成成功后，系统会自动保存到云端历史记录并更新使用统计。</p>
+            <p className="video-generation-helper">任务完成后，系统会自动保存到云端历史记录并更新使用统计。</p>
             {error ? <p className="video-generation-error">{error}</p> : null}
           </form>
         </div>

@@ -8,11 +8,11 @@ export type UsageLimitRule = {
 export const USAGE_TYPES = ["chat", "copywriting", "image", "image-enhance", "video", "product-analysis"] as const;
 
 export const USAGE_TYPE_LABELS = {
-  chat: "AI 助手",
-  copywriting: "文案生成",
-  image: "图片生成",
-  "image-enhance": "图片优化",
-  video: "视频生成",
+  chat: "创作助手",
+  copywriting: "上架文案",
+  image: "商品图",
+  "image-enhance": "商品图精修",
+  video: "视频工坊",
   "product-analysis": "商品分析",
 } satisfies Record<UsageType, string>;
 

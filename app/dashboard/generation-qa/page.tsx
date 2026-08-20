@@ -91,7 +91,7 @@ const qaScenarios: QaScenario[] = [
     scene: "套图规划",
     input: "任意商品生成套图规划。",
     expected: "headline / keyMessage / visualDirection 不应包含未经确认的官方、认证、第一、100% 等风险词。",
-    checkPoint: "套图 Tab / 风险提示",
+    checkPoint: "商品套图 / 风险提示",
   },
   {
     scene: "详情页规划",

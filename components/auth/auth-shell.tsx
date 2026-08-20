@@ -16,7 +16,7 @@ const flowSteps = [
   },
   {
     description: "生成标题、卖点、图片和场景图",
-    title: "文案与图片生成",
+    title: "上架文案与商品图",
   },
   {
     description: "汇总为可复制、可下载的 Markdown 素材包",
@@ -34,7 +34,7 @@ export function AuthShell({ callbackUrl, mode }: AuthShellProps) {
           <div className="auth-brand-copy">
             <p className="auth-brand-eyebrow">CLOUDAI WORKSPACE</p>
             <h1>从一张商品图开始</h1>
-            <p>上传商品图，CloudAI 会帮你生成商品分析、营销文案、图片优化、营销场景图和 Markdown 商品素材包。</p>
+            <p>上传商品图，CloudAI 会帮你完成商品策划、上架文案、商品图精修、商品套图和 Markdown 商品素材包。</p>
           </div>
 
           <div className="auth-flow-preview" aria-label="CloudAI 商品创作流程">

@@ -42,7 +42,7 @@ function getRateLimitMessage(type: UsageRecord["type"], retryAfterSeconds: numbe
   }
 
   if (type === "video") {
-    return `视频生成任务正在排队保护中，请 ${retryAfterSeconds} 秒后再试。`;
+    return `视频工坊任务正在排队保护中，请 ${retryAfterSeconds} 秒后再试。`;
   }
 
   return `请求过于频繁，请 ${retryAfterSeconds} 秒后再试。`;
