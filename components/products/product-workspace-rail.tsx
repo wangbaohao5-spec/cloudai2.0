@@ -75,7 +75,7 @@ function getWorkspaceStatus({
 
   return {
     label: "已分析",
-    description: "商品分析已完成，可以继续生成文案、图片和场景图。",
+    description: "商品分析已完成，可以继续生成文案、图片优化和商品套图。",
   };
 }
 
@@ -200,12 +200,12 @@ export function ProductWorkspaceRail({
         <summary>更多设置</summary>
         <div className="product-workspace-future-feature" aria-disabled="true">
           <div>
-            <strong>详情页素材</strong>
-            <span>次级入口</span>
+            <strong>详情页生成</strong>
+            <span>后续独立工具</span>
           </div>
-          <p>详情页图片可在右侧「详情页」Tab 中按规划逐张生成，本区只保留轻量提示。</p>
+          <p>详情页生成将作为独立工具提供；已有详情页素材仍会在素材库和导出包中展示。</p>
           <button disabled type="button">
-            右侧使用
+            即将提供
           </button>
         </div>
       </details>

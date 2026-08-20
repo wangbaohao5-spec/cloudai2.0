@@ -18,6 +18,8 @@ type ProgressItem = {
 };
 
 function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount, imageSetCount, sceneImageCount }: ProductCreationProgressProps): ProgressItem[] {
+  const generatedVisualCount = imageEditCount + imageSetCount + sceneImageCount + detailPageCount;
+
   return [
     {
       id: "analysis",
@@ -44,28 +46,28 @@ function buildProgressItems({ copywritingCount, detailPageCount, imageEditCount,
       description: imageEditCount > 0 ? "原图优化结果已可用于素材整理" : "在图片 Tab 生成商品展示优化图",
     },
     {
-      id: "scenes",
-      label: "场景图",
-      count: sceneImageCount,
-      done: sceneImageCount > 0,
-      status: sceneImageCount > 0 ? `已生成 ${sceneImageCount} 张` : "待生成",
-      description: sceneImageCount > 0 ? "营销场景图已进入当前商品资产" : "在场景 Tab 生成适合推广的营销场景图",
-    },
-    {
-      id: "detail-pages",
-      label: "详情页",
-      count: detailPageCount,
-      done: detailPageCount > 0,
-      status: detailPageCount > 0 ? `已生成 ${detailPageCount} 张` : "待生成",
-      description: detailPageCount > 0 ? "商品详情页图片已进入素材区" : "在详情页 Tab 基于规划生成详情页图片",
-    },
-    {
       id: "image-set",
       label: "套图",
       count: imageSetCount,
       done: imageSetCount > 0,
       status: imageSetCount > 0 ? `已生成 ${imageSetCount} 张` : "待生成",
       description: imageSetCount > 0 ? "商品套图图片已进入素材区" : "在套图 Tab 基于规划生成商品套图",
+    },
+    {
+      id: "assets",
+      label: "素材",
+      count: generatedVisualCount,
+      done: generatedVisualCount > 0,
+      status: generatedVisualCount > 0 ? `已汇总 ${generatedVisualCount} 张` : "待汇总",
+      description: generatedVisualCount > 0 ? "图片、套图以及历史场景图/详情页图会统一展示" : "生成图片或套图后，素材会自动进入素材库",
+    },
+    {
+      id: "export",
+      label: "导出",
+      count: 0,
+      done: copywritingCount > 0 || generatedVisualCount > 0,
+      status: copywritingCount > 0 || generatedVisualCount > 0 ? "可整理" : "待生成内容",
+      description: "在导出 Tab 复制或下载当前商品素材包",
     },
   ];
 }

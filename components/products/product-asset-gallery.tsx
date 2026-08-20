@@ -389,14 +389,14 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
         <AssetGroup
           assets={sceneImageAssets}
           description="用于营销场景、使用环境和氛围展示。"
-          emptyText="暂无场景图，可前往「场景」Tab 生成。"
+          emptyText="暂无场景图素材。场景图能力已并入商品套图，历史场景图仍会显示在这里。"
           onPreview={setSelectedImage}
           title="场景图"
         />
         <AssetGroup
           assets={detailPageAssets}
           description="用于商品详情页的卖点、细节和购买理由展示。"
-          emptyText="暂无详情页图，可前往「详情页」Tab 生成。"
+          emptyText="暂无详情页素材。详情页生成后续会作为独立工具提供，历史详情页图仍会显示在这里。"
           onPreview={setSelectedImage}
           title="详情页图"
         />

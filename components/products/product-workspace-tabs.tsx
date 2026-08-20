@@ -4,12 +4,10 @@ import { ProductAnalysisResult } from "@/components/products/product-analysis-re
 import { ProductAssetGallery } from "@/components/products/product-asset-gallery";
 import { ProductContentPackage } from "@/components/products/product-content-package";
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
-import { ProductDetailPagePanel } from "@/components/products/product-detail-page-panel";
 import { ProductGenerationBriefEditor } from "@/components/products/product-generation-brief";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductImageSetPanel } from "@/components/products/product-image-set-panel";
 import { ProductOutputSettingsEditor } from "@/components/products/product-output-settings";
-import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
 import { DEFAULT_PRODUCT_OUTPUT_SETTINGS } from "@/lib/product-output-settings";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
@@ -35,15 +33,14 @@ type UploadedAsset = {
   url: string;
 };
 
-type TabId = "analysis" | "assets" | "copywriting" | "detailPage" | "export" | "imageSet" | "images" | "scenes";
+type TabId = "analysis" | "assets" | "copywriting" | "export" | "imageSet" | "images";
+type RemovedTabId = "detail-page" | "detailPage" | "scene" | "scenes";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "analysis", label: "分析" },
   { id: "assets", label: "素材" },
   { id: "copywriting", label: "文案" },
   { id: "images", label: "图片" },
-  { id: "scenes", label: "场景" },
-  { id: "detailPage", label: "详情页" },
   { id: "imageSet", label: "套图" },
   { id: "export", label: "导出" },
 ];
@@ -90,7 +87,7 @@ function CreationCenterState({
         eyebrow="尚未开始"
         marker="01"
         title="上传并分析商品后开始创作"
-        description="完成商品分析后，素材、文案、图片、场景图和导出内容会在这里统一管理。"
+        description="完成商品分析后，素材、文案、图片、套图和导出内容会在这里统一管理。"
         actions={[{ label: "回到分析", onClick: () => onTabChange("analysis") }]}
       />
     );
@@ -135,8 +132,6 @@ export function ProductWorkspaceTabs({
     assets: creationCenterData ? Number(hasOriginalAsset) + generatedAssetCount : 0,
     copywriting: copywritingCount,
     images: imageEditCount,
-    scenes: sceneImageCount,
-    detailPage: detailPageCount,
     imageSet: imageSetCount,
     export: creationCenterData ? 1 : 0,
   };
@@ -144,20 +139,26 @@ export function ProductWorkspaceTabs({
     { label: "分析", done: Boolean(creationCenterData) },
     { label: "文案", done: copywritingCount > 0 },
     { label: "图片", done: imageEditCount > 0 },
-    { label: "场景", done: sceneImageCount > 0 },
+    { label: "套图", done: imageSetCount > 0 },
   ];
   const isExportReady = Boolean(creationCenterData) && (copywritingCount > 0 || generatedAssetCount > 0);
   const uploadEmptyAction = isUploading
     ? { disabled: true, label: "上传图片中...", onClick: scrollToUploadSection, tone: "primary" as const }
     : { label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
 
-  function switchTab(tabId: TabId) {
-    setActiveTab(tabId);
+  function normalizeTab(tabId: TabId | RemovedTabId): TabId {
+    return tabs.some((tab) => tab.id === tabId) ? (tabId as TabId) : "analysis";
   }
 
-  function switchTabAndFocus(tabId: TabId, panelId: string) {
-    setActiveTab(tabId);
-    scrollToPanel(panelId);
+  function switchTab(tabId: TabId | RemovedTabId) {
+    setActiveTab(normalizeTab(tabId));
+  }
+
+  function switchTabAndFocus(tabId: TabId | RemovedTabId, panelId: string) {
+    const nextTab = normalizeTab(tabId);
+
+    setActiveTab(nextTab);
+    scrollToPanel(nextTab === tabId ? panelId : `product-workspace-panel-${nextTab}`);
   }
 
   function openRiskConfirmations() {
@@ -253,12 +254,11 @@ export function ProductWorkspaceTabs({
                   title={hasOriginalAsset ? "素材会自动汇总到这里" : "还没有素材"}
                   description={
                     hasOriginalAsset
-                      ? "生成的优化图、场景图、详情页图和商品套图都会自动进入素材库，方便预览和下载。可先前往「套图」Tab 生成一套商品素材。"
-                      : "生成文案、图片或场景图后，素材会汇总在这里。"
+                      ? "生成的优化图、历史场景图、历史详情页图和商品套图都会自动进入素材库，方便预览和下载。可先前往「套图」Tab 生成一套商品素材。"
+                      : "生成文案、图片或套图后，素材会汇总在这里。"
                   }
                   actions={[
                     { label: "前往套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet"), tone: "primary" },
-                    { label: "详情页素材", onClick: () => switchTabAndFocus("detailPage", "product-workspace-panel-detailPage") },
                     { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
                   ]}
                 />
@@ -322,50 +322,6 @@ export function ProductWorkspaceTabs({
       </div>
 
       <div
-        aria-labelledby="product-workspace-tab-scenes"
-        className="product-workspace-panel"
-        hidden={activeTab !== "scenes"}
-        id="product-workspace-panel-scenes"
-        role="tabpanel"
-      >
-        {result && !sceneImageCount ? (
-          <ProductWorkspaceEmptyState
-            eyebrow="场景图"
-            marker="SCN"
-            title="生成营销场景图"
-            description="选择使用场景、平台和视觉风格，生成适合详情页、社媒或广告使用的商品场景图。"
-            actions={[{ label: "开始生成场景图", onClick: () => scrollToPanel("product-scene-image-panel"), tone: "primary" }]}
-          />
-        ) : null}
-        <ProductSceneImagePanel analysisResult={result} generationBrief={generationBrief} outputSettings={outputSettings} onGenerated={onGenerated} />
-      </div>
-
-      <div
-        aria-labelledby="product-workspace-tab-detailPage"
-        className="product-workspace-panel"
-        hidden={activeTab !== "detailPage"}
-        id="product-workspace-panel-detailPage"
-        role="tabpanel"
-      >
-        {result && !detailPageCount ? (
-          <ProductWorkspaceEmptyState
-            eyebrow="详情页"
-            marker="DTP"
-            title="生成详情页素材"
-            description="可先规划详情页图片结构，再按需逐张生成卖点、细节、场景或购买理由素材。"
-            actions={[{ label: "配置详情页素材", onClick: () => scrollToPanel("product-workspace-panel-detailPage"), tone: "primary" }]}
-          />
-        ) : null}
-        <ProductDetailPagePanel
-          analysisResult={result}
-          generationBrief={generationBrief}
-          outputSettings={outputSettings}
-          onGenerated={onGenerated}
-          onOpenRiskConfirmations={openRiskConfirmations}
-        />
-      </div>
-
-      <div
         aria-labelledby="product-workspace-tab-imageSet"
         className="product-workspace-panel"
         hidden={activeTab !== "imageSet"}
@@ -418,7 +374,7 @@ export function ProductWorkspaceTabs({
                 actions={[
                   { label: "前往文案", onClick: () => switchTab("copywriting"), tone: "primary" },
                   { label: "前往图片", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
-                  { label: "前往场景", onClick: () => switchTabAndFocus("scenes", "product-scene-image-panel") },
+                  { label: "前往套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet") },
                 ]}
               />
             )
