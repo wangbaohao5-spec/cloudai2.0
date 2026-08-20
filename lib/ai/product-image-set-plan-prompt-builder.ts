@@ -84,6 +84,7 @@ const PURPOSE_GUIDES = {
 } satisfies Record<ProductImageSetPurpose, string[]>;
 
 const CATEGORY_IMAGE_SET_GUIDES = {
+  bag: "包包：首张可优先考虑人物携带场景、通勤搭配或生活方式主图；突出包型、材质、大小感和背法；必须保留包型、五金、颜色、Logo、纹理、肩带/提手结构。",
   skincare: "护肤品：适合 hero、selling-point、detail-closeup（水感/泡沫/质地）、usage-scene、brand-story/信任氛围、cta；必须保留瓶型、包装、Logo、容量信息和瓶盖结构。",
   clothing: "服装：适合 model-wearing、detail-closeup、size-spec、usage-scene、面料/领口/袖口/下摆细节；必须保留颜色、版型、印花位置和面料质感。",
   jewelry: "首饰：适合 detail-closeup、佩戴效果 usage-scene、four-grid-detail、礼物/生活方式场景；必须保留珠子数量印象、颜色、点缀位置、吊坠形状和材质。",
@@ -92,6 +93,29 @@ const CATEGORY_IMAGE_SET_GUIDES = {
   cup: "杯子：适合 hero、usage-scene、杯盖/杯口 detail-closeup、multi-color、便携/防漏细节、cta；必须保留杯型、杯盖、手柄、材质和图案。",
   general: "通用商品：根据商品卖点选择 hero、selling-point、usage-scene、detail-closeup、four-grid-detail、size-spec、brand-story、cta。",
 } satisfies Record<ReturnType<typeof getProductCategoryVisualStrategy>["categoryKey"], string>;
+
+const HERO_PLATFORM_STRATEGY = [
+  "首屏主视觉 / 主图点击图定义：商品套图中的第 1 张图负责让用户第一眼理解商品是什么，并产生点击兴趣，不是普通展示图。",
+  "第 1 张图片必须围绕商品主体和最重要的 1 个点击理由规划，画面比普通展示图更有吸引力，但不能牺牲商品保真。",
+  "第 1 张 imageType 必须优先使用 hero；如果发布平台或自定义结构更适合，也可使用 white-background、model-wearing 或 usage-scene，但 title/goal/keyMessage/visualDirection 必须明确它是主图点击图。",
+  "第 1 张 title 建议使用“首屏主视觉”“主图点击图”或“商品主图”；goal 必须包含“吸引点击，并在第一眼展示商品核心价值”；keyMessage 只提炼 1 个最重要点击理由。",
+  "主图不要堆砌文字，不要生成无关元素，不要自动生成官方授权、正品保证、第一、最好、100%、永久、医学功效、平台认证或未确认品牌关系。",
+  "淘宝 / 京东 / 拼多多：主体明确、商品占比高、卖点清楚，可适当加入电商主图式短卖点，但不要过度杂乱。",
+  "小红书：更偏生活方式、种草感和场景感，画面自然、有氛围，文案轻，不要像硬广。",
+  "抖音电商 / TikTok Shop：更强调吸引眼球、卖点直接、画面有冲击力，适合人物场景或使用场景。",
+  "Amazon / Shopee / 独立站：更干净、清楚、可信，商品主体完整，白底 / 场景 / 细节组合清楚，文案克制不夸张。",
+  "通用电商：商品清楚、核心卖点明确，画面简洁但有吸引力。",
+].join("\n");
+
+const HERO_CATEGORY_STRATEGY = [
+  "类目主图策略：",
+  "- 服装：首张可优先考虑模特穿搭图、上身场景图或搭配主视觉；重点展示版型、颜色、面料和穿着氛围；不要改变衣服颜色、图案、Logo、版型、袖口、领口、纽扣。",
+  "- 包包：首张可优先考虑人物携带场景、通勤搭配或生活方式主图；重点展示包型、材质、大小感和背法；不要改变包型、五金、颜色、Logo、纹理。",
+  "- 首饰：首张可优先考虑佩戴场景、手部或颈部近景、材质质感主图；重点展示材质、光泽、尺寸感和佩戴效果；不要改变珠子数量、颜色、吊坠、特殊点缀。",
+  "- 数码外设：首张优先考虑干净主图或桌面场景；重点展示外观、结构、灯效、接口和核心功能；不要改变键位布局、Logo、颜色、结构、屏幕内容。",
+  "- 护肤品：首张优先考虑干净主图、质地展示、水感/温和氛围；不要改变瓶身、包装、Logo、容量、文字位置。",
+  "- 通用商品：主体完整、卖点明确，背景辅助但不喧宾夺主。",
+].join("\n");
 
 function joinList(items?: string[]) {
   return items?.filter(Boolean).join("、") || "暂无明确结果";
@@ -196,6 +220,8 @@ export function buildProductImageSetPlanPrompt({
     "imageIndex 必须从 1 开始连续递增。",
     "允许 imageType：hero、white-background、selling-point、usage-scene、detail-closeup、model-wearing、multi-angle、size-spec、comparison、four-grid-detail、brand-story、cta。",
     "suggestedGenerationMode 只能是 faithful 或 creative。结构敏感、有 Logo/印花/图案/固定外观的商品优先 faithful。",
+    HERO_PLATFORM_STRATEGY,
+    HERO_CATEGORY_STRATEGY,
     getCountGuide(count),
     ...PURPOSE_GUIDES[purpose],
     `类目策略：${categoryStrategy.categoryKey}`,

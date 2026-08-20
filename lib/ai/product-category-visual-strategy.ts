@@ -1,5 +1,5 @@
 export type ProductCategoryVisualStrategy = {
-  categoryKey: "clothing" | "cup" | "general" | "jewelry" | "keyboard" | "shoes" | "skincare";
+  categoryKey: "bag" | "clothing" | "cup" | "general" | "jewelry" | "keyboard" | "shoes" | "skincare";
   fidelityRules: string[];
   detailPageSuggestions: string[];
   avoidRules: string[];
@@ -28,6 +28,15 @@ const CATEGORY_STRATEGIES: Record<ProductCategoryVisualStrategy["categoryKey"], 
     ],
     detailPageSuggestions: ["Use model wearing scene, flat lay, fabric close-up, collar/sleeve/hem details, outfit/lifestyle scene."],
     avoidRules: ["Do not add nonexistent buttons, zippers, pockets, patterns, or decorations."],
+  },
+  bag: {
+    categoryKey: "bag",
+    fidelityRules: [
+      "Preserve bag shape, size impression, handles/straps, hardware, logo position, texture, color, stitching, closure, and proportions.",
+      "Do not change the bag silhouette, hardware style, pattern, logo, or material impression.",
+    ],
+    detailPageSuggestions: ["Use carrying scene, commute outfit, lifestyle styling, material close-up, hardware detail, capacity impression."],
+    avoidRules: ["Do not invent luxury branding, authorization, new hardware, extra pockets, or different carrying methods not visible or requested."],
   },
   jewelry: {
     categoryKey: "jewelry",
@@ -72,6 +81,7 @@ const CATEGORY_STRATEGIES: Record<ProductCategoryVisualStrategy["categoryKey"], 
 
 const CATEGORY_KEYWORDS: Array<{ key: ProductCategoryVisualStrategy["categoryKey"]; keywords: string[] }> = [
   { key: "keyboard", keywords: ["keyboard", "keycap", "mechanical", "键盘", "机械键盘", "键帽", "轴体"] },
+  { key: "bag", keywords: ["bag", "handbag", "tote", "backpack", "purse", "satchel", "包", "包包", "手提包", "托特包", "双肩包", "斜挎包", "挎包"] },
   { key: "clothing", keywords: ["clothing", "apparel", "shirt", "t-shirt", "hoodie", "dress", "vest", "衣服", "服装", "t恤", "T恤", "背心", "裙", "外套", "卫衣"] },
   { key: "jewelry", keywords: ["jewelry", "bracelet", "necklace", "ring", "earring", "bead", "首饰", "手链", "项链", "戒指", "耳环", "珠子", "吊坠"] },
   { key: "skincare", keywords: ["skincare", "cleanser", "cream", "lotion", "serum", "toner", "护肤", "护肤品", "洁面", "洁面乳", "面霜", "乳液", "精华", "爽肤水"] },

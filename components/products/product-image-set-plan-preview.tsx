@@ -126,6 +126,8 @@ export function ProductImageSetPlanPreview({
         const result = imageResults[image.imageIndex];
         const error = imageErrors[image.imageIndex];
         const imageTypeLabel = getImageTypeLabel(image.imageType);
+        const isHeroClickImage = image.imageIndex === 1;
+        const displayTypeLabel = isHeroClickImage ? "主图点击图" : imageTypeLabel;
         const coreCopyItems = getNonEmptyItems([image.headline, image.subheadline, image.keyMessage]);
         const keepItems = getNonEmptyItems([...image.requiredElements, ...image.mustKeep]);
         const avoidItems = getNonEmptyItems(image.avoid);
@@ -137,14 +139,15 @@ export function ProductImageSetPlanPreview({
             <div className="product-image-set-card-header product-image-set-plan-card-header">
               <div className="product-image-set-card-kicker">
                 <span className="product-image-set-type-badge">
-                  第 {image.imageIndex} 张 · {imageTypeLabel}
+                  第 {image.imageIndex} 张 · {displayTypeLabel}
                 </span>
+                {isHeroClickImage ? <i className="product-image-set-hero-badge">首屏主视觉</i> : null}
                 <i className="product-image-set-mode-badge">{modeLabel}</i>
               </div>
             </div>
 
             <div className={`product-image-set-card__media product-image-set-card-media ${result ? "has-image" : "is-placeholder"}`}>
-              <span className="product-image-set-card__badge product-image-set-card-badge">{imageTypeLabel}</span>
+              <span className="product-image-set-card__badge product-image-set-card-badge">{displayTypeLabel}</span>
               {result ? (
                 <>
                   <button
@@ -174,7 +177,7 @@ export function ProductImageSetPlanPreview({
               ) : (
                 <div className="product-image-set-card__placeholder product-image-set-card-placeholder">
                   {isGenerating ? <LongGenerationLoading size="md" /> : <span>{String(image.imageIndex).padStart(2, "0")}</span>}
-                  <strong>{isGenerating ? `正在生成第 ${image.imageIndex} 张...` : imageTypeLabel}</strong>
+                  <strong>{isGenerating ? `正在生成第 ${image.imageIndex} 张...` : displayTypeLabel}</strong>
                   <p>{image.visualDirection || image.goal || "生成后将在这里显示图片预览。"}</p>
                 </div>
               )}
@@ -182,6 +185,7 @@ export function ProductImageSetPlanPreview({
 
             <div className="product-image-set-card__body product-image-set-card-body">
               <h3>{image.title}</h3>
+              {isHeroClickImage ? <p className="product-image-set-hero-note">这张图负责吸引点击，展示商品最核心的卖点。</p> : null}
               <p className="product-image-set-card-summary">
                 {result ? image.keyMessage || image.headline || "当前显示最近一次生成结果。" : image.goal || image.keyMessage || "暂无任务说明"}
               </p>

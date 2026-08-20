@@ -38,6 +38,16 @@ const IMAGE_TYPE_VISUAL_GUIDES: Record<ProductImageSetPlanImage["imageType"], st
   "white-background": "Use a clean white or light background. The product should be clear, centered, and suitable as a listing image. Avoid complex scenes or decorative clutter.",
 };
 
+const HERO_CLICK_IMAGE_PROMPT = [
+  "首屏主视觉 / 主图点击图专项要求：",
+  "这张图是商品套图的首屏主视觉 / 主图点击图，它的任务不是普通展示，而是提升用户第一眼点击兴趣。",
+  "请突出商品主体和核心卖点，画面要适合当前发布平台，让用户第一眼知道商品是什么、为什么值得点开。",
+  "主图只使用 1 个最重要的点击理由，不堆砌过多文字，不生成无关元素。",
+  "保持商品外观保真，不要重新设计商品，不要改变颜色、Logo、图案、版型、材质、结构、比例或关键装饰。",
+  "不要添加未经用户确认的官方授权、正品保证、认证、第一、最好、100%、永久、医学功效、平台认证、未确认品牌关系或夸张功效表述。",
+  "如果是服装、包包、首饰类商品，允许生成模特穿搭、佩戴或搭配场景，但必须保持商品本身的颜色、结构、材质和关键细节不变。",
+].join("\n");
+
 function joinList(items?: string[]) {
   return items?.filter(Boolean).join("、") || "暂无明确要求";
 }
@@ -57,6 +67,7 @@ export function buildProductImageSetImagePrompt({
     productName,
   });
   const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
+  const isHeroImage = image.imageIndex === 1 || image.imageType === "hero";
 
   return [
     "请基于用户上传的原商品图，生成一张商品套图图片。",
@@ -91,6 +102,7 @@ export function buildProductImageSetImagePrompt({
     `避免改动：${joinList(image.avoid)}`,
     "",
     `图片类型专项要求：${IMAGE_TYPE_VISUAL_GUIDES[image.imageType]}`,
+    isHeroImage ? HERO_CLICK_IMAGE_PROMPT : "",
     outputSettingsPrompt,
     `类目策略：${categoryStrategy.categoryKey}`,
     `类目视觉建议：${categoryStrategy.detailPageSuggestions.join(" ")}`,
