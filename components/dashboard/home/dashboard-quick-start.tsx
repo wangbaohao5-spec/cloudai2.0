@@ -2,9 +2,10 @@ import Link from "next/link";
 
 const quickStartItems = [
   { href: "/dashboard/products", label: "上传新商品" },
+  { href: "/dashboard/detail-page", label: "详情页生成" },
   { href: "/dashboard/history", label: "查看历史" },
   { href: "/dashboard/chat", label: "AI 助手" },
-  { href: "/dashboard/image", label: "图片工具" },
+  { href: "/dashboard/image-edit", label: "图片优化" },
   { href: "/dashboard/usage", label: "额度中心" },
 ];
 

@@ -3329,6 +3329,43 @@ h3 {
   background: var(--primary-gradient);
 }
 
+.legacy-image-tool-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--card-border));
+  padding: 16px 18px;
+}
+
+.legacy-image-tool-notice strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+.legacy-image-tool-notice p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.legacy-image-tool-notice > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.legacy-image-tool-notice .button {
+  min-height: 34px;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+}
+
 .image-enhance-shell {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -8708,6 +8745,19 @@ h3 {
 
   .image-generation-shell {
     grid-template-columns: 1fr;
+  }
+
+  .legacy-image-tool-notice {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .legacy-image-tool-notice > div:last-child {
+    justify-content: stretch;
+  }
+
+  .legacy-image-tool-notice .button {
+    width: 100%;
   }
 
   .image-enhance-shell {

@@ -20,7 +20,7 @@ export const dashboardNavSections: DashboardNavSection[] = [
     label: "AI 工具",
     items: [
       { label: "文案生成", href: "/dashboard/copywriting" },
-      { label: "图片生成", href: "/dashboard/image" },
+      { label: "详情页生成", href: "/dashboard/detail-page" },
       { label: "图片优化", href: "/dashboard/image-edit" },
       { label: "视频生成", href: "/dashboard/video" },
       { label: "AI 助手", href: "/dashboard/chat" },

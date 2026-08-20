@@ -4,16 +4,23 @@ const quickActions = [
   {
     icon: "商",
     title: "商品 AI 工作流",
-    description: "上传商品图，完成商品分析、文案、原图优化和场景图生成。",
+    description: "上传商品图，完成商品分析、发布目标、文案、图片优化、套图和素材交付。",
     href: "/dashboard/products",
     buttonLabel: "开始工作流",
   },
   {
-    icon: "聊",
-    title: "AI 聊天",
-    description: "连续讨论商品定位、平台打法、标题优化和运营建议。",
-    href: "/dashboard/chat",
-    buttonLabel: "开始聊天",
+    icon: "页",
+    title: "详情页生成",
+    description: "基于已分析商品生成详情页结构和详情页图片素材。",
+    href: "/dashboard/detail-page",
+    buttonLabel: "生成详情页",
+  },
+  {
+    icon: "优",
+    title: "图片优化",
+    description: "基于商品原图生成更适合电商展示的优化图片。",
+    href: "/dashboard/image-edit",
+    buttonLabel: "优化图片",
   },
   {
     icon: "文",
@@ -21,13 +28,6 @@ const quickActions = [
     description: "生成商品标题、卖点、详情描述、短视频脚本和广告文案。",
     href: "/dashboard/copywriting",
     buttonLabel: "生成文案",
-  },
-  {
-    icon: "图",
-    title: "AI 商品图",
-    description: "为商品主图、场景图、详情页图片和广告海报生成视觉内容。",
-    href: "/dashboard/image",
-    buttonLabel: "生成商品图",
   },
   {
     icon: "影",
