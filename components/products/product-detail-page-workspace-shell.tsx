@@ -1,0 +1,333 @@
+"use client";
+
+import { ProductDetailPagePanel } from "@/components/products/product-detail-page-panel";
+import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
+import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import type { ProductCreationCenterData } from "@/lib/product-creation-center";
+import { DEFAULT_FORBIDDEN_PRODUCT_CLAIMS, getProductGenerationBriefFromSession } from "@/lib/product-generation-brief";
+import {
+  DEFAULT_PRODUCT_OUTPUT_SETTINGS,
+  formatProductOutputSettingsSummary,
+  getProductOutputSettingsFromSession,
+  sanitizeProductOutputSettings,
+} from "@/lib/product-output-settings";
+import type { HistoryRecord } from "@/lib/types";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductImageAnalysis, ProductOutputSettings } from "@/lib/product-types";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const WORKSPACE_PRODUCTS_PATH = "/dashboard/products";
+
+function getObjectField(value: unknown, key: string) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function getLatestOutputSettingsFromHistory(records: HistoryRecord[]) {
+  const sortedRecords = [...records].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+  for (const record of sortedRecords) {
+    const inputSettings = sanitizeProductOutputSettings(getObjectField(record.input, "outputSettings"));
+    const outputSettings = sanitizeProductOutputSettings(getObjectField(record.output, "outputSettings"));
+
+    if (inputSettings) {
+      return inputSettings;
+    }
+
+    if (outputSettings) {
+      return outputSettings;
+    }
+  }
+
+  return null;
+}
+
+function compactItems(...groups: unknown[]) {
+  return groups
+    .flatMap((group) => {
+      if (!group) {
+        return [];
+      }
+
+      return Array.isArray(group) ? group : [group];
+    })
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function uniqueItems(items: string[]) {
+  return Array.from(new Set(items));
+}
+
+function buildFallbackBriefFromAnalysis(analysis: ProductImageAnalysis): ProductGenerationBrief {
+  return {
+    avoidChanges: uniqueItems(compactItems(analysis.avoidChanges)),
+    coreSellingPoints: uniqueItems(compactItems(analysis.sellingPoints)),
+    extraRequirements: "",
+    mustKeepDetails: uniqueItems(compactItems(analysis.mustKeepDetails)),
+    productName: analysis.productNameSuggestions[0] || "",
+    riskConfirmations: {
+      confirmedBrandClaims: "",
+      forbiddenClaims: DEFAULT_FORBIDDEN_PRODUCT_CLAIMS,
+      complianceNotes: "",
+    },
+    styleRequirements: compactItems(analysis.detailPageHints?.visualMood, analysis.visualStyle)[0] || "",
+    targetAudience: analysis.targetAudience || "",
+    usageScenarios: uniqueItems(compactItems(analysis.detailPageHints?.usageScenes, analysis.scenes)),
+  };
+}
+
+async function fetchCreationCenterData(analysisHistoryId: string) {
+  const response = await fetch(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("未找到商品分析记录");
+  }
+
+  return (await response.json()) as ProductCreationCenterData;
+}
+
+function getAnalysisHistoryIdFromUrl() {
+  try {
+    return new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
+  } catch {
+    return "";
+  }
+}
+
+function goToProductWorkspace(analysisHistoryId?: string) {
+  const href = analysisHistoryId ? `${WORKSPACE_PRODUCTS_PATH}?analysis=${encodeURIComponent(analysisHistoryId)}` : WORKSPACE_PRODUCTS_PATH;
+
+  window.location.assign(href);
+}
+
+export function ProductDetailPageWorkspaceShell() {
+  const [analysisHistoryId, setAnalysisHistoryId] = useState<string | null>(null);
+  const [creationCenterData, setCreationCenterData] = useState<ProductCreationCenterData | null>(null);
+  const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
+  const [generationBrief, setGenerationBrief] = useState<ProductGenerationBrief | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [outputSettings, setOutputSettings] = useState<ProductOutputSettings>(DEFAULT_PRODUCT_OUTPUT_SETTINGS);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setAnalysisHistoryId(getAnalysisHistoryIdFromUrl());
+
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDetailPageContext() {
+      if (analysisHistoryId === null || !analysisHistoryId) {
+        setCreationCenterData(null);
+        setError("");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const data = await fetchCreationCenterData(analysisHistoryId);
+        const sessionBrief = getProductGenerationBriefFromSession(analysisHistoryId);
+        const sessionOutputSettings = getProductOutputSettingsFromSession(analysisHistoryId);
+        const historyOutputSettings = getLatestOutputSettingsFromHistory([
+          ...data.copywriting,
+          ...data.imageSetImages,
+          ...data.detailPages,
+          ...data.sceneImages,
+          ...data.imageEdits,
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCreationCenterData(data);
+        setGenerationBrief(sessionBrief || buildFallbackBriefFromAnalysis(data.analysis));
+        setOutputSettings(sessionOutputSettings || historyOutputSettings || DEFAULT_PRODUCT_OUTPUT_SETTINGS);
+      } catch (caughtError) {
+        if (process.env.NODE_ENV === "development") {
+          console.info("[product-detail-page-workspace] load failed", {
+            analysisHistoryId,
+            message: caughtError instanceof Error ? caughtError.message : "unknown error",
+          });
+        }
+
+        if (isMounted) {
+          setCreationCenterData(null);
+          setError("未找到商品分析记录");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadDetailPageContext();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [analysisHistoryId, refreshKey]);
+
+  const productAnalysisResponse = useMemo<ProductAnalysisResponse | null>(() => {
+    if (!creationCenterData || !analysisHistoryId) {
+      return null;
+    }
+
+    return {
+      assetId: creationCenterData.product.assetId || creationCenterData.originalAsset?.id || "",
+      historyId: analysisHistoryId,
+      title: creationCenterData.product.title,
+      analysis: creationCenterData.analysis,
+    };
+  }, [analysisHistoryId, creationCenterData]);
+
+  function showFeedback(message: string, tone: "error" | "success" = "success") {
+    setFeedback({ message, tone });
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setFeedback(null);
+    }, 2400);
+  }
+
+  function handleGenerated() {
+    setRefreshKey((value) => value + 1);
+    showFeedback("详情页素材已生成，数量已刷新");
+  }
+
+  function openRiskConfirmations() {
+    if (analysisHistoryId) {
+      window.location.assign(`${WORKSPACE_PRODUCTS_PATH}?analysis=${encodeURIComponent(analysisHistoryId)}#product-risk-confirmations`);
+    }
+  }
+
+  if (analysisHistoryId === null || isLoading) {
+    return (
+      <main className="dashboard-content">
+        <section className="product-detail-page-workspace">
+          <ProductWorkspaceEmptyState eyebrow="正在加载" marker="..." title="正在加载详情页生成上下文" description="CloudAI 正在读取当前商品分析记录，请稍等片刻。" />
+        </section>
+      </main>
+    );
+  }
+
+  if (!analysisHistoryId) {
+    return (
+      <main className="dashboard-content">
+        <section className="product-detail-page-workspace">
+          <ProductWorkspaceEmptyState
+            eyebrow="详情页生成"
+            marker="DTP"
+            title="请选择一个商品后生成详情页"
+            description="详情页生成需要先完成商品分析。请先在商品工作台上传商品图并完成分析，再进入详情页生成。"
+            actions={[{ label: "前往商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
+          />
+        </section>
+      </main>
+    );
+  }
+
+  if (error || !creationCenterData || !productAnalysisResponse) {
+    return (
+      <main className="dashboard-content">
+        <section className="product-detail-page-workspace">
+          <ProductWorkspaceEmptyState
+            eyebrow="记录不可用"
+            marker="!"
+            title="未找到商品分析记录"
+            description="请回到商品工作台重新选择商品，或重新上传商品图并完成分析。"
+            actions={[{ label: "返回商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
+          />
+        </section>
+      </main>
+    );
+  }
+
+  const productName = creationCenterData.analysis.productNameSuggestions[0] || creationCenterData.product.title;
+  const originalAssetUrl = creationCenterData.originalAsset?.previewUrl || creationCenterData.originalAsset?.url || "";
+  const workspaceHref = `${WORKSPACE_PRODUCTS_PATH}?analysis=${encodeURIComponent(analysisHistoryId)}`;
+
+  return (
+    <main className="dashboard-content">
+      {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
+      <section className="product-detail-page-workspace">
+        <section className="product-detail-page-hero glass-card">
+          <div>
+            <p className="eyebrow">Detail Page</p>
+            <h1>详情页生成</h1>
+            <p>基于已分析商品生成详情页结构和详情页图片素材。</p>
+          </div>
+          <Link className="button secondary" href={workspaceHref}>
+            返回商品工作台
+          </Link>
+        </section>
+
+        <section className="product-detail-page-context glass-card" aria-label="当前商品详情页上下文">
+          <div className="product-detail-page-original">
+            {originalAssetUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt={productName} decoding="async" src={originalAssetUrl} />
+            ) : (
+              <span>暂无原图</span>
+            )}
+          </div>
+          <div className="product-detail-page-context-main">
+            <span>当前商品</span>
+            <strong>{productName}</strong>
+            <p>{creationCenterData.analysis.category || "商品类别待补充"}</p>
+          </div>
+          <div className="product-detail-page-context-grid">
+            <span>
+              <em>发布目标</em>
+              <strong>{formatProductOutputSettingsSummary(outputSettings)}</strong>
+            </span>
+            <span>
+              <em>已生成详情页</em>
+              <strong>{creationCenterData.detailPages.length} 张</strong>
+            </span>
+          </div>
+        </section>
+
+        <ProductDetailPagePanel
+          analysisResult={productAnalysisResponse}
+          generationBrief={generationBrief}
+          outputSettings={outputSettings}
+          onGenerated={handleGenerated}
+          onOpenRiskConfirmations={openRiskConfirmations}
+        />
+
+        <section className="product-detail-page-existing glass-card">
+          <div>
+            <strong>已有详情页素材</strong>
+            <p>已生成 {creationCenterData.detailPages.length} 张详情页图片，可在商品工作台素材库和导出包中查看。</p>
+          </div>
+          <Link className="button secondary" href={workspaceHref}>
+            回到素材库
+          </Link>
+        </section>
+      </section>
+    </main>
+  );
+}

@@ -4198,6 +4198,113 @@ h3 {
   gap: 22px;
 }
 
+.product-detail-page-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.product-detail-page-hero,
+.product-detail-page-context,
+.product-detail-page-existing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.product-detail-page-hero h1 {
+  margin: 4px 0 8px;
+  color: var(--text);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+}
+
+.product-detail-page-hero p,
+.product-detail-page-existing p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.product-detail-page-context {
+  justify-content: flex-start;
+}
+
+.product-detail-page-original {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--workspace-border);
+  border-radius: 18px;
+  background: var(--workspace-surface);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.product-detail-page-original img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-detail-page-context-main {
+  display: grid;
+  min-width: 180px;
+  gap: 4px;
+}
+
+.product-detail-page-context-main span,
+.product-detail-page-context-grid em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.product-detail-page-context-main strong,
+.product-detail-page-existing strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.product-detail-page-context-main p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.product-detail-page-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  gap: 10px;
+}
+
+.product-detail-page-context-grid span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid var(--workspace-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: var(--workspace-surface);
+}
+
+.product-detail-page-context-grid strong {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.product-detail-page-existing {
+  padding: 18px;
+}
+
 .product-detail-page-settings,
 .product-image-set-settings {
   display: grid;
@@ -8617,6 +8724,7 @@ h3 {
 
   .product-workflow-shell,
   .product-workspace-shell,
+  .product-detail-page-context-grid,
   .product-creation-summary,
   .product-creation-progress-grid,
   .product-creation-action-grid,
@@ -8662,6 +8770,18 @@ h3 {
   }
 
   .product-workspace-empty-actions .button {
+    width: 100%;
+  }
+
+  .product-detail-page-hero,
+  .product-detail-page-context,
+  .product-detail-page-existing {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .product-detail-page-hero .button,
+  .product-detail-page-existing .button {
     width: 100%;
   }
 
