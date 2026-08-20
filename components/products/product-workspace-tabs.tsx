@@ -12,7 +12,8 @@ import { ProductWorkspaceEmptyState } from "@/components/products/product-worksp
 import { DEFAULT_PRODUCT_OUTPUT_SETTINGS } from "@/lib/product-output-settings";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 type ProductWorkspaceTabsProps = {
@@ -35,6 +36,7 @@ type UploadedAsset = {
 
 type TabId = "analysis" | "assets" | "copywriting" | "export" | "imageSet" | "images";
 type RemovedTabId = "detail-page" | "detailPage" | "scene" | "scenes";
+type TabQueryValue = "analysis" | "assets" | "copywriting" | "export" | "image" | "image-set" | "imageSet" | "images";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "analysis", label: "分析" },
@@ -106,6 +108,25 @@ function scrollToUploadSection() {
   scrollToPanel("product-upload-section");
 }
 
+function normalizeTabQuery(value: string | null): TabId {
+  const tabMap: Partial<Record<TabQueryValue, TabId>> = {
+    analysis: "analysis",
+    assets: "assets",
+    copywriting: "copywriting",
+    export: "export",
+    image: "images",
+    imageSet: "imageSet",
+    images: "images",
+    "image-set": "imageSet",
+  };
+
+  return tabMap[value as TabQueryValue] || "analysis";
+}
+
+function getDetailPageHref(analysisHistoryId?: string) {
+  return analysisHistoryId ? `/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}` : "/dashboard/detail-page";
+}
+
 export function ProductWorkspaceTabs({
   creationCenterData,
   creationCenterError,
@@ -145,6 +166,12 @@ export function ProductWorkspaceTabs({
   const uploadEmptyAction = isUploading
     ? { disabled: true, label: "上传图片中...", onClick: scrollToUploadSection, tone: "primary" as const }
     : { label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
+
+  useEffect(() => {
+    const nextTab = normalizeTabQuery(new URLSearchParams(window.location.search).get("tab"));
+
+    setActiveTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
+  }, []);
 
   function normalizeTab(tabId: TabId | RemovedTabId): TabId {
     return tabs.some((tab) => tab.id === tabId) ? (tabId as TabId) : "analysis";
@@ -227,6 +254,21 @@ export function ProductWorkspaceTabs({
           <>
             <ProductGenerationBriefEditor analysis={result.analysis} analysisHistoryId={result.historyId} onBriefChange={setGenerationBrief} />
             <ProductOutputSettingsEditor analysisHistoryId={result.historyId} onSettingsChange={setOutputSettings} />
+            <section className="product-detail-page-entry-card">
+              <div>
+                <strong>需要详情页素材？</strong>
+                <p>基于当前商品生成详情页结构和详情页图片，生成后会回到素材库和导出包中汇总。</p>
+              </div>
+              {result.historyId ? (
+                <Link className="button secondary" href={getDetailPageHref(result.historyId)}>
+                  前往详情页生成
+                </Link>
+              ) : (
+                <button className="button secondary" disabled type="button">
+                  等待商品分析
+                </button>
+              )}
+            </section>
             <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
           </>
         ) : null}
@@ -264,6 +306,7 @@ export function ProductWorkspaceTabs({
                 />
               ) : null}
               <ProductAssetGallery
+                analysisHistoryId={data.product.analysisHistoryId}
                 detailPages={data.detailPages}
                 imageSetImages={data.imageSetImages}
                 originalAsset={data.originalAsset}

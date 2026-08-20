@@ -6,9 +6,11 @@ import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureMod
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import Link from "next/link";
 import { useState } from "react";
 
 type ProductAssetGalleryProps = {
+  analysisHistoryId?: string;
   detailPages: HistoryRecord[];
   imageEdits: HistoryRecord[];
   imageSetImages: HistoryRecord[];
@@ -186,6 +188,10 @@ function sortImageSetAssetRecords(left: HistoryRecord, right: HistoryRecord) {
   return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
 }
 
+function getDetailPageHref(analysisHistoryId?: string) {
+  return analysisHistoryId ? `/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}` : "/dashboard/detail-page";
+}
+
 function AssetTile({
   label,
   downloadFilename,
@@ -245,6 +251,8 @@ function AssetTile({
 
 function AssetGroup({
   assets,
+  actionHref,
+  actionLabel,
   description,
   emptyText,
   notice,
@@ -252,6 +260,8 @@ function AssetGroup({
   sectionId,
   title,
 }: {
+  actionHref?: string;
+  actionLabel?: string;
   assets: GalleryAsset[];
   description: string;
   emptyText: string;
@@ -288,13 +298,20 @@ function AssetGroup({
           ))}
         </div>
       ) : (
-        <p className="product-asset-empty">{emptyText}</p>
+        <div className="product-asset-empty">
+          <p>{emptyText}</p>
+          {actionHref && actionLabel ? (
+            <Link className="button secondary" href={actionHref}>
+              {actionLabel}
+            </Link>
+          ) : null}
+        </div>
       )}
     </section>
   );
 }
 
-export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, originalAsset, sceneImages }: ProductAssetGalleryProps) {
+export function ProductAssetGallery({ analysisHistoryId, detailPages, imageEdits, imageSetImages, originalAsset, sceneImages }: ProductAssetGalleryProps) {
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const outputSettings = getLatestOutputSettings([...imageSetImages, ...detailPages, ...sceneImages, ...imageEdits]);
   const imageSetDeliveryInfo = getLatestImageSetDeliveryInfo(imageSetImages);
@@ -394,9 +411,11 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
           title="场景图"
         />
         <AssetGroup
+          actionHref={getDetailPageHref(analysisHistoryId)}
+          actionLabel="前往详情页生成"
           assets={detailPageAssets}
           description="用于商品详情页的卖点、细节和购买理由展示。"
-          emptyText="暂无详情页素材。详情页生成后续会作为独立工具提供，历史详情页图仍会显示在这里。"
+          emptyText="暂无详情页素材。你可以前往「详情页生成」为当前商品生成详情页图片。"
           onPreview={setSelectedImage}
           title="详情页图"
         />

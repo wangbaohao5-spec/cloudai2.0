@@ -14,6 +14,7 @@ import {
   sanitizeProductOutputSettings,
 } from "@/lib/product-output-settings";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type ProductContentPackageProps = {
@@ -481,6 +482,10 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
   ].join("\n");
 }
 
+function getDetailPageHref(analysisHistoryId?: string) {
+  return analysisHistoryId ? `/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}` : "/dashboard/detail-page";
+}
+
 export function ProductContentPackage({ data }: ProductContentPackageProps) {
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -540,6 +545,18 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
         <span>{outputSettings ? formatProductOutputSettingsSummary(outputSettings) : "发布目标未记录"}</span>
         <span>Markdown</span>
       </div>
+
+      {!data.detailPages.length ? (
+        <div className="product-content-package-detail-hint">
+          <div>
+            <strong>暂未生成详情页素材</strong>
+            <p>需要详情页图片时，可前往详情页生成；这里的复制和下载内容不会受影响。</p>
+          </div>
+          <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
+            前往详情页生成
+          </Link>
+        </div>
+      ) : null}
 
       <div className="product-content-preview">
         <button type="button" onClick={() => setIsPreviewOpen((current) => !current)}>

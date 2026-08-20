@@ -141,6 +141,20 @@ function goToProductWorkspace(analysisHistoryId?: string) {
   window.location.assign(href);
 }
 
+function getProductWorkspaceHref(analysisHistoryId?: string, tab?: "assets" | "export") {
+  if (!analysisHistoryId) {
+    return WORKSPACE_PRODUCTS_PATH;
+  }
+
+  const params = new URLSearchParams({ analysis: analysisHistoryId });
+
+  if (tab) {
+    params.set("tab", tab);
+  }
+
+  return `${WORKSPACE_PRODUCTS_PATH}?${params.toString()}`;
+}
+
 export function ProductDetailPageWorkspaceShell() {
   const [analysisHistoryId, setAnalysisHistoryId] = useState<string | null>(null);
   const [creationCenterData, setCreationCenterData] = useState<ProductCreationCenterData | null>(null);
@@ -322,7 +336,10 @@ export function ProductDetailPageWorkspaceShell() {
 
   const productName = creationCenterData.analysis.productNameSuggestions[0] || creationCenterData.product.title;
   const originalAssetUrl = creationCenterData.originalAsset?.previewUrl || creationCenterData.originalAsset?.url || "";
-  const workspaceHref = `${WORKSPACE_PRODUCTS_PATH}?analysis=${encodeURIComponent(analysisHistoryId)}`;
+  const workspaceHref = getProductWorkspaceHref(analysisHistoryId);
+  const workspaceAssetsHref = getProductWorkspaceHref(analysisHistoryId, "assets");
+  const workspaceExportHref = getProductWorkspaceHref(analysisHistoryId, "export");
+  const hasDetailPageAssets = creationCenterData.detailPages.length > 0;
 
   return (
     <main className="dashboard-content">
@@ -334,9 +351,17 @@ export function ProductDetailPageWorkspaceShell() {
             <h1>详情页生成</h1>
             <p>基于已分析商品生成详情页结构和详情页图片素材。</p>
           </div>
-          <Link className="button secondary" href={workspaceHref}>
-            返回商品工作台
-          </Link>
+          <div className="product-detail-page-hero-actions">
+            <Link className="button secondary" href={workspaceHref}>
+              返回商品工作台
+            </Link>
+            <Link className="button secondary" href={workspaceAssetsHref}>
+              查看素材库
+            </Link>
+            <Link className="button secondary" href={workspaceExportHref}>
+              导出素材包
+            </Link>
+          </div>
         </section>
 
         <section className="product-detail-page-context glass-card" aria-label="当前商品详情页上下文">
@@ -375,12 +400,21 @@ export function ProductDetailPageWorkspaceShell() {
 
         <section className="product-detail-page-existing glass-card">
           <div>
-            <strong>已有详情页素材</strong>
-            <p>已生成 {creationCenterData.detailPages.length} 张详情页图片，可在商品工作台素材库和导出包中查看。</p>
+            <strong>{hasDetailPageAssets ? "详情页素材已生成" : "已有详情页素材"}</strong>
+            <p>
+              {hasDetailPageAssets
+                ? `已生成 ${creationCenterData.detailPages.length} 张详情页图片，可回到商品工作台素材库查看、下载或导出素材包。`
+                : "生成详情页图片后，可在商品工作台素材库和导出包中查看。"}
+            </p>
           </div>
-          <Link className="button secondary" href={workspaceHref}>
-            回到素材库
-          </Link>
+          <div>
+            <Link className="button secondary" href={workspaceAssetsHref}>
+              查看素材库
+            </Link>
+            <Link className="button secondary" href={workspaceExportHref}>
+              导出素材包
+            </Link>
+          </div>
         </section>
       </section>
     </main>
