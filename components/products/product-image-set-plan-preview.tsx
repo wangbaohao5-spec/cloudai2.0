@@ -46,6 +46,7 @@ const IMAGE_TYPE_LABELS: Partial<Record<ProductImageSetPlanImage["imageType"], s
 };
 
 const CHIP_LIMIT = 5;
+const HERO_COPY_RISK_KEYWORDS = ["官方", "授权", "正品", "第一", "最好", "100%", "永久", "认证", "保证", "功效", "无副作用", "品牌"];
 
 function getNonEmptyItems(items: Array<string | undefined>) {
   return items.map((item) => item?.trim() || "").filter(Boolean);
@@ -90,6 +91,12 @@ function getImageTypeLabel(imageType: ProductImageSetPlanImage["imageType"]) {
   return IMAGE_TYPE_LABELS[imageType] || "商品图";
 }
 
+function hasHeroCopyRisk(image: ProductImageSetPlanImage) {
+  const text = [image.title, image.headline, image.keyMessage, image.visualDirection].filter(Boolean).join(" ");
+
+  return HERO_COPY_RISK_KEYWORDS.some((keyword) => text.includes(keyword));
+}
+
 export function ProductImageSetPlanPreview({
   generatingImageIndex = null,
   imageErrors = {},
@@ -128,6 +135,7 @@ export function ProductImageSetPlanPreview({
         const imageTypeLabel = getImageTypeLabel(image.imageType);
         const isHeroClickImage = image.imageIndex === 1;
         const displayTypeLabel = isHeroClickImage ? "主图点击图" : imageTypeLabel;
+        const hasHeroRiskNotice = isHeroClickImage && hasHeroCopyRisk(image);
         const coreCopyItems = getNonEmptyItems([image.headline, image.subheadline, image.keyMessage]);
         const keepItems = getNonEmptyItems([...image.requiredElements, ...image.mustKeep]);
         const avoidItems = getNonEmptyItems(image.avoid);
@@ -186,6 +194,9 @@ export function ProductImageSetPlanPreview({
             <div className="product-image-set-card__body product-image-set-card-body">
               <h3>{image.title}</h3>
               {isHeroClickImage ? <p className="product-image-set-hero-note">这张图负责吸引点击，展示商品最核心的卖点。</p> : null}
+              {hasHeroRiskNotice ? (
+                <p className="product-image-set-hero-risk-note">主图文案可能包含需确认表述，请生成前检查。</p>
+              ) : null}
               <p className="product-image-set-card-summary">
                 {result ? image.keyMessage || image.headline || "当前显示最近一次生成结果。" : image.goal || image.keyMessage || "暂无任务说明"}
               </p>
@@ -236,6 +247,7 @@ export function ProductImageSetPlanPreview({
             ) : null}
 
             <div className="product-image-set-plan-footer">
+              {hasHeroRiskNotice ? <p className="product-image-set-hero-generate-note">建议先确认主图文字是否可用于上架。</p> : null}
               <ProductGenerationCostHint
                 compact
                 type="image-set"

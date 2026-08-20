@@ -4965,6 +4965,25 @@ h3 {
   line-height: 1.5;
 }
 
+.product-image-set-hero-risk-note,
+.product-image-set-hero-generate-note {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, var(--card-border));
+  border-radius: 12px;
+  padding: 7px 9px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.product-image-set-hero-generate-note {
+  flex: 1 1 100%;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--warning) 7%, var(--workspace-surface));
+}
+
 .product-image-set-plan-card.has-result .product-image-set-card-summary {
   -webkit-line-clamp: 1;
 }
