@@ -25,6 +25,7 @@ type ProductImageSetPanelProps = {
   outputSettings?: ProductOutputSettings | null;
   onGenerated?: () => void;
   onOpenRiskConfirmations?: () => void;
+  onViewExport?: () => void;
   onViewAssets?: () => void;
 };
 
@@ -164,7 +165,15 @@ function ImageSetStructureValidationNotice({
   );
 }
 
-export function ProductImageSetPanel({ analysisResult, generationBrief, outputSettings, onGenerated, onOpenRiskConfirmations, onViewAssets }: ProductImageSetPanelProps) {
+export function ProductImageSetPanel({
+  analysisResult,
+  generationBrief,
+  outputSettings,
+  onGenerated,
+  onOpenRiskConfirmations,
+  onViewAssets,
+  onViewExport,
+}: ProductImageSetPanelProps) {
   const [count, setCount] = useState<ProductImageSetSmartCount>(7);
   const [customStructure, setCustomStructure] = useState<ProductImageSetCustomStructure>(() => getDefaultCustomStructure(7));
   const [error, setError] = useState("");
@@ -201,6 +210,9 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
   const isFullSetGenerated = Boolean(plan?.images.length) && remainingImages.length === 0;
   const hasAnyGeneratedImage = generatedCount > 0;
   const batchStatusTone = failedCount ? "warning" : isFullSetGenerated ? "complete" : "";
+  const deliveryDescription = isFullSetGenerated
+    ? "套图已完成，可前往素材库下载或导出素材包。"
+    : `已生成 ${generatedCount} / ${plan?.images.length || 0} 张图片，可先查看已生成素材。`;
 
   function getFullSetButtonLabel() {
     if (isGeneratingSet) {
@@ -640,14 +652,29 @@ export function ProductImageSetPanel({ analysisResult, generationBrief, outputSe
                     重试失败项
                   </button>
                 ) : null}
-                {isFullSetGenerated && onViewAssets ? (
-                  <button className="button secondary" disabled={isGeneratingSet || isPlanning} type="button" onClick={onViewAssets}>
-                    查看素材库
-                  </button>
-                ) : null}
                 <button className="button primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>
                   {getFullSetButtonLabel()}
                 </button>
+              </div>
+            </div>
+          ) : null}
+          {hasAnyGeneratedImage ? (
+            <div className="product-image-set-delivery-cta" aria-live="polite">
+              <div>
+                <strong>{isFullSetGenerated ? "套图已完成" : "套图已生成"}</strong>
+                <span>{deliveryDescription}</span>
+              </div>
+              <div>
+                {onViewAssets ? (
+                  <button className="button secondary" type="button" onClick={onViewAssets}>
+                    查看素材库
+                  </button>
+                ) : null}
+                {onViewExport ? (
+                  <button className="button secondary" type="button" onClick={onViewExport}>
+                    导出素材包
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : null}

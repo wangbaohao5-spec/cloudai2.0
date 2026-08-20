@@ -335,6 +335,31 @@ function getStringArrayField(value: unknown, key: string) {
   return Array.isArray(field) ? field.filter((item): item is string => typeof item === "string" && Boolean(item.trim())) : [];
 }
 
+function getImageSetRecordIndex(record: HistoryRecord) {
+  const image = getObjectField(record.output, "image") || getObjectField(record.input, "image");
+
+  return getNumberField(record.input, "imageIndex") ?? getNumberField(image, "imageIndex");
+}
+
+function sortImageSetRecords(left: HistoryRecord, right: HistoryRecord) {
+  const leftIndex = getImageSetRecordIndex(left);
+  const rightIndex = getImageSetRecordIndex(right);
+
+  if (leftIndex !== null && rightIndex !== null && leftIndex !== rightIndex) {
+    return leftIndex - rightIndex;
+  }
+
+  if (leftIndex !== null && rightIndex === null) {
+    return -1;
+  }
+
+  if (leftIndex === null && rightIndex !== null) {
+    return 1;
+  }
+
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+}
+
 function buildImageSetMarkdown(records: HistoryRecord[]) {
   if (!records.length) {
     return "";
@@ -344,12 +369,14 @@ function buildImageSetMarkdown(records: HistoryRecord[]) {
     "",
     "## 商品套图",
     "",
-    records
+    [...records]
+      .sort(sortImageSetRecords)
       .map((record, index) => {
         const image = getObjectField(record.output, "image") || getObjectField(record.input, "image");
         const imageIndex = getNumberField(record.input, "imageIndex") ?? getNumberField(image, "imageIndex") ?? index + 1;
         const imageType = getStringField(record.input, "imageType") || getStringField(image, "imageType");
         const imageTypeLabel = IMAGE_SET_TYPE_LABELS[imageType] || imageType || "套图";
+        const displayTypeLabel = imageIndex === 1 ? "主图点击图 / 首屏主视觉" : imageTypeLabel;
         const title = getStringField(image, "title") || record.title || "暂无";
         const headline = getStringField(image, "headline");
         const keyMessage = getStringField(image, "keyMessage");
@@ -359,16 +386,19 @@ function buildImageSetMarkdown(records: HistoryRecord[]) {
         const imageUrl = getOutputUrl(record.output);
 
         return [
-          `### 第 ${imageIndex} 张：${imageTypeLabel}`,
+          `### 第 ${imageIndex} 张：${displayTypeLabel}`,
           "",
-          `- 图类型：${imageTypeLabel}`,
+          `- 图类型：${displayTypeLabel}`,
+          imageIndex === 1 ? "- 主图说明：负责吸引点击并展示商品核心卖点。" : "",
           `- 标题：${title}`,
           `- 核心信息：${headline || keyMessage || "暂无"}`,
           `- 画面建议：${visualDirection}`,
           `- 必须保留：${formatInlineList(mustKeep)}`,
           `- 避免改动：${formatInlineList(avoid)}`,
           `- 图片链接：${imageUrl || "暂无"}`,
-        ].join("\n");
+        ]
+          .filter(Boolean)
+          .join("\n");
       })
       .join("\n\n"),
   ].join("\n");
@@ -388,6 +418,7 @@ function buildImageSetStructureMarkdown(records: HistoryRecord[]) {
     `- 套图用途：${summary.purpose}`,
     `- 结构模式：${summary.structureMode}`,
     summary.customStructure ? `- 图片结构：${summary.customStructure}` : "",
+    "- 主图点击图：第 1 张，负责吸引点击并展示商品核心卖点。",
     `- 已生成：${summary.generatedCount} 张`,
   ]
     .filter(Boolean)

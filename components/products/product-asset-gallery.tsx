@@ -19,7 +19,9 @@ type ProductAssetGalleryProps = {
 type GalleryAsset = {
   downloadFilename: string;
   id: string;
+  isHero?: boolean;
   label: string;
+  lightboxTitle?: string;
   meta?: string;
   previewUrl?: string | null;
   title: string;
@@ -147,17 +149,48 @@ function getImageSetInfo(record: HistoryRecord) {
   const headline = getStringField(image, "headline");
   const keyMessage = getStringField(image, "keyMessage");
   const typeLabel = IMAGE_SET_TYPE_LABELS[imageType] || imageType || "套图";
+  const isHero = imageIndex === 1;
 
   return {
+    imageIndex,
+    isHero,
     label: imageIndex ? `第 ${imageIndex} 张` : "套图",
+    lightboxTitle: isHero ? "第 1 张 · 主图点击图" : imageIndex ? `第 ${imageIndex} 张 · ${typeLabel}` : undefined,
     meta: typeLabel,
-    title: [typeLabel, title || headline || keyMessage].filter(Boolean).join(" · ") || record.title,
+    title: [isHero ? "主图点击图" : typeLabel, title || headline || keyMessage].filter(Boolean).join(" · ") || record.title,
   };
+}
+
+function getImageSetRecordIndex(record: HistoryRecord) {
+  const image = getObjectField(record.output, "image") || getObjectField(record.input, "image");
+
+  return getNumberField(record.input, "imageIndex") ?? getNumberField(image, "imageIndex");
+}
+
+function sortImageSetAssetRecords(left: HistoryRecord, right: HistoryRecord) {
+  const leftIndex = getImageSetRecordIndex(left);
+  const rightIndex = getImageSetRecordIndex(right);
+
+  if (leftIndex !== null && rightIndex !== null && leftIndex !== rightIndex) {
+    return leftIndex - rightIndex;
+  }
+
+  if (leftIndex !== null && rightIndex === null) {
+    return -1;
+  }
+
+  if (leftIndex === null && rightIndex !== null) {
+    return 1;
+  }
+
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
 }
 
 function AssetTile({
   label,
   downloadFilename,
+  isHero,
+  lightboxTitle,
   meta,
   onPreview,
   previewUrl,
@@ -165,7 +198,9 @@ function AssetTile({
   url,
 }: {
   downloadFilename: string;
+  isHero?: boolean;
   label: string;
+  lightboxTitle?: string;
   meta?: string;
   onPreview: (image: SelectedImage) => void;
   previewUrl?: string | null;
@@ -183,7 +218,7 @@ function AssetTile({
             className="product-image-preview-button product-asset-preview-button"
             type="button"
             aria-label={`放大查看${title}`}
-            onClick={() => onPreview({ alt: title, title: `${label} · ${title}`, url: lightboxUrl })}
+            onClick={() => onPreview({ alt: title, title: lightboxTitle || `${label} · ${title}`, url: lightboxUrl })}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img alt={title} decoding="async" loading="lazy" src={displayUrl} />
@@ -192,6 +227,7 @@ function AssetTile({
           <span>暂无预览</span>
         )}
         <span className="product-asset-type-badge">{label}</span>
+        {isHero ? <span className="product-asset-hero-badge">主图点击图</span> : null}
         {lightboxUrl ? (
           <div className="product-asset-download" onClick={(event) => event.stopPropagation()}>
             <ImageDownloadButton className="product-asset-download-button" filename={downloadFilename} imageUrl={lightboxUrl} label="下载" />
@@ -213,6 +249,7 @@ function AssetGroup({
   emptyText,
   notice,
   onPreview,
+  sectionId,
   title,
 }: {
   assets: GalleryAsset[];
@@ -220,10 +257,11 @@ function AssetGroup({
   emptyText: string;
   notice?: string;
   onPreview: (image: SelectedImage) => void;
+  sectionId?: string;
   title: string;
 }) {
   return (
-    <section className="product-asset-group product-asset-section">
+    <section className="product-asset-group product-asset-section" id={sectionId}>
       <div className="product-asset-group-header product-asset-section-header">
         <div>
           <strong>{title}</strong>
@@ -238,7 +276,9 @@ function AssetGroup({
             <AssetTile
               key={asset.id}
               downloadFilename={asset.downloadFilename}
+              isHero={asset.isHero}
               label={asset.label}
+              lightboxTitle={asset.lightboxTitle}
               meta={asset.meta}
               onPreview={onPreview}
               previewUrl={asset.previewUrl}
@@ -298,13 +338,15 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
       url: getOutputUrl(record.output),
     };
   });
-  const imageSetAssets = imageSetImages.map((record) => {
+  const imageSetAssets = [...imageSetImages].sort(sortImageSetAssetRecords).map((record) => {
     const imageSetInfo = getImageSetInfo(record);
 
     return {
       downloadFilename: buildImageDownloadFilename("image-set", [imageSetInfo.label, imageSetInfo.title]),
       id: record.id,
+      isHero: imageSetInfo.isHero,
       label: imageSetInfo.label,
+      lightboxTitle: imageSetInfo.lightboxTitle,
       previewUrl: record.previewUrl,
       title: imageSetInfo.title,
       meta: imageSetInfo.meta,
@@ -377,6 +419,7 @@ export function ProductAssetGallery({ detailPages, imageEdits, imageSetImages, o
               : undefined
           }
           onPreview={setSelectedImage}
+          sectionId="product-asset-section-image-set"
           title="商品套图"
         />
       </div>

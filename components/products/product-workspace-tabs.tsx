@@ -146,7 +146,7 @@ export function ProductWorkspaceTabs({
     { label: "图片", done: imageEditCount > 0 },
     { label: "场景", done: sceneImageCount > 0 },
   ];
-  const isExportReady = exportChecklist.every((item) => item.done);
+  const isExportReady = Boolean(creationCenterData) && (copywritingCount > 0 || generatedAssetCount > 0);
   const uploadEmptyAction = isUploading
     ? { disabled: true, label: "上传图片中...", onClick: scrollToUploadSection, tone: "primary" as const }
     : { label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
@@ -387,7 +387,8 @@ export function ProductWorkspaceTabs({
           outputSettings={outputSettings}
           onGenerated={onGenerated}
           onOpenRiskConfirmations={openRiskConfirmations}
-          onViewAssets={() => switchTabAndFocus("assets", "product-workspace-panel-assets")}
+          onViewAssets={() => switchTabAndFocus("assets", "product-asset-section-image-set")}
+          onViewExport={() => switchTabAndFocus("export", "product-workspace-panel-export")}
         />
       </div>
 
