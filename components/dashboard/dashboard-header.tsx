@@ -1,5 +1,6 @@
 import { signOut } from "@/auth";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
+import { ThemeQuickToggle } from "@/components/dashboard/theme-quick-toggle";
 
 type DashboardHeaderProps = {
   userEmail: string;
@@ -20,6 +21,7 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
         <h1>CloudAI 工作台</h1>
       </div>
       <div className="dashboard-user">
+        <ThemeQuickToggle />
         <span className="dashboard-user-account" title={accountLabel}>
           {accountLabel}
         </span>
