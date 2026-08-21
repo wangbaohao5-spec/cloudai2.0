@@ -5,13 +5,14 @@ export type AIMessage = {
   content: string;
 };
 
-export type TextGenerationTask = "copywriting" | "detail-page-plan" | "image-set-plan" | "product-copywriting";
+export type TextGenerationTask = "chat-assistant" | "copywriting" | "detail-page-plan" | "image-set-plan" | "product-copywriting";
 
 export type GenerateAIResponseOptions = {
   jsonMode?: boolean;
   model?: string;
   outputSettings?: ProductOutputSettings | null;
   requestId?: string;
+  strictProviderConfig?: boolean;
   task?: TextGenerationTask;
   temperature?: number;
 };
@@ -20,14 +21,17 @@ export type AIProvider = {
   generateAIResponse: (messages: AIMessage[], options?: GenerateAIResponseOptions) => Promise<string>;
 };
 
-type TextProviderName = "deepseek" | "openai-compatible";
+export type TextProviderName = "deepseek" | "openai-compatible";
 type TextConfigSource = "default" | "fallback" | "global-env" | "multilingual-env" | "provider-default-env" | "task-env";
 
 const DEEPSEEK_MODEL_ID = "deepseek-v4-pro";
 
 type TextEnvName =
+  | "CHAT_TEXT_MODEL"
+  | "CHAT_TEXT_PROVIDER"
   | "COPYWRITING_TEXT_MODEL"
   | "COPYWRITING_TEXT_PROVIDER"
+  | "DEEPSEEK_API_KEY"
   | "DETAIL_PAGE_PLAN_TEXT_MODEL"
   | "DETAIL_PAGE_PLAN_TEXT_PROVIDER"
   | "IMAGE_SET_PLAN_TEXT_MODEL"
@@ -43,6 +47,10 @@ type TextEnvName =
   | "TEXT_PROVIDER";
 
 const TASK_ENV_MAP = {
+  "chat-assistant": {
+    model: "CHAT_TEXT_MODEL",
+    provider: "CHAT_TEXT_PROVIDER",
+  },
   copywriting: {
     model: "COPYWRITING_TEXT_MODEL",
     provider: "COPYWRITING_TEXT_PROVIDER",
@@ -70,6 +78,48 @@ type TextProviderConfig = {
   task?: TextGenerationTask;
 };
 
+export type TextProviderErrorKind = "auth" | "configuration" | "model-not-found" | "network" | "rate-limit" | "server" | "unknown";
+
+export class TextProviderError extends Error {
+  kind: TextProviderErrorKind;
+  model?: string;
+  provider?: TextProviderName;
+  status?: number;
+  upstreamCode?: string;
+  upstreamMessage?: string;
+  upstreamStatus?: string;
+
+  constructor({
+    kind,
+    message,
+    model,
+    provider,
+    status,
+    upstreamCode,
+    upstreamMessage,
+    upstreamStatus,
+  }: {
+    kind: TextProviderErrorKind;
+    message: string;
+    model?: string;
+    provider?: TextProviderName;
+    status?: number;
+    upstreamCode?: string;
+    upstreamMessage?: string;
+    upstreamStatus?: string;
+  }) {
+    super(message);
+    this.name = "TextProviderError";
+    this.kind = kind;
+    this.model = model;
+    this.provider = provider;
+    this.status = status;
+    this.upstreamCode = upstreamCode;
+    this.upstreamMessage = upstreamMessage;
+    this.upstreamStatus = upstreamStatus;
+  }
+}
+
 function getOptionalTextEnv(name: TextEnvName) {
   return process.env[name]?.trim() || "";
 }
@@ -88,6 +138,8 @@ function logTextEnvSnapshot() {
   }
 
   console.info("[text-router] env snapshot", {
+    CHAT_TEXT_MODEL: getOptionalTextEnv("CHAT_TEXT_MODEL"),
+    CHAT_TEXT_PROVIDER: getOptionalTextEnv("CHAT_TEXT_PROVIDER"),
     COPYWRITING_TEXT_MODEL: getOptionalTextEnv("COPYWRITING_TEXT_MODEL"),
     COPYWRITING_TEXT_PROVIDER: getOptionalTextEnv("COPYWRITING_TEXT_PROVIDER"),
     DETAIL_PAGE_PLAN_TEXT_MODEL: getOptionalTextEnv("DETAIL_PAGE_PLAN_TEXT_MODEL"),
@@ -125,6 +177,20 @@ function getOutputLanguage(outputSettings?: ProductOutputSettings | null) {
 
 function isMultilingualTask(task?: TextGenerationTask) {
   return Boolean(task && ["copywriting", "product-copywriting", "detail-page-plan", "image-set-plan"].includes(task));
+}
+
+function getEnvHost(name: TextEnvName) {
+  const value = getOptionalTextEnv(name);
+
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return new URL(value).host;
+  } catch {
+    return "invalid-url";
+  }
 }
 
 function getResolvedTextProviderConfig(task?: TextGenerationTask, outputSettings?: ProductOutputSettings | null): TextProviderConfig {
@@ -174,12 +240,25 @@ function isOpenAICompatibleTextConfigured(model: string) {
   return Boolean(getOptionalTextEnv("OPENAI_TEXT_API_KEY") && getOptionalTextEnv("OPENAI_TEXT_BASE_URL") && model);
 }
 
-function getRunnableTextProviderConfig(task?: TextGenerationTask, outputSettings?: ProductOutputSettings | null): TextProviderConfig {
+function getRunnableTextProviderConfig(
+  task?: TextGenerationTask,
+  outputSettings?: ProductOutputSettings | null,
+  options: { strictProviderConfig?: boolean } = {},
+): TextProviderConfig {
   const config = getResolvedTextProviderConfig(task, outputSettings);
 
   if (config.provider === "openai-compatible") {
     if (isOpenAICompatibleTextConfigured(config.model)) {
       return config;
+    }
+
+    if (options.strictProviderConfig) {
+      throw new TextProviderError({
+        kind: "configuration",
+        message: "OpenAI-compatible text provider is not fully configured.",
+        model: config.model,
+        provider: config.provider,
+      });
     }
 
     console.error("[text-router] openai-compatible text provider is not fully configured; falling back to deepseek", {
@@ -201,6 +280,22 @@ function getRunnableTextProviderConfig(task?: TextGenerationTask, outputSettings
   };
 }
 
+export function getTextProviderResolution(
+  task?: TextGenerationTask,
+  outputSettings?: ProductOutputSettings | null,
+  options: { strictProviderConfig?: boolean } = {},
+) {
+  const config = getRunnableTextProviderConfig(task, outputSettings, options);
+
+  return {
+    ...config,
+    baseUrlHost: config.provider === "openai-compatible" ? getEnvHost("OPENAI_TEXT_BASE_URL") : "api.deepseek.com",
+    hasApiKey: config.provider === "openai-compatible" ? Boolean(getOptionalTextEnv("OPENAI_TEXT_API_KEY")) : Boolean(getOptionalTextEnv("DEEPSEEK_API_KEY")),
+    hasBaseUrl: config.provider === "openai-compatible" ? Boolean(getOptionalTextEnv("OPENAI_TEXT_BASE_URL")) : true,
+    modelId: config.provider === "openai-compatible" ? `openai-compatible:${config.model}` : config.model || DEEPSEEK_MODEL_ID,
+  };
+}
+
 export function getTextProviderName(task?: TextGenerationTask): TextProviderName {
   return getRunnableTextProviderConfig(task).provider;
 }
@@ -216,7 +311,7 @@ export function getTextProviderModelId(task?: TextGenerationTask, outputSettings
 }
 
 export async function generateAIResponse(messages: AIMessage[], options?: GenerateAIResponseOptions) {
-  const config = getRunnableTextProviderConfig(options?.task, options?.outputSettings);
+  const config = getRunnableTextProviderConfig(options?.task, options?.outputSettings, { strictProviderConfig: options?.strictProviderConfig });
   const requestId = options?.requestId || createTextRequestId();
 
   logTextEnvSnapshot();

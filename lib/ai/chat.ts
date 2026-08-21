@@ -10,5 +10,5 @@ export async function generateChatReply(messages: ChatMessage[]) {
   return generateAIResponse([
     { role: "system", content: CHAT_SYSTEM_PROMPT },
     ...conversationMessages,
-  ]);
+  ], { strictProviderConfig: true, task: "chat-assistant" });
 }
