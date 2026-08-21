@@ -1,6 +1,5 @@
 import { signOut } from "@/auth";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
-import { ThemeSelector } from "@/components/dashboard/theme-selector";
 
 type DashboardHeaderProps = {
   userEmail: string;
@@ -8,6 +7,8 @@ type DashboardHeaderProps = {
 };
 
 export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
+  const accountLabel = userEmail || userName;
+
   return (
     <header className="dashboard-header">
       <details className="dashboard-mobile-nav">
@@ -19,11 +20,9 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
         <h1>CloudAI 工作台</h1>
       </div>
       <div className="dashboard-user">
-        <div className="dashboard-user-info">
-          <strong>{userName}</strong>
-          <span>{userEmail}</span>
-        </div>
-        <ThemeSelector />
+        <span className="dashboard-user-account" title={accountLabel}>
+          {accountLabel}
+        </span>
         <form
           action={async () => {
             "use server";

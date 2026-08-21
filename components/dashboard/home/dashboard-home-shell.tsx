@@ -14,8 +14,7 @@ export function DashboardHomeShell({ data }: DashboardHomeShellProps) {
     <main className="dashboard-content">
       <section className="dashboard-home">
         <div className="dashboard-home-hero">
-          <p className="eyebrow">Dashboard</p>
-          <h1>CloudAI 工作台</h1>
+          <p className="eyebrow">Workspace Overview</p>
           <p>继续商品创作、查看最近素材和工作进度。</p>
         </div>
 

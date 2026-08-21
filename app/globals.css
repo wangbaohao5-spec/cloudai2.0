@@ -1989,27 +1989,28 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 18px;
   border-bottom: 1px solid var(--header-border);
-  padding: 28px 36px;
+  padding: 14px 28px;
   background: var(--header-bg);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(12px);
 }
 
 .dashboard-header h1 {
   margin-bottom: 0;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  line-height: 1.12;
 }
 
 .dashboard-user {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 10px 12px;
-  background: var(--surface);
+  max-width: min(360px, 46vw);
+  gap: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 5px 6px 5px 12px;
+  background: var(--surface-card-muted);
 }
 
 .dashboard-user-info {
@@ -2029,6 +2030,13 @@ h3 {
   font-size: 0.78rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dashboard-user-account {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .theme-selector {
@@ -2122,15 +2130,18 @@ h3 {
 }
 
 .dashboard-user button {
-  border: 1px solid var(--card-border);
+  min-height: 30px;
+  border: 1px solid var(--border-subtle);
   border-radius: 999px;
-  padding: 8px 12px;
-  color: var(--text);
-  background: var(--surface-hover);
+  padding: 0 10px;
+  color: var(--button-ghost-text);
+  background: var(--button-ghost-bg);
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .dashboard-content {
-  padding: 36px;
+  padding: 22px 28px 32px;
 }
 
 .dashboard-welcome {
@@ -2169,13 +2180,13 @@ h3 {
 
 .dashboard-home {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   max-width: 1320px;
 }
 
 .dashboard-home-hero {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .dashboard-home-hero h1 {
@@ -2189,22 +2200,23 @@ h3 {
   max-width: 760px;
   margin-bottom: 0;
   color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .dashboard-home-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.45fr);
-  gap: 18px;
+  gap: 16px;
   align-items: stretch;
 }
 
 .continue-product-card {
   display: grid;
   grid-template-columns: minmax(170px, 0.32fr) minmax(0, 1fr);
-  gap: 18px;
-  min-height: 260px;
-  border-radius: 20px;
-  padding: 20px;
+  gap: 16px;
+  min-height: 230px;
+  border-radius: 18px;
+  padding: 16px;
 }
 
 .continue-product-card-empty {
@@ -2222,7 +2234,7 @@ h3 {
 }
 
 .continue-product-media {
-  min-height: 220px;
+  min-height: 190px;
   border-radius: 16px;
 }
 
@@ -2235,14 +2247,14 @@ h3 {
 
 .continue-product-body {
   display: grid;
-  gap: 13px;
+  gap: 10px;
   align-content: center;
   min-width: 0;
 }
 
 .continue-product-body h2 {
   margin-bottom: 0;
-  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-size: clamp(1.35rem, 2.3vw, 1.9rem);
   letter-spacing: 0;
   word-break: break-word;
 }
@@ -2273,7 +2285,7 @@ h3 {
 .continue-product-status span {
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  padding: 7px 10px;
+  padding: 6px 9px;
   color: var(--text-muted);
   background: var(--surface-card-muted);
   font-size: 0.82rem;
@@ -2296,17 +2308,17 @@ h3 {
 .dashboard-home-section,
 .dashboard-quick-start {
   border-radius: 18px;
-  padding: 20px;
+  padding: 16px;
 }
 
 .today-generated-card {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
 }
 
 .today-generated-header h2 {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: var(--text);
   font-size: 1.25rem;
   letter-spacing: 0;
@@ -2322,7 +2334,7 @@ h3 {
 .today-generated-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
 }
 
 .today-generated-list article {
@@ -2339,7 +2351,7 @@ h3 {
 
 .today-generated-list strong {
   color: var(--text);
-  font-size: 1.45rem;
+  font-size: 1.28rem;
   line-height: 1;
 }
 
@@ -9498,18 +9510,19 @@ h3 {
     position: sticky;
     top: 0;
     z-index: 10;
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 20px 24px;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 16px;
   }
 
   .dashboard-user {
+    max-width: none;
     width: 100%;
     justify-content: space-between;
   }
 
   .dashboard-content {
-    padding: 24px;
+    padding: 16px;
   }
 
   .dashboard-section-header,
