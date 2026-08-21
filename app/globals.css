@@ -2350,6 +2350,95 @@ h3 {
   padding: 22px 28px 32px;
 }
 
+.dashboard-settings-page {
+  display: grid;
+  max-width: 840px;
+  gap: 18px;
+}
+
+.dashboard-settings-header {
+  display: grid;
+  max-width: 680px;
+  gap: 6px;
+}
+
+.dashboard-settings-header h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+
+.dashboard-settings-header p:last-child {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.dashboard-settings-card {
+  display: grid;
+  max-width: 560px;
+  gap: 16px;
+}
+
+.dashboard-settings-card h2 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  letter-spacing: 0;
+}
+
+.dashboard-settings-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.dashboard-settings-card .theme-selector {
+  justify-self: start;
+}
+
+.dashboard-settings-card .theme-selector-trigger {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 10px 13px;
+  color: var(--text-default);
+  background: var(--surface-card-muted);
+  box-shadow: var(--shadow-xs);
+}
+
+.dashboard-settings-card .theme-selector-menu {
+  left: 0;
+  right: auto;
+}
+
+.dashboard-settings-card .theme-selector-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 10px;
+  color: var(--text-muted);
+  background: transparent;
+  text-align: left;
+}
+
+.dashboard-settings-card .theme-selector-menu button:hover,
+.dashboard-settings-card .theme-selector-menu button.selected {
+  border-color: var(--border-default);
+  color: var(--text-default);
+  background: var(--surface-card-muted);
+}
+
+.dashboard-settings-note {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+  font-size: 0.86rem;
+}
+
 .dashboard-welcome {
   border-radius: 28px;
   padding: 36px;
