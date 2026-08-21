@@ -12,6 +12,28 @@ const initialMessages: ChatMessageData[] = [
   },
 ];
 
+type ChatApiResponse = {
+  content?: string;
+  debug?: string;
+  error?: string;
+  message?: string;
+  reply?: string;
+  result?: string;
+  text?: string;
+};
+
+async function readChatApiResponse(response: Response) {
+  return response.json().catch(() => null) as Promise<ChatApiResponse | null>;
+}
+
+function getAssistantContent(data: ChatApiResponse | null) {
+  return data?.content || data?.text || data?.result || data?.reply || "";
+}
+
+function getChatErrorMessage(data: ChatApiResponse | null) {
+  return data?.error || data?.message || "创作助手服务暂时不可用，请稍后重试。";
+}
+
 export function ChatWindow() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +48,14 @@ export function ChatWindow() {
   }, [messages, isLoading]);
 
   async function handleSend(content: string) {
-    const userMessage: ChatMessageData = { role: "user", content };
+    const nextContent = content.trim();
+
+    if (!nextContent) {
+      setError("消息不能为空。");
+      return;
+    }
+
+    const userMessage: ChatMessageData = { role: "user", content: nextContent };
     const nextMessages = [...messages, userMessage];
     const apiMessages = nextMessages.filter((message) => message.content.trim());
 
@@ -45,12 +74,27 @@ export function ChatWindow() {
         }),
       });
 
+      const data = await readChatApiResponse(response);
+
       if (!response.ok) {
-        throw new Error("聊天请求失败，请稍后再试。");
+        if (process.env.NODE_ENV === "development") {
+          console.info("[chat-window] request failed", {
+            message: data?.error || data?.message,
+            responseKeys: data ? Object.keys(data) : [],
+            status: response.status,
+          });
+        }
+
+        throw new Error(getChatErrorMessage(data));
       }
 
-      const data = (await response.json()) as { reply: string };
-      const assistantMessage: ChatMessageData = { role: "assistant", content: data.reply };
+      const assistantContent = getAssistantContent(data);
+
+      if (!assistantContent.trim()) {
+        throw new Error("创作助手服务没有返回有效回复，请稍后重试。");
+      }
+
+      const assistantMessage: ChatMessageData = { role: "assistant", content: assistantContent };
 
       setMessages([...nextMessages, assistantMessage]);
     } catch (caughtError) {
