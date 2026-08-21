@@ -19,6 +19,7 @@ type ProductWorkspaceRailProps = {
   isAnalyzing: boolean;
   isRestoring: boolean;
   isUploading: boolean;
+  mode?: "initial" | "pending" | "restoring" | "workspace";
   onAnalyze: () => void;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onProductHintChange: (value: string) => void;
@@ -99,6 +100,7 @@ export function ProductWorkspaceRail({
   isAnalyzing,
   isRestoring,
   isUploading,
+  mode = "workspace",
   onAnalyze,
   onFileChange,
   onProductHintChange,
@@ -111,6 +113,60 @@ export function ProductWorkspaceRail({
   const isPrimaryActionLoading = isUploading || isAnalyzing || isRestoring;
   const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
   const generatedCount = getGeneratedCount(creationCenterData);
+
+  if (mode !== "workspace") {
+    const railStatus =
+      mode === "restoring"
+        ? {
+            label: "正在恢复",
+            description: "CloudAI 正在读取最近的商品工作区，请稍等片刻。",
+          }
+        : mode === "pending"
+          ? {
+              label: "待策划",
+              description: "商品图片已准备好，请在主区域确认补充信息并开始商品策划。",
+            }
+          : {
+              label: "未开始",
+              description: "先上传商品图片，CloudAI 会创建当前商品工作区。",
+            };
+
+    return (
+      <aside className="product-workspace-rail product-workspace-rail--start">
+        <div className="product-workspace-rail-section product-workspace-rail-heading">
+          <p className="eyebrow">商品工作台</p>
+          <h2>{mode === "pending" ? "等待商品策划" : "等待上传商品图"}</h2>
+          <p className="image-generation-intro">{railStatus.description}</p>
+        </div>
+
+        <div className="product-workspace-status" aria-live="polite">
+          <div>
+            <span>当前状态</span>
+            <p>{railStatus.description}</p>
+          </div>
+          <strong>{railStatus.label}</strong>
+        </div>
+
+        <section className="product-workflow-mini-steps is-compact" aria-label="轻量创建流程">
+          <strong>创建流程</strong>
+          <div>
+            {["上传商品图", "商品策划", "商品套图", "素材库", "素材包"].map((step) => (
+              <span key={step}>{step}</span>
+            ))}
+          </div>
+        </section>
+
+        {uploadedAsset ? (
+          <div className="product-workspace-pending-summary">
+            <strong>{uploadedAsset.name}</strong>
+            <p>{isUploading ? "商品图片正在上传，请稍等。" : "图片已上传，可在主区域开始商品策划。"}</p>
+          </div>
+        ) : null}
+
+        {error ? <p className="image-generation-error">{error}</p> : null}
+      </aside>
+    );
+  }
 
   return (
     <aside className="product-workspace-rail">

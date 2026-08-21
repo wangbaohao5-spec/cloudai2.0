@@ -2,6 +2,8 @@
 
 import { ProductWorkspaceRail } from "@/components/products/product-workspace-rail";
 import { ProductWorkspaceTabs } from "@/components/products/product-workspace-tabs";
+import { AiThinkingLoading } from "@/components/ui/loading";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -11,6 +13,18 @@ type UploadedAsset = {
   assetId: string;
   name: string;
   url: string;
+};
+
+type ProductWorkspaceStartPanelProps = {
+  error: string;
+  isAnalyzing: boolean;
+  isRestoring: boolean;
+  isUploading: boolean;
+  onAnalyze: () => void;
+  onFileSelect: (file: File) => void;
+  onProductHintChange: (value: string) => void;
+  productHint: string;
+  uploadedAsset: UploadedAsset | null;
 };
 
 const PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY = "cloudai:products:last-analysis-history-id";
@@ -52,6 +66,163 @@ async function fetchCreationCenterData(analysisHistoryId: string) {
   return (await response.json()) as ProductCreationCenterData;
 }
 
+function ProductWorkspaceStartPanel({
+  error,
+  isAnalyzing,
+  isRestoring,
+  isUploading,
+  onAnalyze,
+  onFileSelect,
+  onProductHintChange,
+  productHint,
+  uploadedAsset,
+}: ProductWorkspaceStartPanelProps) {
+  const isPendingAnalysis = Boolean(uploadedAsset) || isUploading;
+  const isBusy = isUploading || isAnalyzing || isRestoring;
+  const buttonLabel = isUploading
+    ? "上传图片中..."
+    : isAnalyzing
+      ? "正在商品策划..."
+      : isRestoring
+        ? "正在恢复商品..."
+        : uploadedAsset
+          ? "开始商品策划"
+          : "请先上传商品图";
+
+  function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      onFileSelect(file);
+    }
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+
+    const file = event.dataTransfer.files?.[0];
+
+    if (file) {
+      onFileSelect(file);
+    }
+  }
+
+  if (isRestoring) {
+    return (
+      <section className="product-workspace-start product-workspace-start--loading" aria-label="正在恢复商品工作台">
+        <div className="cai-empty product-workspace-start-loading">
+          <div className="cai-empty__icon" aria-hidden="true">
+            ...
+          </div>
+          <h2 className="cai-empty__title">正在恢复商品工作台</h2>
+          <p className="cai-empty__description">CloudAI 正在读取当前商品分析记录，请稍等片刻。</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="product-workspace-start" aria-label={isPendingAnalysis ? "待分析商品" : "创建商品项目"}>
+      <div className="product-workspace-start-header">
+        <p className="eyebrow">{isPendingAnalysis ? "Pending Analysis" : "New Product Project"}</p>
+        <h1>{isPendingAnalysis ? "待分析商品" : "创建商品项目"}</h1>
+        <p>
+          {isPendingAnalysis
+            ? "请确认商品图片和补充信息，然后开始商品策划。"
+            : "上传一张商品图，CloudAI 会先完成商品策划，再帮助你生成上架文案、原图优化、商品套图和素材包。"}
+        </p>
+      </div>
+
+      <div className="product-workspace-start-grid">
+        <section className="cai-card product-workspace-start-upload-card" aria-label="上传商品图">
+          <div className="product-workspace-start-section-header">
+            <span>01</span>
+            <div>
+              <h2>上传商品图</h2>
+              <p>支持 PNG、JPG、WebP。建议选择主体完整、光线清楚的商品原图。</p>
+            </div>
+          </div>
+
+          <label
+            className={`product-workspace-start-upload ${uploadedAsset?.url ? "has-preview" : ""}`}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={handleDrop}
+          >
+            <input accept="image/png,image/jpeg,image/webp" type="file" onChange={handleFileInputChange} />
+            {uploadedAsset?.url ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img alt={uploadedAsset.name || "商品图片预览"} src={uploadedAsset.url} />
+                <span>{uploadedAsset.name}</span>
+              </>
+            ) : (
+              <div>
+                <strong>{isUploading ? "图片上传中..." : "拖拽或点击选择商品图"}</strong>
+                <p>上传后会在这里预览，确认无误后开始商品策划。</p>
+              </div>
+            )}
+          </label>
+
+          <details className="product-upload-tips product-workspace-start-tips">
+            <summary>查看上传建议</summary>
+            <ul>
+              <li>商品主体完整，边缘不要被裁切</li>
+              <li>光线清楚，避免严重反光或过暗</li>
+              <li>服装、包包、首饰建议保留关键细节</li>
+              <li>有 Logo、图案、版型时可在补充信息中注明必须保留</li>
+            </ul>
+          </details>
+        </section>
+
+        <section className="cai-card product-workspace-start-brief-card" aria-label="商品补充信息">
+          <div className="product-workspace-start-section-header">
+            <span>02</span>
+            <div>
+              <h2>商品补充信息（可选）</h2>
+              <p>补充型号、规格、颜色、材质、卖点或必须保留的细节，能让 AI 更准确地完成商品策划。</p>
+            </div>
+          </div>
+
+          <textarea
+            className="cai-textarea product-workspace-start-textarea"
+            maxLength={1000}
+            placeholder="例如：这是一款粉蓝配色机械键盘，粉色背光，右下角卡通图案是键盘设计的一部分，请保留键盘整体布局、粉蓝配色、粉色灯光和卡通图案位置。"
+            rows={5}
+            value={productHint}
+            onChange={(event) => onProductHintChange(event.target.value)}
+          />
+          <div className="product-workspace-start-hint-row">
+            <span>{productHint.trim().length ? `${productHint.trim().length}/1000` : "不填写也可以直接开始策划"}</span>
+          </div>
+
+          <button className="cai-button cai-button--primary cai-button--full" disabled={!uploadedAsset || isBusy} type="button" onClick={onAnalyze}>
+            {isAnalyzing ? <AiThinkingLoading size="sm" /> : isUploading ? <LoadingIndicator /> : null}
+            {buttonLabel}
+          </button>
+
+          {error ? <p className="image-generation-error">{error}</p> : null}
+        </section>
+      </div>
+
+      <aside className="cai-card cai-card--muted product-workspace-start-guide" aria-label="商品策划会识别的内容">
+        <div>
+          <strong>{isPendingAnalysis ? "商品策划会识别" : "创建后可以继续生成"}</strong>
+          <p>
+            {isPendingAnalysis
+              ? "商品类别、颜色/材质/规格、核心卖点、必须保留的细节和后续生成建议。"
+              : "商品策划、上架文案、原图优化、商品套图、素材库和素材包。"}
+          </p>
+        </div>
+        <div className="product-workspace-start-flow" aria-label="轻量流程">
+          {["上传商品图", "商品策划", "商品套图", "素材库", "素材包"].map((step) => (
+            <span key={step}>{step}</span>
+          ))}
+        </div>
+      </aside>
+    </section>
+  );
+}
+
 export function ProductWorkspaceShell() {
   const [error, setError] = useState("");
   const [creationCenterError, setCreationCenterError] = useState("");
@@ -59,6 +230,7 @@ export function ProductWorkspaceShell() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCreationCenterLoading, setIsCreationCenterLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [hasCheckedInitialRestore, setHasCheckedInitialRestore] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
@@ -100,6 +272,9 @@ export function ProductWorkspaceShell() {
 
     async function restoreProductWorkspace() {
       if (!analysisHistoryId) {
+        if (isMounted) {
+          setHasCheckedInitialRestore(true);
+        }
         return;
       }
 
@@ -152,6 +327,7 @@ export function ProductWorkspaceShell() {
       } finally {
         if (isMounted) {
           setIsRestoring(false);
+          setHasCheckedInitialRestore(true);
         }
       }
     }
@@ -218,9 +394,7 @@ export function ProductWorkspaceShell() {
     };
   }, [result?.historyId, creationCenterRefreshKey]);
 
-  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-
+  async function uploadProductFile(file: File) {
     if (!file) {
       return;
     }
@@ -258,6 +432,14 @@ export function ProductWorkspaceShell() {
       showToast(message, "error");
     } finally {
       setIsUploading(false);
+    }
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      void uploadProductFile(file);
     }
   }
 
@@ -312,16 +494,23 @@ export function ProductWorkspaceShell() {
     setCreationCenterRefreshKey((value) => value + 1);
   }
 
+  const hasAnalysis = Boolean(result);
+  const isInitialRestorePending = !hasCheckedInitialRestore || isRestoring;
+  const hasUploadedAsset = Boolean(uploadedAsset) || isUploading;
+  const workspaceMode = isInitialRestorePending ? "restoring" : hasAnalysis ? "workspace" : hasUploadedAsset ? "pending" : "initial";
+  const shouldShowFullWorkspace = workspaceMode === "workspace";
+
   return (
     <main className="dashboard-content">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
-      <section className="product-workspace-shell">
+      <section className={`product-workspace-shell ${shouldShowFullWorkspace ? "" : "product-workspace-shell--start"}`}>
         <ProductWorkspaceRail
           creationCenterData={creationCenterData}
           error={error}
           isAnalyzing={isAnalyzing}
           isRestoring={isRestoring}
           isUploading={isUploading}
+          mode={workspaceMode}
           result={result}
           productHint={productHint}
           uploadedAsset={uploadedAsset}
@@ -329,17 +518,31 @@ export function ProductWorkspaceShell() {
           onFileChange={handleFileChange}
           onProductHintChange={setProductHint}
         />
-        <ProductWorkspaceTabs
-          creationCenterData={creationCenterData}
-          creationCenterError={creationCenterError}
-          isAnalyzing={isAnalyzing}
-          isCreationCenterLoading={isCreationCenterLoading}
-          isUploading={isUploading}
-          result={result}
-          uploadedAsset={uploadedAsset}
-          onAnalyze={() => void handleAnalyze()}
-          onGenerated={handleGenerated}
-        />
+        {shouldShowFullWorkspace ? (
+          <ProductWorkspaceTabs
+            creationCenterData={creationCenterData}
+            creationCenterError={creationCenterError}
+            isAnalyzing={isAnalyzing}
+            isCreationCenterLoading={isCreationCenterLoading}
+            isUploading={isUploading}
+            result={result}
+            uploadedAsset={uploadedAsset}
+            onAnalyze={() => void handleAnalyze()}
+            onGenerated={handleGenerated}
+          />
+        ) : (
+          <ProductWorkspaceStartPanel
+            error={error}
+            isAnalyzing={isAnalyzing}
+            isRestoring={isInitialRestorePending}
+            isUploading={isUploading}
+            productHint={productHint}
+            uploadedAsset={uploadedAsset}
+            onAnalyze={() => void handleAnalyze()}
+            onFileSelect={(file) => void uploadProductFile(file)}
+            onProductHintChange={setProductHint}
+          />
+        )}
       </section>
     </main>
   );
