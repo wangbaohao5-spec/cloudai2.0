@@ -8056,6 +8056,13 @@ h3 {
   object-fit: contain;
 }
 
+.product-image-edit-result-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
 .product-image-lightbox {
   position: fixed;
   inset: 0;

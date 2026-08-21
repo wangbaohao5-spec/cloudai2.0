@@ -363,8 +363,8 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
     return (
       <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
         <p className="eyebrow">Next Step</p>
-        <h2>AI 商品营销文案</h2>
-        <p className="image-generation-intro">先完成商品图片分析，CloudAI 会把识别到的类别、卖点和目标用户转成可发布的电商文案。</p>
+        <h2>上架文案</h2>
+        <p className="image-generation-intro">先完成商品图片分析，CloudAI 会把识别到的类别、卖点和目标用户转成可发布的商品上架文案。</p>
       </section>
     );
   }
@@ -375,8 +375,8 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Next Step</p>
-          <h2>AI 商品营销文案</h2>
-          <p className="image-generation-intro">基于当前商品分析结果生成电商营销文案。</p>
+          <h2>上架文案</h2>
+          <p className="image-generation-intro">基于当前商品分析结果生成商品标题、卖点、描述和平台文案。</p>
         </div>
         <span>已连接分析结果</span>
       </div>

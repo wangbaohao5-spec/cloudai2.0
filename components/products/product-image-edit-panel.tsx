@@ -121,7 +121,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
           <h2>商品图精修</h2>
           <p className="image-generation-intro">基于当前上传的原商品图进行 AI 编辑优化，尽量保持商品主体、颜色和结构一致。</p>
         </div>
-        <span>已连接原图 Asset</span>
+        <span>已连接原商品图</span>
       </div>
 
       <form className="image-edit-form" onSubmit={(event) => void handleSubmit(event)}>
@@ -170,16 +170,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
           <div className="product-preview-actions">
             <ImageDownloadButton filename={buildImageDownloadFilename("image-edit")} imageUrl={result.imageUrl} />
           </div>
-          <dl>
-            <div>
-              <dt>模型</dt>
-              <dd>GPT-image-2</dd>
-            </div>
-            <div>
-              <dt>结果 Asset</dt>
-              <dd>{result.assetId}</dd>
-            </div>
-          </dl>
+          <p className="product-image-edit-result-note">优化图已生成，可放大查看或下载后用于商品素材整理。</p>
         </div>
       ) : null}
 

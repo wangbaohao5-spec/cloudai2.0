@@ -210,13 +210,27 @@ export function ProductWorkspaceTabs({
   const isExportReady = Boolean(creationCenterData) && (copywritingCount > 0 || generatedAssetCount > 0);
   const uploadEmptyAction = isUploading
     ? { disabled: true, label: "上传图片中...", onClick: scrollToUploadSection, tone: "primary" as const }
-    : { label: "请先在左侧上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
+    : { label: "请先上传商品图片", onClick: scrollToUploadSection, tone: "primary" as const };
   const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
 
   useEffect(() => {
     const nextTab = normalizeTabQuery(new URLSearchParams(window.location.search).get("tab"));
 
     setActiveTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
+  }, []);
+
+  useEffect(() => {
+    function handlePopState() {
+      const nextTab = normalizeTabQuery(new URLSearchParams(window.location.search).get("tab"));
+
+      setActiveTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
+    }
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, []);
 
   function normalizeTab(tabId: TabId | RemovedTabId): TabId {
