@@ -10284,6 +10284,391 @@ h3 {
   color: var(--danger);
 }
 
+[data-theme="business-light"] .dashboard-shell {
+  background: var(--surface-page);
+}
+
+[data-theme="business-light"] .dashboard-sidebar {
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
+  box-shadow: 1px 0 0 var(--border-subtle);
+}
+
+[data-theme="business-light"] .dashboard-nav-label {
+  color: var(--text-soft);
+}
+
+[data-theme="business-light"] .dashboard-nav-link {
+  color: var(--text-muted);
+}
+
+[data-theme="business-light"] .dashboard-nav-link.active,
+[data-theme="business-light"] .dashboard-nav-link:hover {
+  border-color: rgba(37, 99, 235, 0.18);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] .dashboard-header {
+  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .dashboard-user,
+[data-theme="business-light"] .theme-quick-toggle {
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .dashboard-user button,
+[data-theme="business-light"] .dashboard-user .theme-quick-toggle button {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+[data-theme="business-light"] .dashboard-user button:hover,
+[data-theme="business-light"] .dashboard-user .theme-quick-toggle button:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+[data-theme="business-light"] .dashboard-user .theme-quick-toggle button.active {
+  color: var(--primary);
+  background: var(--nav-active-bg);
+}
+
+[data-theme="business-light"] .cai-card,
+[data-theme="business-light"] .cai-panel,
+[data-theme="business-light"] .dashboard-home-section,
+[data-theme="business-light"] .dashboard-quick-start,
+[data-theme="business-light"] .continue-product-card,
+[data-theme="business-light"] .today-generated-card,
+[data-theme="business-light"] .copywriting-panel,
+[data-theme="business-light"] .copywriting-result,
+[data-theme="business-light"] .image-edit-panel,
+[data-theme="business-light"] .image-edit-result,
+[data-theme="business-light"] .chat-sidebar,
+[data-theme="business-light"] .chat-window,
+[data-theme="business-light"] .product-detail-page-hero,
+[data-theme="business-light"] .product-detail-page-context,
+[data-theme="business-light"] .product-detail-page-existing {
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: none;
+}
+
+[data-theme="business-light"] .cai-card--muted,
+[data-theme="business-light"] .dashboard-home-empty,
+[data-theme="business-light"] .copywriting-result-empty,
+[data-theme="business-light"] .image-edit-result-empty,
+[data-theme="business-light"] .product-workspace-start-guide,
+[data-theme="business-light"] .product-workspace-empty-state {
+  border-color: var(--border-subtle);
+  background: var(--surface-card-muted);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] .cai-button--primary,
+[data-theme="business-light"] .button.primary {
+  border-color: var(--button-primary-border);
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="business-light"] .cai-button--secondary,
+[data-theme="business-light"] .button.secondary,
+[data-theme="business-light"] .cai-button--utility,
+[data-theme="business-light"] .image-download-button,
+[data-theme="business-light"] .product-content-package-actions button,
+[data-theme="business-light"] .product-content-preview button {
+  border-color: var(--button-secondary-border);
+  color: var(--button-secondary-text);
+  background: var(--button-secondary-bg);
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .cai-button--secondary:hover:not(:disabled),
+[data-theme="business-light"] .button.secondary:hover:not(:disabled),
+[data-theme="business-light"] .cai-button--utility:hover:not(:disabled),
+[data-theme="business-light"] .image-download-button:hover:not(:disabled),
+[data-theme="business-light"] .product-content-package-actions button:hover,
+[data-theme="business-light"] .product-content-preview button:hover {
+  border-color: rgba(37, 99, 235, 0.26);
+  color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .cai-chip,
+[data-theme="business-light"] .cai-badge,
+[data-theme="business-light"] .continue-product-meta span,
+[data-theme="business-light"] .continue-product-status span,
+[data-theme="business-light"] .recent-product-footer span,
+[data-theme="business-light"] .product-workspace-start-flow span,
+[data-theme="business-light"] .product-generation-brief-summary span,
+[data-theme="business-light"] .product-output-settings-cards span,
+[data-theme="business-light"] .product-asset-delivery-meta span,
+[data-theme="business-light"] .product-image-set-chip,
+[data-theme="business-light"] .product-image-set-plan-footer span,
+[data-theme="business-light"] .chat-scope-list span,
+[data-theme="business-light"] .chat-status {
+  border-color: var(--chip-border);
+  color: var(--chip-text);
+  background: var(--chip-bg);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] .cai-badge--success,
+[data-theme="business-light"] .product-workflow-steps span.done,
+[data-theme="business-light"] .product-creation-progress-list article.done > span {
+  border-color: var(--status-success-border);
+  color: var(--status-success-text);
+  background: var(--status-success-bg);
+}
+
+[data-theme="business-light"] input,
+[data-theme="business-light"] textarea,
+[data-theme="business-light"] select,
+[data-theme="business-light"] .cai-input,
+[data-theme="business-light"] .cai-textarea,
+[data-theme="business-light"] .cai-select {
+  border-color: var(--input-border);
+  color: var(--input-text);
+  background: var(--input-bg);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] input:focus,
+[data-theme="business-light"] textarea:focus,
+[data-theme="business-light"] select:focus,
+[data-theme="business-light"] input:focus-visible,
+[data-theme="business-light"] textarea:focus-visible,
+[data-theme="business-light"] select:focus-visible,
+[data-theme="business-light"] .cai-input:focus-visible,
+[data-theme="business-light"] .cai-textarea:focus-visible,
+[data-theme="business-light"] .cai-select:focus-visible {
+  border-color: rgba(37, 99, 235, 0.46);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+[data-theme="business-light"] .continue-product-media,
+[data-theme="business-light"] .recent-product-media,
+[data-theme="business-light"] .recent-output-media,
+[data-theme="business-light"] .product-workspace-start-upload,
+[data-theme="business-light"] .product-workspace-start-upload.has-preview,
+[data-theme="business-light"] .product-workspace-start-upload img,
+[data-theme="business-light"] .product-upload-preview,
+[data-theme="business-light"] .product-creation-original,
+[data-theme="business-light"] .product-asset-media,
+[data-theme="business-light"] .product-image-set-card-media,
+[data-theme="business-light"] .product-detail-generated-preview,
+[data-theme="business-light"] .product-image-set-generated-preview,
+[data-theme="business-light"] .image-edit-preview,
+[data-theme="business-light"] .image-edit-output {
+  border-color: var(--media-border);
+  background: var(--media-bg);
+}
+
+[data-theme="business-light"] .dashboard-home {
+  color: var(--text-default);
+}
+
+[data-theme="business-light"] .recent-product-card,
+[data-theme="business-light"] .recent-output-card,
+[data-theme="business-light"] .product-asset-tile,
+[data-theme="business-light"] .product-image-set-plan-card,
+[data-theme="business-light"] .product-detail-plan-card,
+[data-theme="business-light"] .copywriting-section-card {
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .recent-product-card:hover,
+[data-theme="business-light"] .recent-output-card:hover,
+[data-theme="business-light"] .product-asset-tile:hover,
+[data-theme="business-light"] .product-image-set-plan-card:hover {
+  border-color: rgba(37, 99, 235, 0.24);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="business-light"] .product-workspace-rail,
+[data-theme="business-light"] .product-workspace-rail--start,
+[data-theme="business-light"] .product-workspace-tabs,
+[data-theme="business-light"] .product-workspace-panel .product-generation-brief,
+[data-theme="business-light"] .product-workspace-panel .product-output-settings,
+[data-theme="business-light"] .product-workspace-panel .product-analysis-result,
+[data-theme="business-light"] .product-workspace-panel .product-asset-gallery,
+[data-theme="business-light"] .product-workspace-panel .product-image-set-panel,
+[data-theme="business-light"] .product-workspace-panel .product-content-package,
+[data-theme="business-light"] .product-workspace-panel .product-copywriting-panel,
+[data-theme="business-light"] .product-workspace-panel .image-edit-panel {
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: none;
+}
+
+[data-theme="business-light"] .product-workspace-shell:not(.product-workspace-shell--start) .product-upload-box,
+[data-theme="business-light"] .product-workspace-shell:not(.product-workspace-shell--start) .product-workspace-supplement,
+[data-theme="business-light"] .product-workspace-shell:not(.product-workspace-shell--start) .product-workspace-status,
+[data-theme="business-light"] .product-workspace-shell:not(.product-workspace-shell--start) .product-workspace-rail-next,
+[data-theme="business-light"] .product-workspace-shell:not(.product-workspace-shell--start) .product-creation-summary,
+[data-theme="business-light"] .product-workspace-shell:not(.product-workspace-shell--start) .product-workspace-rail-meta,
+[data-theme="business-light"] .product-workspace-start-upload-card,
+[data-theme="business-light"] .product-workspace-start-brief-card,
+[data-theme="business-light"] .product-workspace-action-strip,
+[data-theme="business-light"] .product-detail-page-entry-card,
+[data-theme="business-light"] .product-asset-gallery-header,
+[data-theme="business-light"] .product-asset-delivery-meta,
+[data-theme="business-light"] .product-asset-group,
+[data-theme="business-light"] .product-image-set-summary-bar,
+[data-theme="business-light"] .product-image-set-delivery-cta,
+[data-theme="business-light"] .product-image-set-structure-validation,
+[data-theme="business-light"] .product-image-set-batch-status,
+[data-theme="business-light"] .product-image-set-placeholder,
+[data-theme="business-light"] .product-content-package-detail-hint {
+  border-color: var(--border-subtle);
+  background: var(--surface-card-muted);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] .product-workspace-tab.active,
+[data-theme="business-light"] .product-workspace-tab:hover {
+  border-color: rgba(37, 99, 235, 0.22);
+  color: var(--primary);
+  background: var(--nav-active-bg);
+}
+
+[data-theme="business-light"] .product-workspace-tab.active em,
+[data-theme="business-light"] .product-workspace-tab:hover em {
+  color: var(--primary);
+  background: #ffffff;
+}
+
+[data-theme="business-light"] .product-output-settings {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.055), rgba(255, 255, 255, 0.96));
+}
+
+[data-theme="business-light"] .product-output-settings::before {
+  background: var(--primary);
+}
+
+[data-theme="business-light"] .product-output-settings-options button.active,
+[data-theme="business-light"] .product-output-settings-options button:hover,
+[data-theme="business-light"] .product-image-set-mode-switch button.active,
+[data-theme="business-light"] .product-image-set-purpose-grid label.active,
+[data-theme="business-light"] .product-image-set-count-option.active,
+[data-theme="business-light"] .image-edit-goal-selector label.active {
+  border-color: rgba(37, 99, 235, 0.26);
+  color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] .product-output-settings-options button.active strong,
+[data-theme="business-light"] .product-output-settings-options button:hover strong,
+[data-theme="business-light"] .product-image-set-mode-switch button.active strong,
+[data-theme="business-light"] .product-image-set-mode-switch button.active span {
+  color: var(--primary);
+}
+
+[data-theme="business-light"] .product-asset-type-badge,
+[data-theme="business-light"] .product-image-set-card-badge,
+[data-theme="business-light"] .product-image-set-card__badge,
+[data-theme="business-light"] .product-asset-download-button,
+[data-theme="business-light"] .product-image-set-card-download-button,
+[data-theme="business-light"] .product-image-set-card__download-button {
+  border-color: rgba(15, 23, 42, 0.12);
+  color: var(--text-default);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="business-light"] .product-asset-hero-badge,
+[data-theme="business-light"] .product-image-set-hero-badge {
+  border-color: var(--status-success-border);
+  color: var(--status-success-text);
+  background: rgba(236, 253, 245, 0.9);
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .product-image-set-hero-note,
+[data-theme="business-light"] .product-asset-group-header strong,
+[data-theme="business-light"] .product-asset-tile strong,
+[data-theme="business-light"] .product-asset-meta strong,
+[data-theme="business-light"] .copywriting-result-group strong,
+[data-theme="business-light"] .chat-sidebar-section strong,
+[data-theme="business-light"] .product-analysis-summary-grid strong,
+[data-theme="business-light"] .product-analysis-extra-card strong {
+  color: var(--accent);
+}
+
+[data-theme="business-light"] .product-image-set-hero-risk-note,
+[data-theme="business-light"] .product-image-set-hero-generate-note,
+[data-theme="business-light"] .product-risk-alert.is-medium,
+[data-theme="business-light"] .product-risk-alert.is-high,
+[data-theme="business-light"] .product-image-set-summary-bar.warning,
+[data-theme="business-light"] .product-image-set-batch-status.warning {
+  border-color: var(--status-warning-border);
+  color: var(--status-warning-text);
+  background: var(--status-warning-bg);
+}
+
+[data-theme="business-light"] .product-content-preview {
+  border: 1px solid var(--border-subtle);
+  background: var(--markdown-bg);
+}
+
+[data-theme="business-light"] .product-content-preview pre,
+[data-theme="business-light"] .history-detail-block pre {
+  border-color: var(--border-subtle);
+  color: var(--text-default);
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.03);
+}
+
+[data-theme="business-light"] .chat-messages {
+  border-color: var(--border-subtle);
+  background: var(--surface-card-muted);
+}
+
+[data-theme="business-light"] .chat-avatar {
+  background: var(--primary);
+}
+
+[data-theme="business-light"] .chat-bubble {
+  border-color: var(--border-subtle);
+  color: var(--text-default);
+  background: #ffffff;
+  box-shadow: var(--shadow-xs);
+}
+
+[data-theme="business-light"] .chat-message.user .chat-bubble {
+  border-color: rgba(37, 99, 235, 0.28);
+  color: var(--text-inverse);
+  background: var(--button-primary-bg);
+}
+
+[data-theme="business-light"] .chat-error,
+[data-theme="business-light"] .copywriting-error,
+[data-theme="business-light"] .image-generation-error,
+[data-theme="business-light"] .image-edit-error {
+  border: 1px solid var(--status-danger-border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  color: var(--status-danger-text);
+  background: var(--status-danger-bg);
+}
+
 .auth-page {
   display: grid;
   min-height: 100vh;
