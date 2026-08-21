@@ -1,31 +1,31 @@
 import type { DashboardHomeData } from "@/lib/dashboard-home";
 
 type TodayGeneratedSummaryProps = {
+  recentOutputCount: number;
+  recentProductCount: number;
   stats: DashboardHomeData["todayGenerated"];
 };
 
-const statItems = [
-  { key: "productAnalysis", label: "商品分析" },
-  { key: "copywriting", label: "上架文案" },
-  { key: "image", label: "商品图" },
-  { key: "imageEnhance", label: "商品图精修" },
-  { key: "sceneImage", label: "场景图" },
-  { key: "video", label: "视频工坊" },
-] as const;
+export function TodayGeneratedSummary({ recentOutputCount, recentProductCount, stats }: TodayGeneratedSummaryProps) {
+  const summaryItems = [
+    { label: "今日创作", value: stats.total },
+    { label: "最近商品", value: recentProductCount },
+    { label: "商品素材", value: recentOutputCount },
+    { label: "图片任务", value: stats.image + stats.imageEnhance },
+  ];
 
-export function TodayGeneratedSummary({ stats }: TodayGeneratedSummaryProps) {
   return (
-    <section className="today-generated-card glass-card">
-      <div>
-        <p className="eyebrow">今日生成</p>
-        <h2>{stats.total}</h2>
-        <p>今日生成额度使用</p>
+    <section className="today-generated-card cai-card cai-card--compact">
+      <div className="today-generated-header">
+        <p className="eyebrow">Overview</p>
+        <h2>创作概览</h2>
+        <p>查看今天的生成量和当前素材状态。</p>
       </div>
       <div className="today-generated-list">
-        {statItems.map((item) => (
-          <article key={item.key}>
+        {summaryItems.map((item) => (
+          <article className="cai-card cai-card--compact cai-card--muted" key={item.label}>
             <span>{item.label}</span>
-            <strong>{stats[item.key]}</strong>
+            <strong>{item.value}</strong>
           </article>
         ))}
       </div>

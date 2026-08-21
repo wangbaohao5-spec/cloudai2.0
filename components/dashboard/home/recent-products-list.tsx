@@ -1,5 +1,4 @@
 import type { ProductHomeCard } from "@/lib/dashboard-home";
-import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 
 type RecentProductsListProps = {
@@ -15,11 +14,11 @@ function formatDate(value: string) {
 
 export function RecentProductsList({ products }: RecentProductsListProps) {
   return (
-    <section className="dashboard-home-section glass-card">
+    <section className="dashboard-home-section dashboard-recent-products cai-panel">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">最近商品</p>
-          <h2>继续最近分析过的商品</h2>
+          <p className="eyebrow">Recent Products</p>
+          <h2>最近商品项目</h2>
         </div>
         <span>{products.length ? `${products.length} 个商品` : "暂无商品"}</span>
       </div>
@@ -27,7 +26,7 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
       {products.length ? (
         <div className="recent-products-grid">
           {products.map((product) => (
-            <Link className="recent-product-card" href={`/dashboard/products?analysis=${product.analysisHistoryId}`} key={product.analysisHistoryId}>
+            <Link className="recent-product-card cai-card cai-card--compact cai-card--interactive" href={`/dashboard/products?analysis=${product.analysisHistoryId}`} key={product.analysisHistoryId}>
               <div className="recent-product-media">
                 {product.previewUrl || product.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -39,6 +38,7 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
               <div className="recent-product-content">
                 <strong>{product.title}</strong>
                 <p>{product.category || "商品类别待补充"}</p>
+                <span>{product.statusSummary}</span>
               </div>
               <div className="recent-product-footer">
                 <span>上次更新 {formatDate(product.updatedAt)}</span>
@@ -48,13 +48,18 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
           ))}
         </div>
       ) : (
-        <EmptyState
-          icon="📦"
-          title="还没有商品"
-          description="上传第一张商品图开始创作，最近分析过的商品会出现在这里。"
-          actionHref="/dashboard/products"
-          actionLabel="进入商品工作台"
-        />
+        <div className="dashboard-home-empty cai-empty">
+          <span className="cai-empty__icon" aria-hidden="true">
+            商
+          </span>
+          <h3 className="cai-empty__title">还没有商品项目</h3>
+          <p className="cai-empty__description">上传第一张商品图开始创作，最近分析过的商品会出现在这里。</p>
+          <div className="cai-empty__actions">
+            <Link className="cai-button cai-button--primary" href="/dashboard/products">
+              创建商品
+            </Link>
+          </div>
+        </div>
       )}
     </section>
   );
