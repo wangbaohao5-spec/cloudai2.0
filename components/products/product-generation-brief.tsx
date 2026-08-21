@@ -172,7 +172,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
   }
 
   return (
-    <section className="product-generation-brief">
+    <section className="product-generation-brief cai-card cai-card--compact">
       <div className="product-generation-brief-header">
         <div>
           <p className="eyebrow">Generation Brief</p>

@@ -82,7 +82,7 @@ export function ProductOutputSettingsEditor({ analysisHistoryId, onSettingsChang
   }
 
   return (
-    <section className="product-output-settings">
+    <section className="product-output-settings cai-card cai-card--compact">
       <div className="product-output-settings-summary">
         <div>
           <h3>发布目标</h3>

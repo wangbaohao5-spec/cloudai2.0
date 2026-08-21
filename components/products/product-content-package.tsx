@@ -522,7 +522,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
   }
 
   return (
-    <section className="product-content-package">
+    <section className="product-content-package cai-delivery-card">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="product-creation-section-header">
         <div>

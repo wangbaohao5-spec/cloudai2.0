@@ -1,10 +1,10 @@
 "use client";
 
-import { ProductCreationProgress } from "@/components/products/product-creation-progress";
 import { ProductCreationSummary } from "@/components/products/product-creation-summary";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
+import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 
 type UploadedAsset = {
@@ -40,6 +40,40 @@ function getGeneratedCount(creationCenterData: ProductCreationCenterData | null)
     creationCenterData.detailPages.length +
     creationCenterData.imageSetImages.length
   );
+}
+
+function getObjectField(value: unknown, key: string) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function getLatestOutputSettings(creationCenterData: ProductCreationCenterData | null) {
+  if (!creationCenterData) {
+    return null;
+  }
+
+  const records = [
+    ...creationCenterData.copywriting,
+    ...creationCenterData.imageEdits,
+    ...creationCenterData.sceneImages,
+    ...creationCenterData.detailPages,
+    ...creationCenterData.imageSetImages,
+  ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+  for (const record of records) {
+    const inputSettings = sanitizeProductOutputSettings(getObjectField(record.input, "outputSettings"));
+    const outputSettings = sanitizeProductOutputSettings(getObjectField(record.output, "outputSettings"));
+    const settings = inputSettings || outputSettings;
+
+    if (settings) {
+      return settings;
+    }
+  }
+
+  return null;
 }
 
 function getWorkspaceStatus({
@@ -113,6 +147,7 @@ export function ProductWorkspaceRail({
   const isPrimaryActionLoading = isUploading || isAnalyzing || isRestoring;
   const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
   const generatedCount = getGeneratedCount(creationCenterData);
+  const outputSettings = getLatestOutputSettings(creationCenterData);
 
   if (mode !== "workspace") {
     const railStatus =
@@ -172,8 +207,8 @@ export function ProductWorkspaceRail({
     <aside className="product-workspace-rail">
       <div className="product-workspace-rail-section product-workspace-rail-heading">
         <p className="eyebrow">商品工作台</p>
-        <h2>商品来源</h2>
-        <p className="image-generation-intro">上传一张商品图，完成分析后在右侧工作区生成素材。</p>
+        <h2>当前商品</h2>
+        <p className="image-generation-intro">围绕当前商品继续生成、整理和导出素材。</p>
       </div>
 
       <section className="product-workspace-summary" id="product-upload-section" aria-label="当前商品摘要">
@@ -215,6 +250,17 @@ export function ProductWorkspaceRail({
         ) : null}
       </section>
 
+      <section className="product-workspace-rail-meta" aria-label="当前商品创作摘要">
+        <div>
+          <span>发布目标</span>
+          <strong>{outputSettings ? formatProductOutputSettingsSummary(outputSettings) : "在商品策划中设置"}</strong>
+        </div>
+        <div>
+          <span>素材数量</span>
+          <strong>{generatedCount ? `${generatedCount} 项` : "待生成"}</strong>
+        </div>
+      </section>
+
       <section className="product-workspace-supplement" aria-label="商品补充信息">
         <label htmlFor="product-supplement">
           商品补充信息（可选）
@@ -239,23 +285,6 @@ export function ProductWorkspaceRail({
         <strong>{status.label}</strong>
       </div>
 
-      <section className="product-quota-summary" aria-label="图片额度状态">
-        <div>
-          <span>图片额度</span>
-          <strong>内测额度</strong>
-        </div>
-        <p>当前为内测版本，图片额度以额度中心实际记录为准。生成入口会提示预计消耗。</p>
-      </section>
-
-      <section className="product-workflow-mini-steps is-compact" aria-label="推荐生成流程">
-        <strong>流程</strong>
-        <div>
-          {["上传", "分析", "生成要求", "套图", "素材库", "导出"].map((step) => (
-            <span key={step}>{step}</span>
-          ))}
-        </div>
-      </section>
-
       {result ? (
         <section className="product-workspace-rail-next" aria-label="下一步建议">
           <div>
@@ -277,19 +306,6 @@ export function ProductWorkspaceRail({
             需要详情页？前往详情页制作
           </a>
         </section>
-      ) : null}
-
-      {creationCenterData ? (
-        <div className="product-workspace-progress-wrap">
-          <ProductCreationProgress
-            analysisHistoryId={creationCenterData.product.analysisHistoryId}
-            copywritingCount={creationCenterData.copywriting.length}
-            detailPageCount={creationCenterData.detailPages.length}
-            imageEditCount={creationCenterData.imageEdits.length}
-            imageSetCount={creationCenterData.imageSetImages.length}
-            sceneImageCount={creationCenterData.sceneImages.length}
-          />
-        </div>
       ) : null}
 
       <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>

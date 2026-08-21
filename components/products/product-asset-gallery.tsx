@@ -217,7 +217,7 @@ function AssetTile({
   const lightboxUrl = url || displayUrl;
 
   return (
-    <article className="product-asset-tile product-asset-card">
+    <article className="product-asset-tile product-asset-card cai-gallery-card">
       <div className="product-asset-media">
         {displayUrl ? (
           <button
@@ -373,7 +373,7 @@ export function ProductAssetGallery({ analysisHistoryId, detailPages, imageEdits
   const totalAssets = originalAssets.length + imageEditAssets.length + sceneImageAssets.length + detailPageAssets.length + imageSetAssets.length;
 
   return (
-    <div className="product-asset-gallery">
+    <div className="product-asset-gallery cai-panel">
       <div className="product-asset-gallery-header">
         <div>
           <strong>商品素材库</strong>

@@ -478,7 +478,7 @@ export function ProductImageSetPanel({
 
   if (!analysisResult) {
     return (
-      <section className="product-image-set-panel glass-card">
+      <section className="product-image-set-panel glass-card cai-panel">
         <p className="eyebrow">Image Set</p>
         <h2>商品套图规划</h2>
         <p className="image-generation-intro">完成商品分析后，CloudAI 可以根据商品卖点和目标用途规划一组商品图片结构。</p>
@@ -487,7 +487,7 @@ export function ProductImageSetPanel({
   }
 
   return (
-    <section className="product-image-set-panel glass-card">
+    <section className="product-image-set-panel glass-card cai-panel">
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Image Set</p>

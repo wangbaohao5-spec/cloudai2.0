@@ -162,7 +162,7 @@ function ProductWorkspaceActionStrip({
   title: string;
 }) {
   return (
-    <section className="product-workspace-action-strip">
+    <section className="product-workspace-action-strip cai-delivery-card">
       <div>
         <strong>{title}</strong>
         <p>{description}</p>
@@ -304,6 +304,7 @@ export function ProductWorkspaceTabs({
           <>
             <ProductGenerationBriefEditor analysis={result.analysis} analysisHistoryId={result.historyId} onBriefChange={setGenerationBrief} />
             <ProductOutputSettingsEditor analysisHistoryId={result.historyId} onSettingsChange={setOutputSettings} />
+            <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
             {result.historyId ? (
               <ProductWorkspaceActionStrip
                 title="下一步创作"
@@ -341,7 +342,6 @@ export function ProductWorkspaceTabs({
                 </button>
               )}
             </section>
-            <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
           </>
         ) : null}
       </div>
