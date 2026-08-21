@@ -16,7 +16,7 @@ export default function RootLayout({
     (function () {
       try {
         var theme = localStorage.getItem("cloudai-theme");
-        var allowed = theme === "cloudai-dark" || theme === "ecommerce-pink";
+        var allowed = theme === "cloudai-dark" || theme === "ecommerce-pink" || theme === "business-light";
         document.documentElement.dataset.theme = allowed ? theme : "cloudai-dark";
       } catch (error) {
         document.documentElement.dataset.theme = "cloudai-dark";

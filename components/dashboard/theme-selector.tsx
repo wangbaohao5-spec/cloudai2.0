@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type ThemeId = "cloudai-dark" | "ecommerce-pink";
+type ThemeId = "cloudai-dark" | "ecommerce-pink" | "business-light";
 
 const THEME_STORAGE_KEY = "cloudai-theme";
 
@@ -21,10 +21,19 @@ const themes: Array<{
     label: "E-commerce Pink",
     swatchClassName: "theme-swatch ecommerce-pink",
   },
+  {
+    id: "business-light",
+    label: "Business Light · 商务浅色",
+    swatchClassName: "theme-swatch business-light",
+  },
 ];
 
 function normalizeTheme(theme: string | undefined | null): ThemeId {
-  return theme === "ecommerce-pink" ? "ecommerce-pink" : "cloudai-dark";
+  if (theme === "ecommerce-pink" || theme === "business-light") {
+    return theme;
+  }
+
+  return "cloudai-dark";
 }
 
 export function ThemeSelector() {
