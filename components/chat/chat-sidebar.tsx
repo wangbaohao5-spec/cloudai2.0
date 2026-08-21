@@ -1,22 +1,23 @@
 const assistantScopes = [
-  "商品定位",
-  "标题优化",
-  "卖点分析",
-  "短视频脚本",
-  "平台运营建议",
+  "商品卖点",
+  "平台风格",
+  "素材策略",
+  "主图点击力",
+  "上架内容",
 ];
 
 const workflowHints = [
-  "先描述商品、目标人群和平台",
-  "继续追问时可以让助手改写上一版",
-  "适合淘宝、抖音电商、TikTok Shop 和跨境场景",
+  "先描述商品、目标人群和发布平台",
+  "可以让助手检查标题、素材缺口或主图策略",
+  "适合淘宝、小红书、抖音电商和跨境场景",
 ];
 
 export function ChatSidebar() {
   return (
-    <aside className="chat-sidebar glass-card">
+    <aside className="chat-sidebar cai-card cai-card--compact">
       <p className="eyebrow">Assistant Mode</p>
       <h2>创作助手</h2>
+      <p className="chat-sidebar-intro">为商品内容创作提供方向判断、文案改写和素材策略建议。</p>
       <div className="chat-sidebar-section">
         <strong>可协助任务</strong>
         <div className="chat-scope-list">

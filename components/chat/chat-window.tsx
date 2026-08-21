@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 const initialMessages: ChatMessageData[] = [
   {
     role: "assistant",
-    content: "你好，我是 CloudAI 电商助手。你可以问我商品定位、标题优化、卖点分析、短视频脚本或平台运营建议。",
+    content: "你好，我是 CloudAI 创作助手。你可以问我商品卖点、平台风格、素材策略、主图点击力或上架内容优化。",
   },
 ];
 
@@ -105,13 +105,14 @@ export function ChatWindow() {
   }
 
   return (
-    <section className="chat-window glass-card">
+    <section className="chat-window cai-card cai-card--compact">
       <div className="chat-window-header">
         <div>
-          <p className="eyebrow">Creative Assistant</p>
+          <p className="eyebrow">Commerce Assistant</p>
           <h2>创作助手</h2>
+          <p>围绕商品卖点、平台风格、素材策略和内容创作提供辅助建议。</p>
         </div>
-        <span className="chat-status">DeepSeek</span>
+        <span className="chat-status cai-badge cai-badge--neutral">文本助手</span>
       </div>
       <div className="chat-messages" ref={messagesRef} aria-live="polite">
         {messages.map((message, index) => (

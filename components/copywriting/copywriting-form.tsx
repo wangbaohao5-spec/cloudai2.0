@@ -40,7 +40,7 @@ export function CopywritingForm({ error, isLoading, onSubmit }: CopywritingFormP
       </label>
       <label>
         核心卖点
-        <textarea name="sellingPoints" placeholder="例如：保温 8 小时、无线充电、适合办公室和通勤" required rows={5} />
+        <textarea name="sellingPoints" placeholder="例如：保温 8 小时、无线充电、适合办公室和通勤" required rows={4} />
       </label>
       <label>
         平台
@@ -90,11 +90,15 @@ export function CopywritingForm({ error, isLoading, onSubmit }: CopywritingFormP
           ))}
         </div>
       </fieldset>
-      <button className="button primary" disabled={isLoading} type="submit">
-        {isLoading ? "生成中..." : "生成商品文案"}
+      <button className="cai-button cai-button--primary cai-button--full" disabled={isLoading} type="submit">
+        {isLoading ? "生成中..." : "生成文案"}
       </button>
-      <p className="copywriting-helper">{isLoading ? "CloudAI 正在生成 AI 文案..." : "Loading 状态将在这里显示。"}</p>
-      <p className="copywriting-error" aria-live="polite">{error || "错误提示将在这里显示。"}</p>
+      {isLoading ? <p className="copywriting-helper">CloudAI 正在生成上架内容...</p> : null}
+      {error ? (
+        <p className="copywriting-error" aria-live="polite">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

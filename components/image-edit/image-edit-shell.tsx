@@ -71,8 +71,8 @@ export function ImageEditShell() {
     <main className="dashboard-content">
       <ImageModeTabs />
       <section className="image-edit-shell">
-        <div className="image-edit-panel glass-card">
-          <p className="eyebrow">Product Image Studio</p>
+        <div className="image-edit-panel cai-card cai-card--compact">
+          <p className="eyebrow">Commerce Tool</p>
           <h2>商品图精修</h2>
           <p className="image-generation-intro">优化商品原图的背景、光线、质感和展示效果，保持商品主体保真。</p>
           <ImageEditForm

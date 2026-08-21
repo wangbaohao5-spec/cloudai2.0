@@ -106,16 +106,16 @@ export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChan
           name="prompt"
           placeholder="系统会根据优化目标生成基础 Prompt，你也可以追加具体要求。"
           required
-          rows={8}
+          rows={6}
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
         />
       </label>
 
-      <button className="button primary" disabled={disabled} type="submit">
+      <button className="cai-button cai-button--primary cai-button--full" disabled={disabled} type="submit">
         {disabled ? "优化中..." : "优化商品图片"}
       </button>
-      <p className="image-generation-helper">将使用 GPT-image-2 图片编辑能力，并记录到额度中心和历史记录。</p>
+      <p className="image-generation-helper">将使用图片编辑链路处理当前商品图，并记录到额度中心和历史记录。</p>
       {error ? <p className="image-generation-error">{error}</p> : null}
     </form>
   );

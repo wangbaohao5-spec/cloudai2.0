@@ -345,26 +345,26 @@ export function ProductDetailPageWorkspaceShell() {
     <main className="dashboard-content">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <section className="product-detail-page-workspace">
-        <section className="product-detail-page-hero glass-card">
+        <section className="product-detail-page-hero cai-card cai-card--compact">
           <div>
-            <p className="eyebrow">Detail Page</p>
+            <p className="eyebrow">Detail Page Tool</p>
             <h1>详情页制作</h1>
             <p>基于已分析商品规划详情页结构，并生成详情页图片素材。</p>
           </div>
           <div className="product-detail-page-hero-actions">
-            <Link className="button secondary" href={workspaceHref}>
+            <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceHref}>
               返回商品工作台
             </Link>
-            <Link className="button secondary" href={workspaceAssetsHref}>
+            <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceAssetsHref}>
               查看素材库
             </Link>
-            <Link className="button secondary" href={workspaceExportHref}>
+            <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceExportHref}>
               导出素材包
             </Link>
           </div>
         </section>
 
-        <section className="product-detail-page-context glass-card" aria-label="当前商品详情页上下文">
+        <section className="product-detail-page-context cai-card cai-card--compact" aria-label="当前商品详情页上下文">
           <div className="product-detail-page-original">
             {originalAssetUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -398,7 +398,7 @@ export function ProductDetailPageWorkspaceShell() {
           onOpenRiskConfirmations={openRiskConfirmations}
         />
 
-        <section className="product-detail-page-existing glass-card">
+        <section className="product-detail-page-existing cai-delivery-card">
           <div>
             <strong>{hasDetailPageAssets ? "详情页素材已生成" : "已有详情页素材"}</strong>
             <p>
@@ -408,10 +408,10 @@ export function ProductDetailPageWorkspaceShell() {
             </p>
           </div>
           <div>
-            <Link className="button secondary" href={workspaceAssetsHref}>
+            <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceAssetsHref}>
               查看素材库
             </Link>
-            <Link className="button secondary" href={workspaceExportHref}>
+            <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceExportHref}>
               导出素材包
             </Link>
           </div>

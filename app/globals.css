@@ -3616,28 +3616,28 @@ h3 {
 
 .copywriting-shell {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 24px;
+  grid-template-columns: minmax(320px, 0.86fr) minmax(0, 1.14fr);
+  gap: 18px;
 }
 
 .copywriting-panel,
 .copywriting-result {
-  border-radius: 28px;
-  padding: 28px;
+  border-radius: 18px;
+  padding: 20px;
 }
 
 .copywriting-result {
-  min-height: 560px;
+  min-height: 460px;
   border: 1px solid var(--card-border);
-  background: var(--result-gradient);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
+  background: var(--result-card-bg);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
 }
 
 .copywriting-form {
   display: grid;
-  gap: 18px;
-  margin-top: 24px;
+  gap: 14px;
+  margin-top: 16px;
 }
 
 .copywriting-form label {
@@ -3653,15 +3653,15 @@ h3 {
 .copywriting-form textarea {
   width: 100%;
   border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 11px 13px;
   color: var(--text);
   background: var(--input);
   outline: none;
 }
 
 .copywriting-form textarea {
-  min-height: 140px;
+  min-height: 112px;
   resize: vertical;
 }
 
@@ -3676,10 +3676,10 @@ h3 {
 
 .copywriting-checkbox-group {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 12px;
 }
 
 .copywriting-checkbox-group legend {
@@ -3692,16 +3692,16 @@ h3 {
 .copywriting-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .copywriting-checkbox-grid label {
   display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: 14px;
-  padding: 10px;
-  background: var(--card);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: var(--surface-card-muted);
 }
 
 .copywriting-checkbox-grid input {
@@ -3723,19 +3723,19 @@ h3 {
 }
 
 .copywriting-result h2 {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .copywriting-result-empty {
   border: 1px dashed var(--preview-border);
-  border-radius: 22px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 22px;
   color: var(--muted);
   background: var(--result-surface);
 }
 
 .copywriting-result-group {
-  margin-top: 22px;
+  margin-top: 16px;
 }
 
 .copywriting-result-group strong {
@@ -3746,7 +3746,7 @@ h3 {
 
 .copywriting-result-group h3 {
   margin-bottom: 0;
-  font-size: 1.45rem;
+  font-size: 1.25rem;
 }
 
 .copywriting-result-group ul {
@@ -4054,28 +4054,28 @@ h3 {
 
 .image-edit-shell {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 24px;
+  grid-template-columns: minmax(320px, 0.86fr) minmax(0, 1.14fr);
+  gap: 18px;
 }
 
 .image-edit-panel,
 .image-edit-result {
-  border-radius: 28px;
-  padding: 28px;
+  border-radius: 18px;
+  padding: 20px;
 }
 
 .image-edit-result {
-  min-height: 560px;
+  min-height: 460px;
   border: 1px solid var(--card-border);
-  background: var(--result-gradient);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
+  background: var(--result-card-bg);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
 }
 
 .image-edit-form {
   display: grid;
-  gap: 16px;
-  margin-top: 22px;
+  gap: 13px;
+  margin-top: 16px;
 }
 
 .image-edit-form label {
@@ -4090,25 +4090,26 @@ h3 {
 .image-edit-form textarea {
   width: 100%;
   border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 11px 13px;
   color: var(--text);
   background: var(--input);
   outline: none;
 }
 
 .image-edit-form textarea {
+  max-height: 220px;
   resize: vertical;
 }
 
 .image-edit-preview,
 .image-edit-output {
   display: grid;
-  min-height: 240px;
+  min-height: 190px;
   place-items: center;
   border: 1px dashed var(--preview-border);
-  border-radius: 22px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 12px;
   color: var(--muted);
   background: var(--preview-bg);
 }
@@ -4117,8 +4118,8 @@ h3 {
 .image-edit-output img {
   display: block;
   width: 100%;
-  max-height: 420px;
-  border-radius: 16px;
+  max-height: 360px;
+  border-radius: 14px;
   object-fit: contain;
 }
 
@@ -4131,19 +4132,19 @@ h3 {
 .image-edit-goal-selector {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .image-edit-goal-selector label {
   position: relative;
   display: grid;
-  gap: 8px;
-  min-height: 148px;
+  gap: 5px;
+  min-height: 104px;
   border: 1px solid var(--card-border);
-  border-radius: 20px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 12px;
   color: var(--muted);
-  background: var(--preview-bg);
+  background: var(--surface-card-muted);
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -4154,7 +4155,7 @@ h3 {
 .image-edit-goal-selector label:hover,
 .image-edit-goal-selector label.active {
   border-color: var(--selected-border);
-  background: var(--selected-gradient);
+  background: var(--chip-accent-bg);
   transform: translateY(-1px);
 }
 
@@ -4165,27 +4166,27 @@ h3 {
 }
 
 .image-edit-goal-selector span {
-  font-size: 1.35rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 .image-edit-goal-selector strong {
   color: var(--text);
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .image-edit-goal-selector p {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 1.45;
 }
 
 .image-edit-result-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 22px;
+  margin-top: 16px;
 }
 
 .image-edit-result-meta span {
@@ -4930,10 +4931,10 @@ h3 {
 }
 
 .product-detail-page-hero h1 {
-  margin: 4px 0 8px;
+  margin: 2px 0 6px;
   color: var(--text);
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 1.05;
+  font-size: clamp(1.55rem, 3vw, 2.3rem);
+  line-height: 1.12;
 }
 
 .product-detail-page-hero p,
@@ -4941,7 +4942,8 @@ h3 {
   max-width: 720px;
   margin: 0;
   color: var(--muted);
-  line-height: 1.65;
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 .product-detail-page-context {
@@ -4950,8 +4952,8 @@ h3 {
 
 .product-detail-page-original {
   display: grid;
-  width: 92px;
-  height: 92px;
+  width: 76px;
+  height: 76px;
   flex: 0 0 auto;
   place-items: center;
   overflow: hidden;
@@ -5007,8 +5009,8 @@ h3 {
   gap: 5px;
   min-width: 0;
   border: 1px solid var(--workspace-border);
-  border-radius: 14px;
-  padding: 10px 12px;
+  border-radius: 12px;
+  padding: 9px 10px;
   background: var(--workspace-surface);
 }
 
@@ -5019,7 +5021,7 @@ h3 {
 }
 
 .product-detail-page-existing {
-  padding: 18px;
+  padding: 16px;
 }
 
 .product-detail-page-settings,
@@ -8954,14 +8956,14 @@ h3 {
 
 .chat-shell {
   display: grid;
-  grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: minmax(220px, 0.3fr) minmax(0, 1fr);
+  gap: 18px;
 }
 
 .chat-sidebar,
 .chat-window {
-  border-radius: 28px;
-  padding: 28px;
+  border-radius: 18px;
+  padding: 20px;
 }
 
 .chat-sidebar {
@@ -8969,16 +8971,25 @@ h3 {
 }
 
 .chat-sidebar h2 {
-  font-size: 2rem;
+  margin-bottom: 8px;
+  font-size: 1.45rem;
+}
+
+.chat-sidebar-intro,
+.chat-window-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
 .chat-sidebar-section {
-  margin-top: 24px;
+  margin-top: 18px;
 }
 
 .chat-sidebar-section strong {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--accent);
 }
 
@@ -8993,23 +9004,23 @@ h3 {
 .chat-scope-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .chat-scope-list span {
   border: 1px solid var(--card-border);
   border-radius: 999px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   color: var(--text);
-  background: var(--surface);
-  font-size: 0.86rem;
+  background: var(--surface-card-muted);
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
 .chat-window {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 160px);
+  min-height: calc(100vh - 180px);
 }
 
 .chat-window-header {
@@ -9017,7 +9028,7 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .chat-window-header h2 {
@@ -9037,13 +9048,13 @@ h3 {
 .chat-messages {
   display: grid;
   align-content: start;
-  gap: 14px;
-  min-height: 360px;
-  max-height: 56vh;
+  gap: 12px;
+  min-height: 320px;
+  max-height: 54vh;
   overflow-y: auto;
   border: 1px solid var(--card-border);
-  border-radius: 22px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 14px;
   background: var(--workspace-panel);
 }
 
@@ -9061,9 +9072,9 @@ h3 {
 
 .chat-avatar {
   display: grid;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   border-radius: 50%;
   color: var(--primary-contrast);
@@ -9074,10 +9085,11 @@ h3 {
 
 .chat-bubble {
   border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 10px 12px;
   color: var(--text);
   background: var(--surface);
+  line-height: 1.58;
 }
 
 .chat-message.user .chat-bubble {
@@ -9087,22 +9099,18 @@ h3 {
 
 .chat-input-area {
   display: grid;
-  gap: 14px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .chat-quick-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .chat-quick-actions button {
-  border: 1px solid var(--card-border);
-  border-radius: 999px;
-  padding: 9px 12px;
-  color: var(--text);
-  background: var(--surface-hover);
+  white-space: normal;
 }
 
 .chat-input-form {
@@ -9115,8 +9123,8 @@ h3 {
 .chat-input-form textarea {
   width: 100%;
   border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 11px 13px;
   color: var(--text);
   background: var(--input);
   outline: none;
@@ -9611,7 +9619,9 @@ h3 {
   }
 
   .product-detail-page-hero .button,
-  .product-detail-page-existing .button {
+  .product-detail-page-existing .button,
+  .product-detail-page-hero .cai-button,
+  .product-detail-page-existing .cai-button {
     width: 100%;
   }
 

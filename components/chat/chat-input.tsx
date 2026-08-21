@@ -1,10 +1,10 @@
 import { FormEvent, useState } from "react";
 
 const quickQuestions = [
-  "帮我优化商品标题",
-  "分析这个商品卖点",
-  "写一个 TikTok 短视频脚本",
-  "给我一个运营建议",
+  "这个商品适合突出哪些卖点？",
+  "小红书风格的标题怎么写？",
+  "这套商品图还缺什么素材？",
+  "商品主图怎么更吸引点击？",
 ];
 
 type ChatInputProps = {
@@ -35,7 +35,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
     <div className="chat-input-area">
       <div className="chat-quick-actions">
         {quickQuestions.map((question) => (
-          <button key={question} disabled={disabled} type="button" onClick={() => submitMessage(question)}>
+          <button className="cai-button cai-button--utility" key={question} disabled={disabled} type="button" onClick={() => submitMessage(question)}>
             {question}
           </button>
         ))}
@@ -49,7 +49,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
           rows={3}
           value={value}
         />
-        <button className="button primary" disabled={disabled} type="submit">
+        <button className="cai-button cai-button--primary" disabled={disabled} type="submit">
           发送
         </button>
       </form>

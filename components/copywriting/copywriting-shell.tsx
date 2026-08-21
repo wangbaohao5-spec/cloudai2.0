@@ -39,8 +39,8 @@ export function CopywritingShell() {
   return (
     <main className="dashboard-content">
       <section className="copywriting-shell">
-        <div className="copywriting-panel glass-card">
-          <p className="eyebrow">Listing Copy</p>
+        <div className="copywriting-panel cai-card cai-card--compact">
+          <p className="eyebrow">Commerce Tool</p>
           <h2>上架文案</h2>
           <p className="image-generation-intro">生成商品标题、卖点、详情描述、平台文案和短视频脚本。</p>
           <CopywritingForm error={error} isLoading={isLoading} onSubmit={handleSubmit} />

@@ -14,9 +14,9 @@ type ImageEditResultProps = {
 
 export function ImageEditResult({ result }: ImageEditResultProps) {
   return (
-    <section className="image-edit-result">
+    <section className="image-edit-result cai-result-card">
       <p className="eyebrow">Edit Result</p>
-      <h2>图片编辑结果</h2>
+      <h2>精修结果</h2>
       <div className="image-edit-output">
         {result?.imageUrl ? <Image alt="图片编辑结果预览" height={1024} src={result.imageUrl} unoptimized width={1024} /> : <p>编辑后的图片将在这里显示。</p>}
       </div>
