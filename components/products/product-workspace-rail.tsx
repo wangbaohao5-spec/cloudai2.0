@@ -1,6 +1,5 @@
 "use client";
 
-import { ProductCreationSummary } from "@/components/products/product-creation-summary";
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
@@ -88,7 +87,7 @@ function getWorkspaceStatus({
   if (!uploadedAsset) {
     return {
       label: "未上传",
-      description: "上传商品原图后，CloudAI 会建立当前商品工作台。",
+      description: "上传商品原图后，CloudAI 会创建当前商品项目。",
     };
   }
 
@@ -154,7 +153,7 @@ export function ProductWorkspaceRail({
       mode === "restoring"
         ? {
             label: "正在恢复",
-            description: "CloudAI 正在读取最近的商品工作区，请稍等片刻。",
+            description: "CloudAI 正在读取当前商品项目，请稍等片刻。",
           }
         : mode === "pending"
           ? {
@@ -163,13 +162,13 @@ export function ProductWorkspaceRail({
             }
           : {
               label: "未开始",
-              description: "先上传商品图片，CloudAI 会创建当前商品工作区。",
+              description: "先上传商品图片，CloudAI 会创建当前商品项目。",
             };
 
     return (
       <aside className="product-workspace-rail product-workspace-rail--start">
         <div className="product-workspace-rail-section product-workspace-rail-heading">
-          <p className="eyebrow">商品工作台</p>
+          <p className="eyebrow">商品项目</p>
           <h2>{mode === "pending" ? "等待商品策划" : "等待上传商品图"}</h2>
           <p className="image-generation-intro">{railStatus.description}</p>
         </div>
@@ -206,8 +205,8 @@ export function ProductWorkspaceRail({
   return (
     <aside className="product-workspace-rail">
       <div className="product-workspace-rail-section product-workspace-rail-heading">
-        <p className="eyebrow">商品工作台</p>
-        <h2>当前商品</h2>
+        <p className="eyebrow">当前商品项目</p>
+        <h2>创作状态</h2>
         <p className="image-generation-intro">围绕当前商品继续生成、整理和导出素材。</p>
       </div>
 
@@ -236,13 +235,7 @@ export function ProductWorkspaceRail({
           </details>
         </div>
 
-        {creationCenterData ? (
-          <ProductCreationSummary
-            analysis={creationCenterData.analysis}
-            originalAsset={creationCenterData.originalAsset}
-            product={creationCenterData.product}
-          />
-        ) : uploadedAsset ? (
+        {!creationCenterData && uploadedAsset ? (
           <div className="product-workspace-pending-summary">
             <strong>{uploadedAsset.name}</strong>
             <p>完成分析后会显示商品名称、类别和目标用户。</p>

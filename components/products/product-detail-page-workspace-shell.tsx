@@ -347,13 +347,16 @@ export function ProductDetailPageWorkspaceShell() {
       <section className="product-detail-page-workspace">
         <section className="product-detail-page-hero cai-card cai-card--compact">
           <div>
+            <Link className="product-detail-page-project-link" href={workspaceHref}>
+              ← 返回当前商品项目
+            </Link>
             <p className="eyebrow">Detail Page Tool</p>
             <h1>详情页制作</h1>
-            <p>基于已分析商品规划详情页结构，并生成详情页图片素材。</p>
+            <p>正在为「{productName}」规划详情页结构，并生成详情页图片素材。</p>
           </div>
           <div className="product-detail-page-hero-actions">
             <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceHref}>
-              返回商品工作台
+              返回当前项目
             </Link>
             <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceAssetsHref}>
               查看素材库
@@ -403,8 +406,8 @@ export function ProductDetailPageWorkspaceShell() {
             <strong>{hasDetailPageAssets ? "详情页素材已生成" : "已有详情页素材"}</strong>
             <p>
               {hasDetailPageAssets
-                ? `已生成 ${creationCenterData.detailPages.length} 张详情页图片，可回到商品工作台素材库查看、下载或导出素材包。`
-                : "生成详情页图片后，可在商品工作台素材库和导出包中查看。"}
+                ? `已生成 ${creationCenterData.detailPages.length} 张详情页图片，可回到当前商品项目的素材库查看、下载或导出素材包。`
+                : "生成详情页图片后，可在当前商品项目的素材库和素材包中查看。"}
             </p>
           </div>
           <div>

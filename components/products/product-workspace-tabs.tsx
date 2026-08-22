@@ -67,7 +67,7 @@ function CreationCenterState({
         eyebrow="正在同步"
         marker="..."
         title="正在加载商品素材"
-        description="CloudAI 正在刷新当前商品工作台，请稍等片刻。"
+        description="CloudAI 正在刷新当前商品项目，请稍等片刻。"
       />
     );
   }
@@ -261,7 +261,7 @@ export function ProductWorkspaceTabs({
 
   return (
     <section className="product-workspace-main">
-      <div className="product-workspace-tabs" role="tablist" aria-label="商品工作台分区">
+      <div className="product-workspace-tabs" role="tablist" aria-label="当前商品项目分区">
         {tabs.map((tab) => (
           <button
             aria-controls={`product-workspace-panel-${tab.id}`}

@@ -6,7 +6,9 @@ import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
+import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type UploadedAsset = {
@@ -33,6 +35,65 @@ type ProductWorkspaceStartPanelProps = {
 };
 
 const PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY = "cloudai:products:last-analysis-history-id";
+
+function getObjectField(value: unknown, key: string) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function getGeneratedCount(creationCenterData: ProductCreationCenterData | null) {
+  if (!creationCenterData) {
+    return 0;
+  }
+
+  return (
+    creationCenterData.copywriting.length +
+    creationCenterData.imageEdits.length +
+    creationCenterData.sceneImages.length +
+    creationCenterData.detailPages.length +
+    creationCenterData.imageSetImages.length
+  );
+}
+
+function getLatestOutputSettings(creationCenterData: ProductCreationCenterData | null) {
+  if (!creationCenterData) {
+    return null;
+  }
+
+  const records = [
+    ...creationCenterData.copywriting,
+    ...creationCenterData.imageEdits,
+    ...creationCenterData.sceneImages,
+    ...creationCenterData.detailPages,
+    ...creationCenterData.imageSetImages,
+  ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+  for (const record of records) {
+    const inputSettings = sanitizeProductOutputSettings(getObjectField(record.input, "outputSettings"));
+    const outputSettings = sanitizeProductOutputSettings(getObjectField(record.output, "outputSettings"));
+    const settings = inputSettings || outputSettings;
+
+    if (settings) {
+      return settings;
+    }
+  }
+
+  return null;
+}
+
+function getProjectTitle(creationCenterData: ProductCreationCenterData | null, result: ProductAnalysisResponse | null, uploadedAsset: UploadedAsset | null) {
+  return (
+    creationCenterData?.analysis.productNameSuggestions[0]?.trim() ||
+    result?.analysis.productNameSuggestions[0]?.trim() ||
+    creationCenterData?.product.title?.trim() ||
+    result?.title?.trim() ||
+    uploadedAsset?.name?.trim() ||
+    "未命名商品"
+  );
+}
 
 function getStoredAnalysisHistoryId() {
   try {
@@ -114,12 +175,12 @@ function ProductWorkspaceStartPanel({
 
   if (isRestoring) {
     return (
-      <section className="product-workspace-start product-workspace-start--loading" aria-label="正在恢复商品工作台">
+      <section className="product-workspace-start product-workspace-start--loading" aria-label="正在恢复商品项目">
         <div className="cai-empty product-workspace-start-loading">
           <div className="cai-empty__icon" aria-hidden="true">
             ...
           </div>
-          <h2 className="cai-empty__title">正在恢复商品工作台</h2>
+          <h2 className="cai-empty__title">正在恢复商品项目</h2>
           <p className="cai-empty__description">CloudAI 正在读取当前商品分析记录，请稍等片刻。</p>
         </div>
       </section>
@@ -230,6 +291,58 @@ function ProductWorkspaceStartPanel({
 
 function getProductWorkspaceHref(analysisHistoryId: string) {
   return `/dashboard/products?analysis=${encodeURIComponent(analysisHistoryId)}`;
+}
+
+function ProductProjectContextHeader({
+  creationCenterData,
+  result,
+  uploadedAsset,
+}: {
+  creationCenterData: ProductCreationCenterData | null;
+  result: ProductAnalysisResponse | null;
+  uploadedAsset: UploadedAsset | null;
+}) {
+  const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
+  const productName = getProjectTitle(creationCenterData, result, uploadedAsset);
+  const category = creationCenterData?.analysis.category || result?.analysis.category || "";
+  const generatedCount = getGeneratedCount(creationCenterData);
+  const outputSettings = getLatestOutputSettings(creationCenterData);
+  const imageUrl = creationCenterData?.originalAsset?.previewUrl || creationCenterData?.originalAsset?.url || uploadedAsset?.url || "";
+
+  return (
+    <section className="product-project-context-header" aria-label="当前商品项目">
+      <div className="product-project-context-main">
+        <Link className="product-project-context-back" href="/dashboard/products">
+          ← 商品项目
+        </Link>
+        <div className="product-project-context-summary">
+          <div className="product-project-context-thumb">
+            {imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt={productName} decoding="async" src={imageUrl} />
+            ) : (
+              <span>商</span>
+            )}
+          </div>
+          <div className="product-project-context-copy">
+            <p className="eyebrow">当前商品项目</p>
+            <h1>{productName}</h1>
+            <div>
+              {category ? <span>{category}</span> : null}
+              {outputSettings ? <span>{formatProductOutputSettingsSummary(outputSettings)}</span> : null}
+              <span>{generatedCount ? `已生成 ${generatedCount} 项素材` : "素材待生成"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {analysisHistoryId ? (
+        <Link className="cai-button cai-button--secondary cai-button--sm" href={`/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}`}>
+          详情页制作
+        </Link>
+      ) : null}
+    </section>
+  );
 }
 
 export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = false }: ProductWorkspaceShellProps = {}) {
@@ -518,6 +631,7 @@ export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = 
   return (
     <main className="dashboard-content">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
+      {shouldShowFullWorkspace ? <ProductProjectContextHeader creationCenterData={creationCenterData} result={result} uploadedAsset={uploadedAsset} /> : null}
       <section className={`product-workspace-shell ${shouldShowFullWorkspace ? "" : "product-workspace-shell--start"}`}>
         <ProductWorkspaceRail
           creationCenterData={creationCenterData}
