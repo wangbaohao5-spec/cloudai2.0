@@ -2108,9 +2108,10 @@ h3 {
 .dashboard-nav {
   display: grid;
   flex: 1;
-  gap: 17px;
+  align-content: start;
+  gap: 14px;
   min-height: 0;
-  margin-top: 22px;
+  margin-top: 18px;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
@@ -2118,35 +2119,36 @@ h3 {
 
 .dashboard-nav-section {
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 
 .dashboard-nav-label {
   margin: 0;
   padding: 0 10px;
   color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
 .dashboard-nav-list {
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 
 .dashboard-nav-link {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 38px;
+  gap: 9px;
+  min-height: 36px;
   border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 8px 10px;
+  border-radius: 10px;
+  padding: 7px 9px;
   color: var(--muted);
   font-size: 0.9rem;
-  line-height: 1.25;
+  line-height: 1.2;
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -2154,7 +2156,10 @@ h3 {
 }
 
 .dashboard-nav-link-icon {
-  flex: 0 0 auto;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  padding: 1px;
   opacity: 0.82;
 }
 
@@ -2178,7 +2183,7 @@ h3 {
   border-color: var(--selected-border);
   color: var(--nav-active-text);
   background: var(--nav-active-bg);
-  font-weight: 900;
+  font-weight: 850;
 }
 
 .dashboard-main {
@@ -2186,31 +2191,42 @@ h3 {
 }
 
 .sidebar-collapse-button {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  min-height: 38px;
+  gap: 9px;
+  min-height: 34px;
   width: 100%;
-  margin-top: 16px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 8px 10px;
-  color: var(--muted);
+  margin-top: 12px;
+  border: 0;
+  border-radius: 10px;
+  padding: 7px 9px;
+  color: var(--text-soft);
   background: transparent;
   cursor: pointer;
-  font-weight: 800;
+  font-size: 0.84rem;
+  font-weight: 750;
   transition:
     border-color 160ms ease,
     background 160ms ease,
     color 160ms ease;
 }
 
+.sidebar-collapse-button::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
 .sidebar-collapse-button:hover,
 .sidebar-collapse-button:focus-visible {
-  border-color: var(--card-border);
-  color: var(--text);
-  background: var(--surface);
+  color: var(--text-default);
+  background: var(--surface-card-muted);
 }
 
 .sidebar-collapse-button:focus-visible {
@@ -2219,8 +2235,11 @@ h3 {
 }
 
 .sidebar-collapse-button__icon {
-  flex: 0 0 auto;
-  opacity: 0.82;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  padding: 1px;
+  opacity: 0.74;
 }
 
 .sidebar-collapse-button__label {
@@ -2251,7 +2270,7 @@ h3 {
 
 .dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav {
   width: 100%;
-  gap: 14px;
+  gap: 10px;
 }
 
 .dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-section {
@@ -2264,15 +2283,15 @@ h3 {
 }
 
 .dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-list {
-  gap: 7px;
+  gap: 5px;
 }
 
 .dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-link,
 .dashboard-shell[data-sidebar-collapsed="true"] .sidebar-collapse-button {
   justify-content: center;
-  width: 40px;
+  width: 38px;
   margin-inline: auto;
-  padding: 8px;
+  padding: 7px;
 }
 
 .dashboard-header {
@@ -10445,9 +10464,15 @@ h3 {
   color: var(--text-muted);
 }
 
-[data-theme="business-light"] .dashboard-nav-link.active,
 [data-theme="business-light"] .dashboard-nav-link:hover {
-  border-color: var(--selected-border);
+  border-color: transparent;
+  color: var(--text-default);
+  background: var(--surface-card-muted);
+  box-shadow: none;
+}
+
+[data-theme="business-light"] .dashboard-nav-link.active {
+  border-color: transparent;
   color: var(--nav-active-text);
   background: var(--nav-active-bg);
   box-shadow: none;
