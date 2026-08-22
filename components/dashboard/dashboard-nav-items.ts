@@ -27,7 +27,7 @@ export const dashboardNavSections: DashboardNavSection[] = [
     label: "工作区",
     items: [
       { label: "概览", href: "/dashboard", icon: "overview" },
-      { label: "商品工作台", href: "/dashboard/products", icon: "productWorkspace" },
+      { label: "商品项目", href: "/dashboard/products", icon: "productWorkspace" },
       { label: "视频工坊", href: "/dashboard/video", icon: "videoStudio" },
     ],
   },

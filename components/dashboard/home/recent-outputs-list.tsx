@@ -55,7 +55,7 @@ export function RecentOutputsList({ outputs }: RecentOutputsListProps) {
           <h3 className="cai-empty__title">还没有生成素材</h3>
           <p className="cai-empty__description">完成原图优化或商品套图后，最近生成的图片素材会出现在这里。</p>
           <div className="cai-empty__actions">
-            <Link className="cai-button cai-button--primary" href="/dashboard/products">
+            <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
               创建商品
             </Link>
           </div>

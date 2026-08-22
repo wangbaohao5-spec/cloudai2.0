@@ -3,10 +3,10 @@ import Link from "next/link";
 const quickActions = [
   {
     icon: "商",
-    title: "商品工作台",
-    description: "上传商品图，完成商品策划、发布目标、上架文案、原图优化、商品套图和素材交付。",
+    title: "商品项目",
+    description: "管理商品项目，进入单商品工作区完成商品策划、发布目标、上架文案、原图优化、商品套图和素材交付。",
     href: "/dashboard/products",
-    buttonLabel: "进入工作台",
+    buttonLabel: "查看项目",
   },
   {
     icon: "页",

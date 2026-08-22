@@ -47,11 +47,11 @@ export function ImageShell() {
       <section className="legacy-image-tool-notice glass-card" aria-label="早期图片生成工具提示">
         <div>
           <strong>此页面为早期图片生成工具</strong>
-          <p>商品内容创作建议优先使用「商品工作台」或「详情页制作」，旧商品图路由仍保留用于直接访问和内部测试。</p>
+          <p>商品内容创作建议优先使用「商品项目」或「详情页制作」，旧商品图路由仍保留用于直接访问和内部测试。</p>
         </div>
         <div>
           <Link className="button secondary" href="/dashboard/products">
-            前往商品工作台
+            前往商品项目
           </Link>
           <Link className="button secondary" href="/dashboard/detail-page">
             前往详情页制作

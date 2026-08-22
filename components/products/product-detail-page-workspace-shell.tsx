@@ -310,8 +310,8 @@ export function ProductDetailPageWorkspaceShell() {
             eyebrow="详情页制作"
             marker="DTP"
             title="请选择一个商品后制作详情页"
-            description="详情页制作需要先完成商品分析。请先在商品工作台上传商品图并完成分析，再进入详情页制作。"
-            actions={[{ label: "前往商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
+            description="详情页制作需要先完成商品分析。请先在商品项目中新建或选择一个商品，再进入详情页制作。"
+            actions={[{ label: "前往商品项目", onClick: () => goToProductWorkspace(), tone: "primary" }]}
           />
         </section>
       </main>
@@ -326,8 +326,8 @@ export function ProductDetailPageWorkspaceShell() {
             eyebrow="记录不可用"
             marker="!"
             title="未找到商品分析记录"
-            description="请回到商品工作台重新选择商品，或重新上传商品图并完成分析。"
-            actions={[{ label: "返回商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
+            description="请回到商品项目重新选择商品，或新建商品项目并完成分析。"
+            actions={[{ label: "返回商品项目", onClick: () => goToProductWorkspace(), tone: "primary" }]}
           />
         </section>
       </main>

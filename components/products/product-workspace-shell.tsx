@@ -15,6 +15,11 @@ type UploadedAsset = {
   url: string;
 };
 
+type ProductWorkspaceShellProps = {
+  mode?: "workspace" | "create";
+  restoreFromRecent?: boolean;
+};
+
 type ProductWorkspaceStartPanelProps = {
   error: string;
   isAnalyzing: boolean;
@@ -223,7 +228,11 @@ function ProductWorkspaceStartPanel({
   );
 }
 
-export function ProductWorkspaceShell() {
+function getProductWorkspaceHref(analysisHistoryId: string) {
+  return `/dashboard/products?analysis=${encodeURIComponent(analysisHistoryId)}`;
+}
+
+export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = false }: ProductWorkspaceShellProps = {}) {
   const [error, setError] = useState("");
   const [creationCenterError, setCreationCenterError] = useState("");
   const [creationCenterData, setCreationCenterData] = useState<ProductCreationCenterData | null>(null);
@@ -267,8 +276,8 @@ export function ProductWorkspaceShell() {
 
   useEffect(() => {
     let isMounted = true;
-    const urlAnalysisHistoryId = new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
-    const analysisHistoryId = urlAnalysisHistoryId || getStoredAnalysisHistoryId();
+    const urlAnalysisHistoryId = mode === "create" ? "" : new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
+    const analysisHistoryId = urlAnalysisHistoryId || (restoreFromRecent ? getStoredAnalysisHistoryId() : "");
 
     async function restoreProductWorkspace() {
       if (!analysisHistoryId) {
@@ -340,7 +349,7 @@ export function ProductWorkspaceShell() {
         clearTimeout(toastTimerRef.current);
       }
     };
-  }, []);
+  }, [mode, restoreFromRecent]);
 
   useEffect(() => {
     let isMounted = true;
@@ -477,8 +486,14 @@ export function ProductWorkspaceShell() {
       setCreationCenterRefreshKey(0);
 
       if (data.historyId) {
-        updateAnalysisUrl(data.historyId);
         saveStoredAnalysisHistoryId(data.historyId);
+
+        if (mode === "create") {
+          window.location.assign(getProductWorkspaceHref(data.historyId));
+          return;
+        }
+
+        updateAnalysisUrl(data.historyId);
       }
       showToast("商品分析完成，可以继续生成素材");
     } catch (caughtError) {

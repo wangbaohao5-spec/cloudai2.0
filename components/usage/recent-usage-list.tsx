@@ -42,8 +42,8 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
           icon="📊"
           title="还没有额度记录"
           description="完成一次商品分析、上架文案或商品图任务后，这里会显示最近使用记录。"
-          actionHref="/dashboard/products"
-          actionLabel="开始创作商品"
+          actionHref="/dashboard/products/new"
+          actionLabel="新建商品项目"
         />
       )}
     </section>
