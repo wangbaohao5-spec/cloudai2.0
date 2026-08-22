@@ -87,19 +87,17 @@ export function DashboardUserMenu({ children, userEmail, userName }: DashboardUs
           </div>
 
           <div className="dashboard-user-menu-group" aria-label="账号">
-            <button className="dashboard-user-menu-item is-disabled" disabled type="button">
-              <span>个人中心</span>
-              <em>即将开放</em>
-            </button>
-            <button className="dashboard-user-menu-item is-disabled" disabled type="button">
+            <Link className="dashboard-user-menu-item" href="/dashboard/subscription" onClick={() => setOpen(false)}>
               <span>订阅</span>
-              <em>即将开放</em>
-            </button>
+            </Link>
             <Link className="dashboard-user-menu-item" href="/dashboard/usage" onClick={() => setOpen(false)}>
               <span>额度中心</span>
             </Link>
             <Link className="dashboard-user-menu-item" href="/dashboard/history" onClick={() => setOpen(false)}>
               <span>历史记录</span>
+            </Link>
+            <Link className="dashboard-user-menu-item" href="/dashboard/account" onClick={() => setOpen(false)}>
+              <span>个人中心</span>
             </Link>
           </div>
 

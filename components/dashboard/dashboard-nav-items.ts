@@ -13,6 +13,8 @@ export type DashboardNavIconName =
   | "imageEdit"
   | "assistant"
   | "history"
+  | "account"
+  | "subscription"
   | "usage";
 
 export type DashboardNavSection = {
@@ -41,8 +43,10 @@ export const dashboardNavSections: DashboardNavSection[] = [
   {
     label: "管理",
     items: [
-      { label: "历史记录", href: "/dashboard/history", icon: "history" },
+      { label: "订阅", href: "/dashboard/subscription", icon: "subscription" },
       { label: "额度中心", href: "/dashboard/usage", icon: "usage" },
+      { label: "历史记录", href: "/dashboard/history", icon: "history" },
+      { label: "个人中心", href: "/dashboard/account", icon: "account" },
     ],
   },
 ];

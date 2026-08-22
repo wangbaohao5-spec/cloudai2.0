@@ -2427,6 +2427,16 @@ h3 {
   text-decoration: none;
 }
 
+.header-action-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header-action-panel-link.is-secondary {
+  color: var(--text-muted);
+}
+
 .header-action-panel-link:hover {
   background: var(--surface-card-muted);
 }
@@ -2503,15 +2513,17 @@ h3 {
 
 .dashboard-user-menu-panel {
   display: grid;
-  gap: 10px;
+  width: min(272px, calc(100vw - 32px));
+  gap: 8px;
+  padding: 12px;
 }
 
 .dashboard-user-menu-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 .dashboard-user-menu-avatar {
@@ -2553,7 +2565,7 @@ h3 {
 
 .dashboard-user-menu-group {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .dashboard-user-menu-item {
@@ -2561,10 +2573,10 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 34px;
+  min-height: 36px;
   border: 0;
   border-radius: 10px;
-  padding: 0 10px;
+  padding: 0 9px;
   color: var(--text-default);
   background: transparent;
   font-size: 0.84rem;
@@ -2590,7 +2602,7 @@ h3 {
 
 .dashboard-user-menu-footer {
   border-top: 1px solid var(--border-subtle);
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 .dashboard-user-menu-footer form {
@@ -2599,10 +2611,10 @@ h3 {
 
 .dashboard-user-menu-logout {
   width: 100%;
-  min-height: 34px;
+  min-height: 36px;
   border: 0;
   border-radius: 10px;
-  padding: 0 10px;
+  padding: 0 9px;
   color: var(--button-danger-text);
   background: transparent;
   cursor: pointer;
@@ -2963,6 +2975,142 @@ h3 {
   border-top: 1px solid var(--border-subtle);
   padding-top: 12px;
   font-size: 0.86rem;
+}
+
+.dashboard-account-page,
+.dashboard-subscription-page {
+  display: grid;
+  max-width: 980px;
+  gap: 18px;
+}
+
+.dashboard-account-header,
+.dashboard-subscription-header {
+  display: grid;
+  max-width: 700px;
+  gap: 6px;
+}
+
+.dashboard-account-header h1,
+.dashboard-subscription-header h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+
+.dashboard-account-header p:last-child,
+.dashboard-subscription-header p:last-child {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.dashboard-account-grid,
+.dashboard-subscription-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-account-card,
+.dashboard-subscription-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.dashboard-subscription-card--primary {
+  grid-column: 1 / -1;
+}
+
+.dashboard-account-card h2,
+.dashboard-subscription-card h2 {
+  margin: 0 0 6px;
+  font-size: 1.08rem;
+  letter-spacing: 0;
+}
+
+.dashboard-account-card p,
+.dashboard-subscription-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.dashboard-account-card .theme-selector {
+  justify-self: start;
+}
+
+.dashboard-account-card .theme-selector-trigger {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 10px 13px;
+  color: var(--text-default);
+  background: var(--surface-card-muted);
+  box-shadow: var(--shadow-xs);
+}
+
+.dashboard-account-card .theme-selector-menu {
+  left: 0;
+  right: auto;
+}
+
+.dashboard-account-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.dashboard-account-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-radius: 12px;
+  padding: 10px 11px;
+  background: var(--surface-card-muted);
+}
+
+.dashboard-account-list dt,
+.dashboard-account-list dd {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.dashboard-account-list dt {
+  color: var(--text-muted);
+  font-weight: 850;
+}
+
+.dashboard-account-list dd {
+  color: var(--text-strong);
+  font-weight: 850;
+  text-align: right;
+}
+
+.dashboard-subscription-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-subscription-list li {
+  border-radius: 12px;
+  padding: 9px 11px;
+  color: var(--text-default);
+  background: var(--surface-card-muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.dashboard-subscription-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .dashboard-welcome {
@@ -11492,6 +11640,11 @@ h3 {
   }
 
   .dashboard-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-account-grid,
+  .dashboard-subscription-grid {
     grid-template-columns: 1fr;
   }
 

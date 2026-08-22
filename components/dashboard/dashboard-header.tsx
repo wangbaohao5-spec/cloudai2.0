@@ -31,9 +31,14 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
           </div>
           <p>CloudAI 套餐与创作额度功能正在准备中。</p>
           <p>正式内测阶段将支持套餐开通、续费和额度管理。</p>
-          <Link className="header-action-panel-link" href="/dashboard/usage">
-            前往额度中心
-          </Link>
+          <div className="header-action-panel-actions">
+            <Link className="header-action-panel-link" href="/dashboard/subscription">
+              查看订阅
+            </Link>
+            <Link className="header-action-panel-link is-secondary" href="/dashboard/usage">
+              前往额度中心
+            </Link>
+          </div>
         </HeaderActionPopover>
 
         <HeaderActionPopover icon="announcement" label="公告">

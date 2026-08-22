@@ -114,6 +114,22 @@ function DashboardNavIcon({ icon }: { icon: DashboardNavIconName }) {
           <path d="M3 19h18" />
         </svg>
       );
+    case "subscription":
+      return (
+        <svg {...commonProps}>
+          <rect height="14" rx="2" width="18" x="3" y="5" />
+          <path d="M3 10h18" />
+          <path d="M7 15h4" />
+          <path d="M16 15h1" />
+        </svg>
+      );
+    case "account":
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </svg>
+      );
   }
 }
 
