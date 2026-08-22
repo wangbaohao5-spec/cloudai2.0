@@ -2063,17 +2063,28 @@ h3 {
   display: grid;
   min-height: 100vh;
   grid-template-columns: var(--dashboard-sidebar-width) minmax(0, 1fr);
+  transition: grid-template-columns 180ms ease;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] {
+  grid-template-columns: var(--dashboard-sidebar-collapsed-width) minmax(0, 1fr);
 }
 
 .dashboard-sidebar {
   position: sticky;
   top: 0;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow-x: hidden;
   border-right: 1px solid var(--border-subtle);
   padding: 20px 16px;
   background: var(--bg-elevated);
   backdrop-filter: blur(20px);
+  transition:
+    padding 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
 }
 
 .dashboard-logo {
@@ -2085,10 +2096,24 @@ h3 {
   line-height: 1;
 }
 
+.dashboard-logo-text {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition:
+    opacity 160ms ease,
+    width 160ms ease;
+}
+
 .dashboard-nav {
   display: grid;
+  flex: 1;
   gap: 17px;
+  min-height: 0;
   margin-top: 22px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
 .dashboard-nav-section {
@@ -2114,6 +2139,7 @@ h3 {
 .dashboard-nav-link {
   display: flex;
   align-items: center;
+  gap: 10px;
   min-height: 38px;
   border: 1px solid transparent;
   border-radius: 12px;
@@ -2121,6 +2147,24 @@ h3 {
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.25;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.dashboard-nav-link-icon {
+  flex: 0 0 auto;
+  opacity: 0.82;
+}
+
+.dashboard-nav-link-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 140ms ease;
 }
 
 .dashboard-nav-link:hover,
@@ -2139,6 +2183,96 @@ h3 {
 
 .dashboard-main {
   min-width: 0;
+}
+
+.sidebar-collapse-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 38px;
+  width: 100%;
+  margin-top: 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 8px 10px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 800;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.sidebar-collapse-button:hover,
+.sidebar-collapse-button:focus-visible {
+  border-color: var(--card-border);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.sidebar-collapse-button:focus-visible {
+  outline: 2px solid var(--input-focus);
+  outline-offset: 2px;
+}
+
+.sidebar-collapse-button__icon {
+  flex: 0 0 auto;
+  opacity: 0.82;
+}
+
+.sidebar-collapse-button__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-sidebar {
+  align-items: center;
+  padding-inline: 14px;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-logo {
+  justify-content: center;
+  width: 100%;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-logo-text,
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-label,
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-link-label,
+.dashboard-shell[data-sidebar-collapsed="true"] .sidebar-collapse-button__label {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav {
+  width: 100%;
+  gap: 14px;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-section {
+  gap: 7px;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-section + .dashboard-nav-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-list {
+  gap: 7px;
+}
+
+.dashboard-shell[data-sidebar-collapsed="true"] .dashboard-nav-link,
+.dashboard-shell[data-sidebar-collapsed="true"] .sidebar-collapse-button {
+  justify-content: center;
+  width: 40px;
+  margin-inline: auto;
+  padding: 8px;
 }
 
 .dashboard-header {
