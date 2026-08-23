@@ -310,8 +310,8 @@ export function ProductDetailPageWorkspaceShell() {
             eyebrow="详情页制作"
             marker="DTP"
             title="请选择一个商品后制作详情页"
-            description="详情页制作需要先完成商品分析。请先在商品项目中新建或选择一个商品，再进入详情页制作。"
-            actions={[{ label: "前往商品项目", onClick: () => goToProductWorkspace(), tone: "primary" }]}
+            description="详情页制作需要先完成商品分析。请先在商品工作台新建或选择一个商品，再进入详情页制作。"
+            actions={[{ label: "前往商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
           />
         </section>
       </main>
@@ -326,8 +326,8 @@ export function ProductDetailPageWorkspaceShell() {
             eyebrow="记录不可用"
             marker="!"
             title="未找到商品分析记录"
-            description="请回到商品项目重新选择商品，或新建商品项目并完成分析。"
-            actions={[{ label: "返回商品项目", onClick: () => goToProductWorkspace(), tone: "primary" }]}
+            description="请回到商品工作台重新选择商品，或新建商品并完成分析。"
+            actions={[{ label: "返回商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
           />
         </section>
       </main>
@@ -348,7 +348,7 @@ export function ProductDetailPageWorkspaceShell() {
         <section className="product-detail-page-hero cai-card cai-card--compact">
           <div>
             <Link className="product-detail-page-project-link" href={workspaceHref}>
-              ← 返回当前商品项目
+              ← 返回当前商品
             </Link>
             <p className="eyebrow">Detail Page Tool</p>
             <h1>详情页制作</h1>
@@ -356,7 +356,7 @@ export function ProductDetailPageWorkspaceShell() {
           </div>
           <div className="product-detail-page-hero-actions">
             <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceHref}>
-              返回当前项目
+              返回当前商品
             </Link>
             <Link className="cai-button cai-button--secondary cai-button--sm" href={workspaceAssetsHref}>
               查看素材库
@@ -406,8 +406,8 @@ export function ProductDetailPageWorkspaceShell() {
             <strong>{hasDetailPageAssets ? "详情页素材已生成" : "已有详情页素材"}</strong>
             <p>
               {hasDetailPageAssets
-                ? `已生成 ${creationCenterData.detailPages.length} 张详情页图片，可回到当前商品项目的素材库查看、下载或导出素材包。`
-                : "生成详情页图片后，可在当前商品项目的素材库和素材包中查看。"}
+                ? `已生成 ${creationCenterData.detailPages.length} 张详情页图片，可回到当前商品的素材库查看、下载或导出素材包。`
+                : "生成详情页图片后，可在当前商品的素材库和素材包中查看。"}
             </p>
           </div>
           <div>

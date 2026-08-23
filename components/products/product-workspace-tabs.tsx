@@ -67,7 +67,7 @@ function CreationCenterState({
         eyebrow="正在同步"
         marker="..."
         title="正在加载商品素材"
-        description="CloudAI 正在刷新当前商品项目，请稍等片刻。"
+        description="CloudAI 正在刷新当前商品，请稍等片刻。"
       />
     );
   }
@@ -194,12 +194,10 @@ export function ProductWorkspaceTabs({
   const hasOriginalAsset = Boolean(creationCenterData?.originalAsset);
   const generatedAssetCount = imageEditCount + sceneImageCount + detailPageCount + imageSetCount;
   const tabCounts: Partial<Record<TabId, number>> = {
-    analysis: result ? 1 : 0,
     assets: creationCenterData ? Number(hasOriginalAsset) + generatedAssetCount : 0,
     copywriting: copywritingCount,
     images: imageEditCount,
     imageSet: imageSetCount,
-    export: creationCenterData ? 1 : 0,
   };
   const exportChecklist = [
     { label: "商品策划", done: Boolean(creationCenterData) },
@@ -261,7 +259,7 @@ export function ProductWorkspaceTabs({
 
   return (
     <section className="product-workspace-main">
-      <div className="product-workspace-tabs" role="tablist" aria-label="当前商品项目分区">
+      <div className="product-workspace-tabs" role="tablist" aria-label="当前商品工作区">
         {tabs.map((tab) => (
           <button
             aria-controls={`product-workspace-panel-${tab.id}`}
@@ -341,21 +339,6 @@ export function ProductWorkspaceTabs({
                 }
               />
             ) : null}
-            <section className="product-detail-page-entry-card">
-              <div>
-                <strong>详情页制作已独立</strong>
-                <p>详情页素材会在独立页面制作，完成后仍会回到当前商品的素材库和素材包中汇总。</p>
-              </div>
-              {result.historyId ? (
-                <Link className="button secondary" href={getDetailPageHref(result.historyId)}>
-                  前往详情页制作
-                </Link>
-              ) : (
-                <button className="button secondary" disabled type="button">
-                  等待商品分析
-                </button>
-              )}
-            </section>
           </>
         ) : null}
       </div>

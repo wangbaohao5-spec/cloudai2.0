@@ -87,7 +87,7 @@ export function ProductOutputSettingsEditor({ analysisHistoryId, onSettingsChang
         <div>
           <h3>发布目标</h3>
           <strong>{formatProductOutputSettingsSummary(settings)}</strong>
-          <p>这些设置会影响商品文案、套图、详情页和图片素材的语言、平台风格与画面比例。</p>
+          <p>用于控制后续文案、图片、商品套图和详情页的输出方向。</p>
         </div>
         <button className="button secondary" type="button" onClick={() => setIsEditing((current) => !current)}>
           {isEditing ? "收起" : "修改"}

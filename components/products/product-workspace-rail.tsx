@@ -1,7 +1,5 @@
 "use client";
 
-import { AiThinkingLoading } from "@/components/ui/loading";
-import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -130,23 +128,16 @@ function getDetailPageHref(analysisHistoryId?: string) {
 export function ProductWorkspaceRail({
   creationCenterData,
   error,
-  isAnalyzing,
-  isRestoring,
   isUploading,
   mode = "workspace",
-  onAnalyze,
-  onFileChange,
-  onProductHintChange,
-  productHint,
   result,
   uploadedAsset,
 }: ProductWorkspaceRailProps) {
   const status = getWorkspaceStatus({ creationCenterData, result, uploadedAsset });
-  const analyzeLabel = result ? "重新分析商品" : "分析商品";
-  const isPrimaryActionLoading = isUploading || isAnalyzing || isRestoring;
   const analysisHistoryId = result?.historyId || creationCenterData?.product.analysisHistoryId;
   const generatedCount = getGeneratedCount(creationCenterData);
   const outputSettings = getLatestOutputSettings(creationCenterData);
+  const productName = result?.analysis.productNameSuggestions[0] || result?.title || creationCenterData?.product.title || uploadedAsset?.name || "当前商品";
 
   if (mode !== "workspace") {
     const railStatus =
@@ -205,42 +196,26 @@ export function ProductWorkspaceRail({
   return (
     <aside className="product-workspace-rail">
       <div className="product-workspace-rail-section product-workspace-rail-heading">
-        <p className="eyebrow">当前商品项目</p>
+        <p className="eyebrow">当前进度</p>
         <h2>创作状态</h2>
         <p className="image-generation-intro">围绕当前商品继续生成、整理和导出素材。</p>
       </div>
 
       <section className="product-workspace-summary" id="product-upload-section" aria-label="当前商品摘要">
-        <div className="product-upload-box">
-          <label>
-            商品图片
-            <input accept="image/png,image/jpeg,image/webp" type="file" onChange={onFileChange} />
-          </label>
+        <div className="product-workspace-rail-product">
           <div className="product-upload-preview">
             {uploadedAsset?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img alt={uploadedAsset.name || "商品图片预览"} src={uploadedAsset.url} />
             ) : (
-              <p>选择一张商品图片开始创建素材。</p>
+              <p>当前商品图片暂不可用。</p>
             )}
           </div>
-          <details className="product-upload-tips">
-            <summary>上传建议</summary>
-            <ul>
-              <li>商品主体完整，光线清楚</li>
-              <li>尽量正向拍摄，避免严重倾斜</li>
-              <li>避免遮挡、强反光、过暗</li>
-              <li>服装类建议正向或上身清晰</li>
-            </ul>
-          </details>
-        </div>
-
-        {!creationCenterData && uploadedAsset ? (
-          <div className="product-workspace-pending-summary">
-            <strong>{uploadedAsset.name}</strong>
-            <p>完成分析后会显示商品名称、类别和目标用户。</p>
+          <div>
+            <span>当前商品</span>
+            <strong>{productName}</strong>
           </div>
-        ) : null}
+        </div>
       </section>
 
       <section className="product-workspace-rail-meta" aria-label="当前商品创作摘要">
@@ -252,22 +227,6 @@ export function ProductWorkspaceRail({
           <span>素材数量</span>
           <strong>{generatedCount ? `${generatedCount} 项` : "待生成"}</strong>
         </div>
-      </section>
-
-      <section className="product-workspace-supplement" aria-label="商品补充信息">
-        <label htmlFor="product-supplement">
-          商品补充信息（可选）
-          <span>补充型号、规格、颜色、材质、卖点，或告诉 AI 哪些细节必须保留。</span>
-        </label>
-        <textarea
-          id="product-supplement"
-          maxLength={1000}
-          placeholder="例如：这是一款粉蓝配色机械键盘，粉色背光，右下角卡通图案是键盘设计的一部分，请保留键盘整体布局、粉蓝配色、粉色灯光和卡通图案位置，不要把卡通人物改成漂浮装饰。主打可爱桌搭和柔和氛围感。"
-          rows={4}
-          value={productHint}
-          onChange={(event) => onProductHintChange(event.target.value)}
-        />
-        <em>{productHint.trim().length ? `${productHint.trim().length}/1000` : "不填写也可以直接分析"}</em>
       </section>
 
       <div className="product-workspace-status" aria-live="polite">
@@ -296,17 +255,10 @@ export function ProductWorkspaceRail({
             </a>
           </div>
           <a className="product-workspace-rail-detail-link" href={getDetailPageHref(analysisHistoryId)}>
-            需要详情页？前往详情页制作
+            详情页制作
           </a>
         </section>
       ) : null}
-
-      <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={onAnalyze}>
-        {isAnalyzing ? <AiThinkingLoading size="sm" /> : isPrimaryActionLoading ? <LoadingIndicator /> : null}
-        {isUploading ? "正在上传..." : isAnalyzing ? "正在分析..." : isRestoring ? "正在恢复..." : analyzeLabel}
-      </button>
-
-      <p className="image-generation-helper">发布目标可在右侧「商品策划」中统一设置，后续生成任务会继承该设置。</p>
       {error ? <p className="image-generation-error">{error}</p> : null}
     </aside>
   );

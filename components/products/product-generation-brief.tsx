@@ -183,7 +183,6 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
           <span>卖点 {brief.coreSellingPoints.length}</span>
           <span>保留 {brief.mustKeepDetails.length}</span>
           <span>{brief.riskConfirmations?.forbiddenClaims ? "已设置风险限制" : "待确认风险"}</span>
-          <span>{brief.styleRequirements ? "已填写风格" : "待补充风格"}</span>
         </div>
       </div>
 
@@ -223,7 +222,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
             <button className="button primary" type="button" onClick={() => setIsEditing(true)}>
               编辑生成要求
             </button>
-            <button className="button ghost" type="button" onClick={handleReset}>
+            <button className="button ghost product-generation-brief-reset" type="button" onClick={handleReset}>
               重置为 AI 分析结果
             </button>
             {status ? <span>{status}</span> : null}

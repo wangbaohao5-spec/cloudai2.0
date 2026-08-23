@@ -330,10 +330,10 @@ function ProductProjectContextHeader({
   const imageUrl = creationCenterData?.originalAsset?.previewUrl || creationCenterData?.originalAsset?.url || uploadedAsset?.url || "";
 
   return (
-    <section className="product-project-context-header" aria-label="当前商品项目">
+    <section className="product-project-context-header" aria-label="当前商品">
       <div className="product-project-context-main">
-        <Link className="product-project-context-back" href="/dashboard/products">
-          ← 商品工作台
+        <Link className="product-project-context-back" href="/dashboard/products/all">
+          查看全部商品
         </Link>
         <div className="product-project-context-summary">
           <div className="product-project-context-thumb">
@@ -345,12 +345,12 @@ function ProductProjectContextHeader({
             )}
           </div>
           <div className="product-project-context-copy">
-            <p className="eyebrow">当前商品项目</p>
+            <p className="eyebrow">当前商品</p>
             <h1>{productName}</h1>
             <div>
               {category ? <span>{category}</span> : null}
               {outputSettings ? <span>{formatProductOutputSettingsSummary(outputSettings)}</span> : null}
-              <span>{generatedCount ? `已生成 ${generatedCount} 项素材` : "素材待生成"}</span>
+              <span>{generatedCount ? `已有 ${generatedCount} 项素材` : "素材待生成"}</span>
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@ function ProductProjectContextHeader({
           <Link className="cai-button cai-button--ghost cai-button--sm" href="/dashboard/products/new">
             + 新建商品
           </Link>
-          <Link className="cai-button cai-button--secondary cai-button--sm" href={`/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}`}>
+          <Link className="cai-button cai-button--ghost cai-button--sm" href={`/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}`}>
             详情页制作
           </Link>
         </div>
