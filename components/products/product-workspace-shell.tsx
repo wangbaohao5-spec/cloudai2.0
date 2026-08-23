@@ -160,13 +160,13 @@ function ProductWorkspaceStartPanel({
   const isPendingAnalysis = Boolean(uploadedAsset) || isUploading;
   const isBusy = isUploading || isAnalyzing || isRestoring;
   const buttonLabel = isUploading ? "图片上传中..." : isAnalyzing ? "正在进行商品策划..." : "开始商品策划";
-  const statusLabel = isAnalyzing ? "正在策划" : isUploading ? "上传中" : uploadedAsset ? "商品图片已准备" : "未上传";
+  const statusLabel = isAnalyzing ? "正在策划" : isUploading ? "上传中" : uploadedAsset ? "准备开始商品策划" : "未上传";
   const statusDescription = isAnalyzing
     ? "CloudAI 正在理解商品信息并生成商品策划。"
     : isUploading
       ? "商品图片正在上传，请稍等。"
       : uploadedAsset
-        ? "你可以继续补充商品信息，或直接开始商品策划。"
+        ? "确认商品图片和补充信息后即可开始。"
         : "请先上传一张主体清晰的商品图片。";
 
   function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -204,12 +204,12 @@ function ProductWorkspaceStartPanel({
   return (
     <section className="product-workspace-start" aria-label={isPendingAnalysis ? "待分析商品" : "开始商品创作"}>
       <div className="product-workspace-start-header">
-        <p className="eyebrow">{isPendingAnalysis ? "Pending Analysis" : "Product Workspace"}</p>
+        <p className="eyebrow">PRODUCT WORKSPACE</p>
         <h1>商品工作台</h1>
         <p>
           {isPendingAnalysis
-            ? "请确认商品图片和补充信息，然后开始商品策划。"
-            : "上传一张商品图片，CloudAI 会先理解商品信息，再为后续上架文案、原图优化、商品套图和素材整理建立统一创作上下文。"}
+            ? "确认商品图片和补充信息后，开始生成当前商品的创作上下文。"
+            : "上传一张商品图片，CloudAI 会先完成商品策划，再帮助你继续生成上架文案、原图优化、商品套图和素材包。"}
         </p>
       </div>
 
@@ -218,8 +218,8 @@ function ProductWorkspaceStartPanel({
           <div className="product-workspace-start-section-header">
             <span>01</span>
             <div>
-              <h2>上传商品图</h2>
-              <p>支持 PNG、JPG、WebP。建议选择主体完整、光线清楚的商品原图。</p>
+              <h2>上传商品图片</h2>
+              <p>支持 PNG、JPG、WebP。建议上传主体完整、光线清晰的商品原图。</p>
             </div>
           </div>
 
@@ -234,7 +234,7 @@ function ProductWorkspaceStartPanel({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img alt={uploadedAsset.name || "商品图片预览"} src={uploadedAsset.url} />
                 <span>{uploadedAsset.name}</span>
-                <em>点击可更换图片</em>
+                <em>更换图片</em>
               </>
             ) : (
               <div>
@@ -260,14 +260,14 @@ function ProductWorkspaceStartPanel({
             <span>02</span>
             <div>
               <h2>商品补充信息（可选）</h2>
-              <p>补充型号、规格、颜色、材质、卖点或必须保留的细节，能让 AI 更准确地完成商品策划。</p>
+              <p>补充商品规格、材质、颜色、核心卖点，或说明需要保留的包装、配件和外观细节。</p>
             </div>
           </div>
 
           <textarea
             className="cai-textarea product-workspace-start-textarea"
             maxLength={1000}
-            placeholder="例如：这是一款粉蓝配色机械键盘，粉色背光，右下角卡通图案是键盘设计的一部分，请保留键盘整体布局、粉蓝配色、粉色灯光和卡通图案位置。"
+            placeholder="例如：补充商品的核心卖点、规格参数、适用场景，以及需要重点保留的外观细节、包装信息或品牌元素。"
             rows={5}
             value={productHint}
             onChange={(event) => onProductHintChange(event.target.value)}

@@ -5899,7 +5899,7 @@ h3 {
 .product-workspace-start-upload {
   position: relative;
   display: grid;
-  min-height: 270px;
+  min-height: clamp(300px, 30vw, 360px);
   place-items: center;
   overflow: hidden;
   border: 1px dashed var(--border-default);
@@ -5946,7 +5946,9 @@ h3 {
 }
 
 .product-workspace-start-upload.has-preview {
-  min-height: 300px;
+  height: clamp(320px, 30vw, 380px);
+  min-height: 0;
+  max-height: 400px;
   padding: 0;
   border-style: solid;
   background: var(--surface-overlay);
@@ -5955,39 +5957,36 @@ h3 {
 .product-workspace-start-upload img {
   width: 100%;
   height: 100%;
-  min-height: 300px;
+  min-height: 0;
   object-fit: contain;
   background: var(--surface-card-muted);
 }
 
 .product-workspace-start-upload > span {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
-  max-width: min(300px, calc(100% - 24px));
+  right: 10px;
+  bottom: 10px;
+  max-width: min(260px, calc(100% - 20px));
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
   border-radius: 999px;
-  padding: 7px 10px;
-  color: var(--text-default);
-  background: var(--surface-overlay);
-  box-shadow: var(--shadow-sm);
-  font-size: 0.8rem;
-  font-weight: 850;
+  padding: 5px 8px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--surface-overlay) 86%, transparent);
+  font-size: 0.74rem;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .product-workspace-start-upload > em {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
+  left: 10px;
+  bottom: 10px;
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
-  padding: 7px 10px;
+  padding: 6px 9px;
   color: var(--text-muted);
-  background: var(--surface-overlay);
-  box-shadow: var(--shadow-xs);
+  background: color-mix(in srgb, var(--surface-overlay) 92%, transparent);
   font-size: 0.78rem;
   font-style: normal;
   font-weight: 800;
@@ -5998,8 +5997,15 @@ h3 {
 }
 
 .product-workspace-start-textarea {
-  min-height: 190px;
+  min-height: 170px;
+  max-height: 220px;
   resize: vertical;
+}
+
+.product-workspace-start-textarea:focus-visible {
+  outline: none;
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
 .product-workspace-start-hint-row {
@@ -12212,13 +12218,19 @@ h3 {
     padding: 16px;
   }
 
-  .product-workspace-start-upload,
+  .product-workspace-start-upload {
+    min-height: 260px;
+  }
+
   .product-workspace-start-upload.has-preview {
-    min-height: 220px;
+    height: clamp(260px, 65vw, 360px);
+    min-height: 0;
+    max-height: 380px;
   }
 
   .product-workspace-start-upload img {
-    min-height: 220px;
+    min-height: 0;
+    height: 100%;
   }
 
   .product-workspace-start-flow {
