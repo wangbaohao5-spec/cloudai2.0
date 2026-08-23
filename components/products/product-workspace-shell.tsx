@@ -18,6 +18,7 @@ type UploadedAsset = {
 };
 
 type ProductWorkspaceShellProps = {
+  initialAnalysisHistoryId?: string;
   mode?: "workspace" | "create";
   restoreFromRecent?: boolean;
 };
@@ -35,6 +36,14 @@ type ProductWorkspaceStartPanelProps = {
 };
 
 const PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY = "cloudai:products:last-analysis-history-id";
+const START_WORKSPACE_CAPABILITIES = [
+  { description: "整理商品定位与卖点", label: "商品策划" },
+  { description: "生成标题与商品卖点", label: "上架文案" },
+  { description: "保持商品一致性的精修", label: "原图优化" },
+  { description: "生成适配上架的成套商品图", label: "商品套图" },
+  { description: "统一整理当前商品素材", label: "素材库" },
+  { description: "汇总交付素材", label: "素材包" },
+];
 
 function getObjectField(value: unknown, key: string) {
   if (!value || typeof value !== "object") {
@@ -145,15 +154,15 @@ function ProductWorkspaceStartPanel({
 }: ProductWorkspaceStartPanelProps) {
   const isPendingAnalysis = Boolean(uploadedAsset) || isUploading;
   const isBusy = isUploading || isAnalyzing || isRestoring;
-  const buttonLabel = isUploading
-    ? "上传图片中..."
-    : isAnalyzing
-      ? "正在商品策划..."
-      : isRestoring
-        ? "正在恢复商品..."
-        : uploadedAsset
-          ? "开始商品策划"
-          : "请先上传商品图";
+  const buttonLabel = isUploading ? "图片上传中..." : isAnalyzing ? "正在进行商品策划..." : "开始商品策划";
+  const statusLabel = isAnalyzing ? "正在策划" : isUploading ? "上传中" : uploadedAsset ? "商品图片已准备" : "未上传";
+  const statusDescription = isAnalyzing
+    ? "CloudAI 正在理解商品信息并生成商品策划。"
+    : isUploading
+      ? "商品图片正在上传，请稍等。"
+      : uploadedAsset
+        ? "你可以继续补充商品信息，或直接开始商品策划。"
+        : "请先上传一张主体清晰的商品图片。";
 
   function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -191,11 +200,11 @@ function ProductWorkspaceStartPanel({
     <section className="product-workspace-start" aria-label={isPendingAnalysis ? "待分析商品" : "开始商品创作"}>
       <div className="product-workspace-start-header">
         <p className="eyebrow">{isPendingAnalysis ? "Pending Analysis" : "Product Workspace"}</p>
-        <h1>{isPendingAnalysis ? "待分析商品" : "开始商品创作"}</h1>
+        <h1>商品工作台</h1>
         <p>
           {isPendingAnalysis
             ? "请确认商品图片和补充信息，然后开始商品策划。"
-            : "上传一张商品图，CloudAI 会先理解商品，再帮助你生成上架文案、原图优化、商品套图和素材包。"}
+            : "上传一张商品图片，CloudAI 会先理解商品信息，再为后续上架文案、原图优化、商品套图和素材整理建立统一创作上下文。"}
         </p>
       </div>
 
@@ -220,6 +229,7 @@ function ProductWorkspaceStartPanel({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img alt={uploadedAsset.name || "商品图片预览"} src={uploadedAsset.url} />
                 <span>{uploadedAsset.name}</span>
+                <em>点击可更换图片</em>
               </>
             ) : (
               <div>
@@ -260,28 +270,33 @@ function ProductWorkspaceStartPanel({
           <div className="product-workspace-start-hint-row">
             <span>{productHint.trim().length ? `${productHint.trim().length}/1000` : "不填写也可以直接开始策划"}</span>
           </div>
-
-          <button className="cai-button cai-button--primary cai-button--full" disabled={!uploadedAsset || isBusy} type="button" onClick={onAnalyze}>
-            {isAnalyzing ? <AiThinkingLoading size="sm" /> : isUploading ? <LoadingIndicator /> : null}
-            {buttonLabel}
-          </button>
-
-          {error ? <p className="image-generation-error">{error}</p> : null}
         </section>
       </div>
 
-      <aside className="cai-card cai-card--muted product-workspace-start-guide" aria-label="商品策划会识别的内容">
-        <div>
-          <strong>{isPendingAnalysis ? "商品策划会识别" : "创建后可以继续生成"}</strong>
-          <p>
-            {isPendingAnalysis
-              ? "商品类别、颜色/材质/规格、核心卖点、必须保留的细节和后续生成建议。"
-              : "商品策划、上架文案、原图优化、商品套图、素材库和素材包。"}
-          </p>
+      <section className="cai-card cai-card--compact product-workspace-start-action" aria-label="开始商品策划">
+        <div className="product-workspace-start-status" aria-live="polite">
+          <strong>{statusLabel}</strong>
+          <span>{statusDescription}</span>
         </div>
-        <div className="product-workspace-start-flow" aria-label="轻量流程">
-          {["上传商品图", "商品策划", "商品套图", "素材库", "素材包"].map((step) => (
-            <span key={step}>{step}</span>
+        <button className="cai-button cai-button--primary" disabled={!uploadedAsset || isBusy} type="button" onClick={onAnalyze}>
+          {isAnalyzing ? <AiThinkingLoading size="sm" /> : isUploading || isRestoring ? <LoadingIndicator /> : null}
+          {buttonLabel}
+        </button>
+        <p>商品策划完成后，后续图片生成会按实际任务消耗额度。</p>
+        {error ? <p className="image-generation-error">{error}</p> : null}
+      </section>
+
+      <aside className="cai-card cai-card--muted product-workspace-start-guide" aria-label="策划完成后可以继续">
+        <div>
+          <strong>策划完成后可以继续</strong>
+          <p>围绕同一个商品上下文继续完成文案、图片、套图和素材交付。</p>
+        </div>
+        <div className="product-workspace-capability-grid" aria-label="商品工作台能力预览">
+          {START_WORKSPACE_CAPABILITIES.map((capability) => (
+            <div className="product-workspace-capability-item" key={capability.label}>
+              <strong>{capability.label}</strong>
+              <span>{capability.description}</span>
+            </div>
           ))}
         </div>
       </aside>
@@ -345,14 +360,14 @@ function ProductProjectContextHeader({
   );
 }
 
-export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = false }: ProductWorkspaceShellProps = {}) {
+export function ProductWorkspaceShell({ initialAnalysisHistoryId = "", mode = "workspace", restoreFromRecent = false }: ProductWorkspaceShellProps = {}) {
   const [error, setError] = useState("");
   const [creationCenterError, setCreationCenterError] = useState("");
   const [creationCenterData, setCreationCenterData] = useState<ProductCreationCenterData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCreationCenterLoading, setIsCreationCenterLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [hasCheckedInitialRestore, setHasCheckedInitialRestore] = useState(false);
+  const [hasCheckedInitialRestore, setHasCheckedInitialRestore] = useState(() => mode === "create" || (!initialAnalysisHistoryId && !restoreFromRecent));
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
@@ -389,7 +404,7 @@ export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = 
 
   useEffect(() => {
     let isMounted = true;
-    const urlAnalysisHistoryId = mode === "create" ? "" : new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
+    const urlAnalysisHistoryId = mode === "create" ? "" : initialAnalysisHistoryId || new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
     const analysisHistoryId = urlAnalysisHistoryId || (restoreFromRecent ? getStoredAnalysisHistoryId() : "");
 
     async function restoreProductWorkspace() {
@@ -462,7 +477,7 @@ export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = 
         clearTimeout(toastTimerRef.current);
       }
     };
-  }, [mode, restoreFromRecent]);
+  }, [initialAnalysisHistoryId, mode, restoreFromRecent]);
 
   useEffect(() => {
     let isMounted = true;
@@ -628,11 +643,30 @@ export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = 
   const workspaceMode = isInitialRestorePending ? "restoring" : hasAnalysis ? "workspace" : hasUploadedAsset ? "pending" : "initial";
   const shouldShowFullWorkspace = workspaceMode === "workspace";
 
+  if (!shouldShowFullWorkspace) {
+    return (
+      <main className="dashboard-content">
+        {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
+        <ProductWorkspaceStartPanel
+          error={error}
+          isAnalyzing={isAnalyzing}
+          isRestoring={isInitialRestorePending}
+          isUploading={isUploading}
+          productHint={productHint}
+          uploadedAsset={uploadedAsset}
+          onAnalyze={() => void handleAnalyze()}
+          onFileSelect={(file) => void uploadProductFile(file)}
+          onProductHintChange={setProductHint}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="dashboard-content">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
-      {shouldShowFullWorkspace ? <ProductProjectContextHeader creationCenterData={creationCenterData} result={result} uploadedAsset={uploadedAsset} /> : null}
-      <section className={`product-workspace-shell ${shouldShowFullWorkspace ? "" : "product-workspace-shell--start"}`}>
+      <ProductProjectContextHeader creationCenterData={creationCenterData} result={result} uploadedAsset={uploadedAsset} />
+      <section className="product-workspace-shell">
         <ProductWorkspaceRail
           creationCenterData={creationCenterData}
           error={error}
@@ -647,31 +681,17 @@ export function ProductWorkspaceShell({ mode = "workspace", restoreFromRecent = 
           onFileChange={handleFileChange}
           onProductHintChange={setProductHint}
         />
-        {shouldShowFullWorkspace ? (
-          <ProductWorkspaceTabs
-            creationCenterData={creationCenterData}
-            creationCenterError={creationCenterError}
-            isAnalyzing={isAnalyzing}
-            isCreationCenterLoading={isCreationCenterLoading}
-            isUploading={isUploading}
-            result={result}
-            uploadedAsset={uploadedAsset}
-            onAnalyze={() => void handleAnalyze()}
-            onGenerated={handleGenerated}
-          />
-        ) : (
-          <ProductWorkspaceStartPanel
-            error={error}
-            isAnalyzing={isAnalyzing}
-            isRestoring={isInitialRestorePending}
-            isUploading={isUploading}
-            productHint={productHint}
-            uploadedAsset={uploadedAsset}
-            onAnalyze={() => void handleAnalyze()}
-            onFileSelect={(file) => void uploadProductFile(file)}
-            onProductHintChange={setProductHint}
-          />
-        )}
+        <ProductWorkspaceTabs
+          creationCenterData={creationCenterData}
+          creationCenterError={creationCenterError}
+          isAnalyzing={isAnalyzing}
+          isCreationCenterLoading={isCreationCenterLoading}
+          isUploading={isUploading}
+          result={result}
+          uploadedAsset={uploadedAsset}
+          onAnalyze={() => void handleAnalyze()}
+          onGenerated={handleGenerated}
+        />
       </section>
     </main>
   );
