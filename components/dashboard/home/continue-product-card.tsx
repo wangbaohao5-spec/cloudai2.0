@@ -22,7 +22,7 @@ export function ContinueProductCard({ product }: ContinueProductCardProps) {
           <span className="cai-empty__icon" aria-hidden="true">
             商
           </span>
-          <h2 className="cai-empty__title">开始第一个商品项目</h2>
+          <h2 className="cai-empty__title">开始第一个商品创作</h2>
           <p className="cai-empty__description">上传一张商品图，CloudAI 会先分析商品，再帮助你生成上架文案、商品套图和详情页素材。</p>
           <div className="dashboard-home-flow">
             <span>上传商品图</span>
@@ -30,7 +30,7 @@ export function ContinueProductCard({ product }: ContinueProductCardProps) {
             <span>商品套图</span>
             <span>素材库</span>
           </div>
-          <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
+          <Link className="cai-button cai-button--primary" href="/dashboard/products">
             创建商品
           </Link>
         </div>

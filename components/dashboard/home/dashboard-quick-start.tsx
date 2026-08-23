@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const quickStartItems = [
-  { href: "/dashboard/products", label: "商品项目" },
+  { href: "/dashboard/products", label: "商品工作台" },
   { href: "/dashboard/detail-page", label: "详情页制作" },
   { href: "/dashboard/image-edit", label: "商品图精修" },
   { href: "/dashboard/copywriting", label: "上架文案" },

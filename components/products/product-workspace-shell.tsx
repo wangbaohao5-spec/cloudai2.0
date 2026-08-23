@@ -188,14 +188,14 @@ function ProductWorkspaceStartPanel({
   }
 
   return (
-    <section className="product-workspace-start" aria-label={isPendingAnalysis ? "待分析商品" : "创建商品项目"}>
+    <section className="product-workspace-start" aria-label={isPendingAnalysis ? "待分析商品" : "开始商品创作"}>
       <div className="product-workspace-start-header">
-        <p className="eyebrow">{isPendingAnalysis ? "Pending Analysis" : "New Product Project"}</p>
-        <h1>{isPendingAnalysis ? "待分析商品" : "创建商品项目"}</h1>
+        <p className="eyebrow">{isPendingAnalysis ? "Pending Analysis" : "Product Workspace"}</p>
+        <h1>{isPendingAnalysis ? "待分析商品" : "开始商品创作"}</h1>
         <p>
           {isPendingAnalysis
             ? "请确认商品图片和补充信息，然后开始商品策划。"
-            : "上传一张商品图，CloudAI 会先完成商品策划，再帮助你生成上架文案、原图优化、商品套图和素材包。"}
+            : "上传一张商品图，CloudAI 会先理解商品，再帮助你生成上架文案、原图优化、商品套图和素材包。"}
         </p>
       </div>
 
@@ -313,7 +313,7 @@ function ProductProjectContextHeader({
     <section className="product-project-context-header" aria-label="当前商品项目">
       <div className="product-project-context-main">
         <Link className="product-project-context-back" href="/dashboard/products">
-          ← 商品项目
+          ← 商品工作台
         </Link>
         <div className="product-project-context-summary">
           <div className="product-project-context-thumb">

@@ -18,10 +18,10 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
       <div className="dashboard-section-header">
         <div>
           <p className="eyebrow">Recent Products</p>
-          <h2>最近商品项目</h2>
+          <h2>最近商品</h2>
         </div>
-        <Link className="dashboard-section-link" href="/dashboard/products">
-          {products.length ? `查看全部 ${products.length} 个` : "查看商品项目"}
+        <Link className="dashboard-section-link" href="/dashboard/products/all">
+          {products.length ? `查看全部 ${products.length} 个` : "查看全部商品"}
         </Link>
       </div>
 
@@ -54,10 +54,10 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
           <span className="cai-empty__icon" aria-hidden="true">
             商
           </span>
-          <h3 className="cai-empty__title">还没有商品项目</h3>
+          <h3 className="cai-empty__title">还没有商品</h3>
           <p className="cai-empty__description">上传第一张商品图开始创作，最近分析过的商品会出现在这里。</p>
           <div className="cai-empty__actions">
-            <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
+            <Link className="cai-button cai-button--primary" href="/dashboard/products">
               创建商品
             </Link>
           </div>

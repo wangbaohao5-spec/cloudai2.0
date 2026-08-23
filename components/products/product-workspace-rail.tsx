@@ -87,7 +87,7 @@ function getWorkspaceStatus({
   if (!uploadedAsset) {
     return {
       label: "未上传",
-      description: "上传商品原图后，CloudAI 会创建当前商品项目。",
+      description: "上传商品原图后，CloudAI 会创建当前商品创作上下文。",
     };
   }
 
@@ -162,13 +162,13 @@ export function ProductWorkspaceRail({
             }
           : {
               label: "未开始",
-              description: "先上传商品图片，CloudAI 会创建当前商品项目。",
+              description: "先上传商品图片，CloudAI 会创建当前商品创作上下文。",
             };
 
     return (
       <aside className="product-workspace-rail product-workspace-rail--start">
         <div className="product-workspace-rail-section product-workspace-rail-heading">
-          <p className="eyebrow">商品项目</p>
+          <p className="eyebrow">商品工作台</p>
           <h2>{mode === "pending" ? "等待商品策划" : "等待上传商品图"}</h2>
           <p className="image-generation-intro">{railStatus.description}</p>
         </div>
