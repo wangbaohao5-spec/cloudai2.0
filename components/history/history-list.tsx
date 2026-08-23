@@ -166,7 +166,7 @@ export function HistoryList() {
           icon={records.length ? "🔎" : "🗂"}
           title={records.length ? "当前筛选下没有记录" : "还没有历史记录"}
           description={records.length ? "换一个类型筛选，或者继续制作新的商品素材。" : "完成一次商品分析、上架文案或商品图任务后，记录会自动保存到这里。"}
-          actionHref="/dashboard/products"
+          actionHref="/dashboard/products/new"
           actionLabel="创建商品"
         />
       )}

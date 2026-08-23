@@ -19,7 +19,7 @@ export function ProductProjectCenter({ result }: ProductProjectCenterProps) {
             <h1>商品项目</h1>
             <p>把每个商品作为独立项目管理，从商品策划到素材包都集中在这里。</p>
           </div>
-          <Link className="cai-button cai-button--primary" href="/dashboard/products">
+          <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
             开始商品创作
           </Link>
         </header>

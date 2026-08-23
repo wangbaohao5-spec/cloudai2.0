@@ -30,7 +30,7 @@ export function ContinueProductCard({ product }: ContinueProductCardProps) {
             <span>商品套图</span>
             <span>素材库</span>
           </div>
-          <Link className="cai-button cai-button--primary" href="/dashboard/products">
+          <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
             创建商品
           </Link>
         </div>

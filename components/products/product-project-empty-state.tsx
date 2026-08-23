@@ -17,7 +17,7 @@ export function ProductProjectEmptyState() {
           <span>素材包</span>
         </div>
         <div className="cai-empty__actions">
-          <Link className="cai-button cai-button--primary" href="/dashboard/products">
+          <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
             开始第一个商品创作
           </Link>
         </div>

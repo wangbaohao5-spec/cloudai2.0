@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { ProductWorkspaceShell } from "@/components/products/product-workspace-shell";
 
 export default function NewProductProjectPage() {
-  redirect("/dashboard/products");
+  return <ProductWorkspaceShell mode="create" />;
 }

@@ -18,6 +18,7 @@ type UploadedAsset = {
 };
 
 type ProductWorkspaceShellProps = {
+  fallbackAnalysisHistoryId?: string | null;
   initialAnalysisHistoryId?: string;
   mode?: "workspace" | "create";
   restoreFromRecent?: boolean;
@@ -120,8 +121,12 @@ function saveStoredAnalysisHistoryId(analysisHistoryId: string) {
   }
 }
 
-function clearStoredAnalysisHistoryId() {
+function clearStoredAnalysisHistoryId(analysisHistoryId?: string) {
   try {
+    if (analysisHistoryId && sessionStorage.getItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY)?.trim() !== analysisHistoryId) {
+      return;
+    }
+
     sessionStorage.removeItem(PRODUCT_WORKFLOW_ANALYSIS_STORAGE_KEY);
   } catch {
     // Ignore storage errors so a new product analysis can still continue.
@@ -352,22 +357,32 @@ function ProductProjectContextHeader({
       </div>
 
       {analysisHistoryId ? (
-        <Link className="cai-button cai-button--secondary cai-button--sm" href={`/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}`}>
-          详情页制作
-        </Link>
+        <div className="product-project-context-actions">
+          <Link className="cai-button cai-button--ghost cai-button--sm" href="/dashboard/products/new">
+            + 新建商品
+          </Link>
+          <Link className="cai-button cai-button--secondary cai-button--sm" href={`/dashboard/detail-page?analysis=${encodeURIComponent(analysisHistoryId)}`}>
+            详情页制作
+          </Link>
+        </div>
       ) : null}
     </section>
   );
 }
 
-export function ProductWorkspaceShell({ initialAnalysisHistoryId = "", mode = "workspace", restoreFromRecent = false }: ProductWorkspaceShellProps = {}) {
+export function ProductWorkspaceShell({
+  fallbackAnalysisHistoryId = null,
+  initialAnalysisHistoryId = "",
+  mode = "workspace",
+  restoreFromRecent = false,
+}: ProductWorkspaceShellProps = {}) {
   const [error, setError] = useState("");
   const [creationCenterError, setCreationCenterError] = useState("");
   const [creationCenterData, setCreationCenterData] = useState<ProductCreationCenterData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCreationCenterLoading, setIsCreationCenterLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [hasCheckedInitialRestore, setHasCheckedInitialRestore] = useState(() => mode === "create" || (!initialAnalysisHistoryId && !restoreFromRecent));
+  const [hasCheckedInitialRestore, setHasCheckedInitialRestore] = useState(() => mode === "create" || (!initialAnalysisHistoryId && !restoreFromRecent && !fallbackAnalysisHistoryId));
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedAsset, setUploadedAsset] = useState<UploadedAsset | null>(null);
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
@@ -405,11 +420,19 @@ export function ProductWorkspaceShell({ initialAnalysisHistoryId = "", mode = "w
   useEffect(() => {
     let isMounted = true;
     const urlAnalysisHistoryId = mode === "create" ? "" : initialAnalysisHistoryId || new URLSearchParams(window.location.search).get("analysis")?.trim() || "";
-    const analysisHistoryId = urlAnalysisHistoryId || (restoreFromRecent ? getStoredAnalysisHistoryId() : "");
+    const recentAnalysisHistoryId = !urlAnalysisHistoryId && restoreFromRecent ? getStoredAnalysisHistoryId() : "";
+    const fallbackId = mode === "create" ? "" : fallbackAnalysisHistoryId?.trim() || "";
+    const restoreTargets = [
+      urlAnalysisHistoryId ? ({ id: urlAnalysisHistoryId, source: "url" } as const) : null,
+      !urlAnalysisHistoryId && recentAnalysisHistoryId ? ({ id: recentAnalysisHistoryId, source: "recent" } as const) : null,
+      !urlAnalysisHistoryId && fallbackId && fallbackId !== recentAnalysisHistoryId ? ({ id: fallbackId, source: "fallback" } as const) : null,
+    ].filter((target): target is { id: string; source: "fallback" | "recent" | "url" } => Boolean(target));
 
     async function restoreProductWorkspace() {
-      if (!analysisHistoryId) {
+      if (!restoreTargets.length) {
         if (isMounted) {
+          setError("");
+          setCreationCenterError("");
           setHasCheckedInitialRestore(true);
         }
         return;
@@ -419,57 +442,81 @@ export function ProductWorkspaceShell({ initialAnalysisHistoryId = "", mode = "w
       setError("");
       setCreationCenterError("");
 
-      try {
-        const data = await fetchCreationCenterData(analysisHistoryId);
-        const assetId = data.originalAsset?.id || data.product.assetId || "";
+      for (const target of restoreTargets) {
+        try {
+          const data = await fetchCreationCenterData(target.id);
+          const assetId = data.originalAsset?.id || data.product.assetId || "";
 
-        if (!assetId) {
-          throw new Error("The product analysis history is missing its original asset.");
-        }
+          if (!assetId) {
+            throw new Error("The product analysis history is missing its original asset.");
+          }
 
-        if (!isMounted) {
+          if (!isMounted) {
+            return;
+          }
+
+          setCreationCenterData(data);
+          loadedCreationCenterRef.current = {
+            analysisHistoryId: data.product.analysisHistoryId,
+            refreshKey: 0,
+          };
+          setUploadedAsset({
+            assetId,
+            name: data.originalAsset?.name || data.product.title,
+            url: data.originalAsset?.url || "",
+          });
+          setResult({
+            assetId,
+            historyId: data.product.analysisHistoryId,
+            title: data.product.title,
+            analysis: data.analysis,
+          });
+          saveStoredAnalysisHistoryId(data.product.analysisHistoryId);
+
+          if (target.source !== "url") {
+            updateAnalysisUrl(data.product.analysisHistoryId);
+          }
+
           return;
-        }
+        } catch (caughtError) {
+          if (!isMounted) {
+            return;
+          }
 
-        setCreationCenterData(data);
-        loadedCreationCenterRef.current = {
-          analysisHistoryId: data.product.analysisHistoryId,
-          refreshKey: 0,
-        };
-        setUploadedAsset({
-          assetId,
-          name: data.originalAsset?.name || data.product.title,
-          url: data.originalAsset?.url || "",
-        });
-        setResult({
-          assetId,
-          historyId: data.product.analysisHistoryId,
-          title: data.product.title,
-          analysis: data.analysis,
-        });
-        saveStoredAnalysisHistoryId(data.product.analysisHistoryId);
+          if (target.source === "recent") {
+            clearStoredAnalysisHistoryId(target.id);
+            continue;
+          }
 
-        if (!urlAnalysisHistoryId) {
-          updateAnalysisUrl(data.product.analysisHistoryId);
-        }
-      } catch (caughtError) {
-        if (isMounted) {
+          if (target.source === "fallback") {
+            continue;
+          }
+
           const message = caughtError instanceof Error ? caughtError.message : "Product workspace restore failed. Please analyze the product image again.";
+
           setError(message);
           setCreationCenterError(message);
           setCreationCenterData(null);
           updateAnalysisUrl();
-          clearStoredAnalysisHistoryId();
+          clearStoredAnalysisHistoryId(target.id);
+
+          return;
         }
-      } finally {
-        if (isMounted) {
-          setIsRestoring(false);
-          setHasCheckedInitialRestore(true);
-        }
+      }
+
+      if (isMounted) {
+        setError("");
+        setCreationCenterError("");
+        setCreationCenterData(null);
       }
     }
 
-    void restoreProductWorkspace();
+    void restoreProductWorkspace().finally(() => {
+      if (isMounted) {
+        setIsRestoring(false);
+        setHasCheckedInitialRestore(true);
+      }
+    });
 
     return () => {
       isMounted = false;
@@ -477,7 +524,7 @@ export function ProductWorkspaceShell({ initialAnalysisHistoryId = "", mode = "w
         clearTimeout(toastTimerRef.current);
       }
     };
-  }, [initialAnalysisHistoryId, mode, restoreFromRecent]);
+  }, [fallbackAnalysisHistoryId, initialAnalysisHistoryId, mode, restoreFromRecent]);
 
   useEffect(() => {
     let isMounted = true;

@@ -5554,6 +5554,13 @@ h3 {
   font-weight: 800;
 }
 
+.product-project-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .product-workspace-shell {
   display: grid;
   grid-template-columns: minmax(340px, 380px) minmax(0, 1fr);
