@@ -35,7 +35,6 @@ export const dashboardNavSections: DashboardNavSection[] = [
     label: "快速工具",
     items: [
       { label: "上架文案", href: "/dashboard/copywriting", icon: "copywriting" },
-      { label: "详情页制作", href: "/dashboard/detail-page", icon: "detailPage" },
       { label: "商品图精修", href: "/dashboard/image-edit", icon: "imageEdit" },
       { label: "创作助手", href: "/dashboard/chat", icon: "assistant" },
     ],
