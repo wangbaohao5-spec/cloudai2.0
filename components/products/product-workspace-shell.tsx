@@ -589,7 +589,11 @@ export function ProductWorkspaceShell({
     loadedCreationCenterRef.current = null;
     setResult(null);
     updateAnalysisUrl();
-    clearStoredAnalysisHistoryId();
+
+    if (mode !== "create") {
+      clearStoredAnalysisHistoryId();
+    }
+
     setIsUploading(true);
 
     try {
