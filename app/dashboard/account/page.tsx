@@ -64,7 +64,7 @@ export default async function AccountPage() {
               </div>
               <div>
                 <dt>商品发布目标</dt>
-                <dd>目前在每个商品项目中单独设置</dd>
+                <dd>目前在每个商品中单独设置</dd>
               </div>
             </dl>
           </article>

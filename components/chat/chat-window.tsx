@@ -110,7 +110,7 @@ export function ChatWindow() {
         <div>
           <p className="eyebrow">Commerce Assistant</p>
           <h2>创作助手</h2>
-          <p>围绕商品卖点、平台风格、素材策略和内容创作提供辅助建议。</p>
+          <p>快速梳理商品卖点、平台表达、素材方向和内容创作思路。</p>
         </div>
         <span className="chat-status cai-badge cai-badge--neutral">文本助手</span>
       </div>

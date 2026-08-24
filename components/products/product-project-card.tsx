@@ -45,7 +45,7 @@ export function ProductProjectCard({ project }: ProductProjectCardProps) {
           <span>{project.outputSettingsSummary || "未设置发布目标"}</span>
         </div>
 
-        <div className="product-project-card__stats" aria-label="项目素材概览">
+        <div className="product-project-card__stats" aria-label="商品素材概览">
           <span>素材 {project.totalAssetCount} 项</span>
           <span>文案 {project.copywritingCount} 组</span>
           {helperStats.slice(0, 2).map((stat) => (

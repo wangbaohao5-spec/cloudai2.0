@@ -144,7 +144,7 @@ export function ProductWorkspaceRail({
       mode === "restoring"
         ? {
             label: "正在恢复",
-            description: "CloudAI 正在读取当前商品项目，请稍等片刻。",
+            description: "CloudAI 正在读取最近商品，请稍等片刻。",
           }
         : mode === "pending"
           ? {

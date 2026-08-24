@@ -32,7 +32,7 @@ export const dashboardNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    label: "AI 工具",
+    label: "快速工具",
     items: [
       { label: "上架文案", href: "/dashboard/copywriting", icon: "copywriting" },
       { label: "详情页制作", href: "/dashboard/detail-page", icon: "detailPage" },

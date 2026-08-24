@@ -74,7 +74,7 @@ export function ImageEditShell() {
         <div className="image-edit-panel cai-card cai-card--compact">
           <p className="eyebrow">Commerce Tool</p>
           <h2>商品图精修</h2>
-          <p className="image-generation-intro">优化商品原图的背景、光线、质感和展示效果，保持商品主体保真。</p>
+          <p className="image-generation-intro">上传任意商品图片并选择优化方向，也可以补充自由编辑要求，快速完成图片优化与编辑。</p>
           <ImageEditForm
             disabled={isLoading}
             error={error}

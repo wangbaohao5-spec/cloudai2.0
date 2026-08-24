@@ -189,12 +189,12 @@ function ProductWorkspaceStartPanel({
 
   if (isRestoring) {
     return (
-      <section className="product-workspace-start product-workspace-start--loading" aria-label="正在恢复商品项目">
+      <section className="product-workspace-start product-workspace-start--loading" aria-label="正在恢复最近商品">
         <div className="cai-empty product-workspace-start-loading">
           <div className="cai-empty__icon" aria-hidden="true">
             ...
           </div>
-          <h2 className="cai-empty__title">正在恢复商品项目</h2>
+          <h2 className="cai-empty__title">正在恢复最近商品</h2>
           <p className="cai-empty__description">CloudAI 正在读取当前商品分析记录，请稍等片刻。</p>
         </div>
       </section>

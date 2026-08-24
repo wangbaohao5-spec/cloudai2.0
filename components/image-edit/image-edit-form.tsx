@@ -92,7 +92,7 @@ export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChan
           // eslint-disable-next-line @next/next/no-img-element
           <img alt={uploadedAsset.name || "待编辑图片"} src={uploadedAsset.url} />
         ) : (
-          <p>上传商品图片后，CloudAI 会使用这张图进行 AI 优化。</p>
+          <p>上传任意商品图片后，即可选择优化方向并补充自由编辑要求。</p>
         )}
       </div>
 

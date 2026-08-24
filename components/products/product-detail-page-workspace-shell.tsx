@@ -310,7 +310,7 @@ export function ProductDetailPageWorkspaceShell() {
             eyebrow="详情页制作"
             marker="DTP"
             title="请选择一个商品后制作详情页"
-            description="详情页制作需要先完成商品分析。请先在商品工作台新建或选择一个商品，再进入详情页制作。"
+            description="选择一个已有商品，基于商品策划、发布目标和已有素材制作详情页内容。"
             actions={[{ label: "前往商品工作台", onClick: () => goToProductWorkspace(), tone: "primary" }]}
           />
         </section>

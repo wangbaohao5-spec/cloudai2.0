@@ -128,7 +128,7 @@ export function HistoryList() {
       </div>
 
       {error ? (
-        <EmptyState icon="!" title="历史记录暂时不可用" description={error} actionHref="/dashboard/products" actionLabel="查看商品项目" />
+        <EmptyState icon="!" title="历史记录暂时不可用" description={error} actionHref="/dashboard/products" actionLabel="前往商品工作台" />
       ) : null}
 
       {isLoading ? (
