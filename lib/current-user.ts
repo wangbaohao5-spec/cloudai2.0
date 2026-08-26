@@ -3,25 +3,17 @@ import { db } from "@/lib/db";
 
 export async function getCurrentUser() {
   const session = await auth();
-  const sessionUser = session?.user;
-  const email = sessionUser?.email?.trim().toLowerCase();
+  const userId = session?.user?.id?.trim();
 
-  if (!sessionUser || !email) {
+  if (!userId) {
     return null;
   }
 
-  return db.user.upsert({
+  const user = await db.user.findUnique({
     where: {
-      email,
-    },
-    update: {
-      name: sessionUser.name || email.split("@")[0] || "CloudAI User",
-      image: sessionUser.image || null,
-    },
-    create: {
-      email,
-      name: sessionUser.name || email.split("@")[0] || "CloudAI User",
-      image: sessionUser.image || null,
+      id: userId,
     },
   });
+
+  return user?.isActive ? user : null;
 }

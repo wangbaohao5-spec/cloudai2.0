@@ -1,4 +1,4 @@
-import { signOut } from "@/auth";
+import { DashboardLogoutButton } from "@/components/dashboard/dashboard-logout-button";
 import { DashboardUserMenu } from "@/components/dashboard/dashboard-user-menu";
 import { HeaderActionPopover } from "@/components/dashboard/header-action-popover";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
@@ -82,16 +82,7 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
         <ThemeQuickToggle />
 
         <DashboardUserMenu userEmail={userEmail} userName={userName}>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button className="dashboard-user-menu-logout" type="submit">
-              退出登录
-            </button>
-          </form>
+          <DashboardLogoutButton />
         </DashboardUserMenu>
       </div>
     </header>

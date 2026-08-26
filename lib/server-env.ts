@@ -57,26 +57,8 @@ export function getRequiredEnv(name: EnvName) {
   return value;
 }
 
-function appendConnectionParam(databaseUrl: string, key: string, value: string) {
-  if (databaseUrl.includes(`${key}=`)) {
-    return databaseUrl;
-  }
-
-  const separator = databaseUrl.includes("?") ? "&" : "?";
-
-  return `${databaseUrl}${separator}${key}=${value}`;
-}
-
 export function getPrismaDatabaseUrl() {
-  let databaseUrl = getRequiredEnv("DATABASE_URL");
-
-  if (databaseUrl.includes("pooler.supabase.com")) {
-    databaseUrl = appendConnectionParam(databaseUrl, "pgbouncer", "true");
-    databaseUrl = appendConnectionParam(databaseUrl, "connection_limit", "1");
-    databaseUrl = appendConnectionParam(databaseUrl, "sslmode", "require");
-  }
-
-  return databaseUrl;
+  return getRequiredEnv("DATABASE_URL");
 }
 
 export function getSupabaseUrl() {

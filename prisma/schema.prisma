@@ -3,21 +3,34 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  image        String?
+  passwordHash String?
+  isActive     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   historyRecords HistoryRecord[]
   usageRecords   UsageRecord[]
   assets         Asset[]
+}
+
+model AuthLoginAttempt {
+  identityHash    String   @id
+  failureCount    Int      @default(0)
+  windowStartedAt DateTime
+  expiresAt       DateTime
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@index([expiresAt])
 }
 
 model HistoryRecord {

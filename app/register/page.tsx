@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { getSafeCallbackUrl } from "@/lib/auth-redirect";
+import { getCurrentUser } from "@/lib/current-user";
 import { redirect } from "next/navigation";
 
 type RegisterPageProps = {
@@ -10,11 +10,11 @@ type RegisterPageProps = {
 };
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
-  const session = await auth();
+  const user = await getCurrentUser();
   const { callbackUrl } = await searchParams;
   const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
 
-  if (session?.user) {
+  if (user) {
     redirect(safeCallbackUrl);
   }
 

@@ -8,14 +8,12 @@ import { FormEvent, useState } from "react";
 
 type AuthFormProps = {
   callbackUrl: string;
-  mode: "login" | "register";
 };
 
-export function AuthForm({ callbackUrl, mode }: AuthFormProps) {
+export function AuthForm({ callbackUrl }: AuthFormProps) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const isRegister = mode === "register";
   const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -36,7 +34,7 @@ export function AuthForm({ callbackUrl, mode }: AuthFormProps) {
       });
 
       if (result?.error) {
-        throw new Error(isRegister ? "注册失败，请使用有效邮箱和至少 6 位密码。" : "登录失败，请检查邮箱和密码。");
+        throw new Error("登录失败，请检查账号或密码。");
       }
 
       router.push(safeCallbackUrl);
@@ -56,15 +54,15 @@ export function AuthForm({ callbackUrl, mode }: AuthFormProps) {
       </label>
       <label>
         密码
-        <input autoComplete={isRegister ? "new-password" : "current-password"} minLength={6} name="password" placeholder="至少 6 位密码" required type="password" />
+        <input autoComplete="current-password" minLength={8} name="password" placeholder="至少 8 位密码" required type="password" />
       </label>
       <button className="button primary" disabled={isLoading} type="submit">
-        {isLoading ? "处理中..." : isRegister ? "创建账号" : "登录"}
+        {isLoading ? "登录中..." : "登录"}
       </button>
       {error ? <p className="auth-error">{error}</p> : null}
       <p className="auth-switch">
-        {isRegister ? "已有账号？" : "还没有账号？"}
-        <Link href={isRegister ? "/login" : "/register"}>{isRegister ? "去登录" : "去注册"}</Link>
+        CloudAI 目前处于封闭内测阶段。
+        <Link href="/register">查看内测说明</Link>
       </p>
     </form>
   );

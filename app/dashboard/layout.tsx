@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardShellClient } from "@/components/dashboard/dashboard-shell-client";
+import { getCurrentUser } from "@/lib/current-user";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -8,15 +8,15 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const user = await getCurrentUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login");
   }
 
   return (
     <DashboardShellClient
-      header={<DashboardHeader userEmail={session.user.email || ""} userName={session.user.name || "CloudAI User"} />}
+      header={<DashboardHeader userEmail={user.email} userName={user.name || "CloudAI User"} />}
     >
       {children}
     </DashboardShellClient>

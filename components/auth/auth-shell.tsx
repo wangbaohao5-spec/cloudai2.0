@@ -1,4 +1,6 @@
 import { AuthForm } from "@/components/auth/auth-form";
+import { CLOSED_BETA_REGISTRATION_CONTENT } from "@/lib/auth-page-content";
+import Link from "next/link";
 
 type AuthShellProps = {
   callbackUrl: string;
@@ -51,10 +53,22 @@ export function AuthShell({ callbackUrl, mode }: AuthShellProps) {
         </div>
 
         <section className="auth-card glass-card">
-          <p className="eyebrow">CloudAI Account</p>
-          <h1>{isRegister ? "注册 CloudAI" : "登录 CloudAI"}</h1>
-          <p>{isRegister ? "创建一个轻量账号，开始体验 AI 商品创作工作台。" : "进入你的 AI 商品创作工作台，继续生成商品分析、文案、图片和素材包。"}</p>
-          <AuthForm callbackUrl={callbackUrl} mode={mode} />
+          <p className="eyebrow">{isRegister ? CLOSED_BETA_REGISTRATION_CONTENT.eyebrow : "CloudAI Account"}</p>
+          <h1>{isRegister ? CLOSED_BETA_REGISTRATION_CONTENT.title : "登录 CloudAI"}</h1>
+          <p>
+            {isRegister
+              ? CLOSED_BETA_REGISTRATION_CONTENT.description
+              : "进入你的 AI 商品创作工作台，继续生成商品分析、文案、图片和素材包。"}
+          </p>
+          {isRegister ? (
+            <div className="auth-form">
+              <Link className="button primary" href={CLOSED_BETA_REGISTRATION_CONTENT.actionHref}>
+                {CLOSED_BETA_REGISTRATION_CONTENT.actionLabel}
+              </Link>
+            </div>
+          ) : (
+            <AuthForm callbackUrl={callbackUrl} />
+          )}
         </section>
       </section>
     </main>
