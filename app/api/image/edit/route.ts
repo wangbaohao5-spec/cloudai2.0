@@ -1,14 +1,15 @@
 import { editImage } from "@/lib/ai/image-edit-provider";
 import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
-import { jsonError, settleTask } from "@/lib/api-errors";
+import { ApiError, jsonError } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { getFileUrl, uploadFile } from "@/lib/storage";
-import { enforceUsageLimitAndRecord } from "@/lib/usage";
+import { classifyUsageFailure, finalizeUsage, getUsageRequestId, refundUsage, reserveUsage, type UsageFailureCode } from "@/lib/usage";
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
 
@@ -24,10 +25,19 @@ function sanitizeAssetName(name: string) {
   return name.replace(/\.[^.]+$/, "") || "image-edit";
 }
 
-function decodeBase64Image(b64Json: string) {
+async function decodeBase64Image(b64Json: string) {
   const [, base64Payload] = b64Json.match(/^data:image\/\w+;base64,(.+)$/) || [];
+  const imageBuffer = Buffer.from(base64Payload || b64Json, "base64");
 
-  return Buffer.from(base64Payload || b64Json, "base64");
+  if (!imageBuffer.length) {
+    throw new Error("Image edit provider returned an empty image.");
+  }
+
+  try {
+    return await sharp(imageBuffer, { failOn: "error" }).png().toBuffer();
+  } catch {
+    throw new Error("Image edit provider returned invalid image data.");
+  }
 }
 
 export async function POST(request: Request) {
@@ -85,69 +95,117 @@ export async function POST(request: Request) {
       }
     }
 
-    await enforceUsageLimitAndRecord({
+    const requestId = getUsageRequestId(request);
+    const usageReservation = await reserveUsage({
       userId: user.id,
       type: "image-enhance",
       model: imageEditRoute.modelId,
+      requestId,
+      metadata: {
+        route: "/api/image/edit",
+        sourceAssetId,
+        ...(analysisHistoryId ? { analysisHistoryId } : {}),
+      },
     });
 
-    const finalPrompt = [prompt, buildProductOutputSettingsPrompt(outputSettings)].filter(Boolean).join("\n\n");
-    const sourceImageUrl = await getFileUrl(sourceAsset.url);
-    const editedImage = await editImage({
-      imageUrl: sourceImageUrl,
-      fileName: sourceAsset.name,
-      prompt: finalPrompt,
-      task: imageEditTask,
-      model: imageEditRoute.model,
-      outputSettings,
-    });
-    const imageBuffer = decodeBase64Image(editedImage.b64Json);
-    const fileName = `${sanitizeAssetName(sourceAsset.name)}-edit-${Date.now()}.png`;
-    const uploadedFile = await uploadFile({
-      userId: user.id,
-      type: "image",
-      name: fileName,
-      content: imageBuffer,
-      contentType: "image/png",
-    });
-    const asset = await createAsset({
-      userId: user.id,
-      type: "image",
-      name: fileName,
-      url: uploadedFile.path,
-    });
-    const historyInput = {
-      source: analysisHistoryId ? "product-image-edit" : "run-image-edit",
-      sourceAssetId,
-      ...(analysisHistoryId ? { analysisHistoryId } : {}),
-      prompt,
-      ...(outputSettings ? { outputSettings } : {}),
-      model: imageEditRoute.model,
-      modelId: imageEditRoute.modelId,
-      provider: imageEditRoute.provider,
-      ...(requestedModel ? { requestedModel } : {}),
-    };
-    const historyResult = await settleTask(
-      saveHistory({
-        userId: user.id,
-        assetId: asset.id,
-        type: "image-enhance",
-        title: `${sourceAsset.name} 图片编辑`,
-        input: historyInput,
-        output: {
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
+    }
+
+    const persistedResult = await (async () => {
+      let failureCode: UsageFailureCode = "STORAGE_ERROR";
+
+      try {
+        const finalPrompt = [prompt, buildProductOutputSettingsPrompt(outputSettings)].filter(Boolean).join("\n\n");
+        const sourceImageUrl = await getFileUrl(sourceAsset.url);
+        failureCode = "PROVIDER_ERROR";
+        const editedImage = await editImage({
+          imageUrl: sourceImageUrl,
+          fileName: sourceAsset.name,
+          prompt: finalPrompt,
+          task: imageEditTask,
+          model: imageEditRoute.model,
+          outputSettings,
+        });
+        failureCode = "INVALID_PROVIDER_OUTPUT";
+        const imageBuffer = await decodeBase64Image(editedImage.b64Json);
+
+        const fileName = `${sanitizeAssetName(sourceAsset.name)}-edit-${Date.now()}.png`;
+        failureCode = "STORAGE_ERROR";
+        const uploadedFile = await uploadFile({
+          userId: user.id,
+          type: "image",
+          name: fileName,
+          content: imageBuffer,
+          contentType: "image/png",
+        });
+        failureCode = "ASSET_PERSIST_ERROR";
+        const asset = await createAsset({
+          userId: user.id,
+          type: "image",
+          name: fileName,
+          url: uploadedFile.path,
+        });
+        const historyInput = {
+          source: analysisHistoryId ? "product-image-edit" : "run-image-edit",
+          sourceAssetId,
+          ...(analysisHistoryId ? { analysisHistoryId } : {}),
+          prompt,
+          ...(outputSettings ? { outputSettings } : {}),
+          model: imageEditRoute.model,
+          modelId: imageEditRoute.modelId,
+          provider: imageEditRoute.provider,
+          ...(requestedModel ? { requestedModel } : {}),
+        };
+        failureCode = "HISTORY_PERSIST_ERROR";
+        const history = await saveHistory({
+          userId: user.id,
           assetId: asset.id,
-          provider: editedImage.provider,
-          model: editedImage.model,
-          modelId: editedImage.modelId,
-        },
-      }),
-    );
-    const warnings = [historyResult.error].filter(Boolean);
+          type: "image-enhance",
+          title: `${sourceAsset.name} 图片编辑`,
+          input: historyInput,
+          output: {
+            assetId: asset.id,
+            provider: editedImage.provider,
+            model: editedImage.model,
+            modelId: editedImage.modelId,
+          },
+        });
+
+        return { asset, history, uploadedFile };
+      } catch (error) {
+        try {
+          await refundUsage({
+            usageRecordId: usageReservation.record.id,
+            userId: user.id,
+            failureCode: classifyUsageFailure(error, failureCode),
+          });
+        } catch (refundError) {
+          console.error("[usage] image edit refund failed", {
+            usageRecordId: usageReservation.record.id,
+            error: refundError instanceof Error ? refundError.message : String(refundError),
+          });
+        }
+
+        throw error;
+      }
+    })();
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: {
+        route: "/api/image/edit",
+        sourceAssetId,
+        ...(analysisHistoryId ? { analysisHistoryId } : {}),
+        assetId: persistedResult.asset.id,
+        historyId: persistedResult.history.id,
+      },
+    });
 
     return NextResponse.json({
-      imageUrl: uploadedFile.signedUrl,
-      assetId: asset.id,
-      warnings: warnings.length ? warnings : undefined,
+      imageUrl: persistedResult.uploadedFile.signedUrl,
+      assetId: persistedResult.asset.id,
     });
   } catch (error) {
     return jsonError(error, "Image edit failed.");

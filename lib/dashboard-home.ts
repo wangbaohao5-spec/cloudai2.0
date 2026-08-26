@@ -279,12 +279,15 @@ export async function getDashboardHomeData(userId: string): Promise<DashboardHom
       by: ["type"],
       where: {
         userId,
+        status: {
+          in: ["pending", "succeeded"],
+        },
         createdAt: {
           gte: startOfToday,
         },
       },
-      _count: {
-        type: true,
+      _sum: {
+        units: true,
       },
     }),
     db.historyRecord.count({
@@ -365,7 +368,7 @@ export async function getDashboardHomeData(userId: string): Promise<DashboardHom
   const recentOutputs = (await Promise.all(recentOutputRecords.map((record) => toRecentOutput(record, assetMap)))).filter(
     (output): output is DashboardRecentOutput => Boolean(output),
   );
-  const usageByType = Object.fromEntries(todayUsageRows.map((row) => [row.type, row._count.type]));
+  const usageByType = Object.fromEntries(todayUsageRows.map((row) => [row.type, row._sum.units || 0]));
   const productAnalysis = usageByType["product-analysis"] || 0;
   const copywriting = usageByType.copywriting || 0;
   const image = usageByType.image || 0;

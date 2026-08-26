@@ -1,6 +1,19 @@
 import { db } from "@/lib/db";
-import { ApiError } from "@/lib/api-errors";
-import { getDailyUsageLimit, USAGE_LIMITS, USAGE_TYPE_LABELS, USAGE_TYPES, type UsageType } from "@/lib/usage-limits";
+import { getDailyUsageLimit, USAGE_TYPE_LABELS, USAGE_TYPES, type UsageType } from "@/lib/usage-limits";
+import { ACTIVE_USAGE_STATUSES, assertUsageAvailable, lockUsageType, type UsageRecordInput } from "@/lib/usage-ledger";
+
+export {
+  ACTIVE_USAGE_STATUSES,
+  STALE_PENDING_USAGE_MS,
+  USAGE_FAILURE_CODES,
+  classifyUsageFailure,
+  finalizeUsage,
+  getStalePendingUsage,
+  getUsageRequestId,
+  refundUsage,
+  reserveUsage,
+} from "@/lib/usage-ledger";
+export type { UsageFailureCode, UsageMetadata, UsageRecordInput, UsageRefundInput, UsageReservationInput, UsageSettlementInput } from "@/lib/usage-ledger";
 
 export type UsageRecord = {
   id: string;
@@ -14,12 +27,6 @@ export type UsageStats = {
   month: number;
   total: number;
   byType: Record<UsageRecord["type"], number>;
-};
-
-export type UsageRecordInput = {
-  userId: string;
-  type: UsageRecord["type"];
-  model: string;
 };
 
 export type UsageCenterSummary = {
@@ -36,123 +43,43 @@ export type UsageCenterData = {
   recentRecords: UsageRecord[];
 };
 
-function getRateLimitMessage(type: UsageRecord["type"], retryAfterSeconds: number, windowSeconds: number) {
-  if (windowSeconds >= 24 * 60 * 60) {
-    return "今日生成额度已达上限，请明天再试。";
-  }
-
-  if (type === "video") {
-    return `视频工坊任务正在排队保护中，请 ${retryAfterSeconds} 秒后再试。`;
-  }
-
-  return `请求过于频繁，请 ${retryAfterSeconds} 秒后再试。`;
-}
-
 export async function recordUsage(record: UsageRecordInput) {
   return db.usageRecord.create({
     data: {
       userId: record.userId,
       type: record.type,
       model: record.model,
+      status: "succeeded",
+      units: 1,
+      settledAt: new Date(),
     },
   });
 }
 
 export async function enforceUsageLimit(record: UsageRecordInput) {
   const now = new Date();
-  const rules = USAGE_LIMITS[record.type];
 
   return db.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${record.userId}), hashtext(${record.type}))`;
-
-    for (const rule of rules) {
-      const windowStart = new Date(now.getTime() - rule.windowSeconds * 1000);
-      const count = await tx.usageRecord.count({
-        where: {
-          userId: record.userId,
-          type: record.type,
-          createdAt: {
-            gte: windowStart,
-          },
-        },
-      });
-
-      if (count >= rule.max) {
-        const oldestRecordInWindow = await tx.usageRecord.findFirst({
-          where: {
-            userId: record.userId,
-            type: record.type,
-            createdAt: {
-              gte: windowStart,
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        });
-        const oldestCreatedAt = oldestRecordInWindow?.createdAt || now;
-        const retryAfterSeconds = Math.max(
-          1,
-          Math.ceil((oldestCreatedAt.getTime() + rule.windowSeconds * 1000 - now.getTime()) / 1000),
-        );
-
-        throw new ApiError(getRateLimitMessage(record.type, retryAfterSeconds, rule.windowSeconds), 429, {
-          "Retry-After": String(retryAfterSeconds),
-        });
-      }
-    }
+    await lockUsageType(tx, record.userId, record.type);
+    await assertUsageAvailable(tx, record, 1, now);
   });
 }
 
 export async function enforceUsageLimitAndRecord(record: UsageRecordInput) {
   const now = new Date();
-  const rules = USAGE_LIMITS[record.type];
 
   return db.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${record.userId}), hashtext(${record.type}))`;
-
-    for (const rule of rules) {
-      const windowStart = new Date(now.getTime() - rule.windowSeconds * 1000);
-      const count = await tx.usageRecord.count({
-        where: {
-          userId: record.userId,
-          type: record.type,
-          createdAt: {
-            gte: windowStart,
-          },
-        },
-      });
-
-      if (count >= rule.max) {
-        const oldestRecordInWindow = await tx.usageRecord.findFirst({
-          where: {
-            userId: record.userId,
-            type: record.type,
-            createdAt: {
-              gte: windowStart,
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        });
-        const oldestCreatedAt = oldestRecordInWindow?.createdAt || now;
-        const retryAfterSeconds = Math.max(
-          1,
-          Math.ceil((oldestCreatedAt.getTime() + rule.windowSeconds * 1000 - now.getTime()) / 1000),
-        );
-
-        throw new ApiError(getRateLimitMessage(record.type, retryAfterSeconds, rule.windowSeconds), 429, {
-          "Retry-After": String(retryAfterSeconds),
-        });
-      }
-    }
+    await lockUsageType(tx, record.userId, record.type);
+    await assertUsageAvailable(tx, record, 1, now);
 
     return tx.usageRecord.create({
       data: {
         userId: record.userId,
         type: record.type,
         model: record.model,
+        status: "succeeded",
+        units: 1,
+        settledAt: now,
       },
     });
   });
@@ -162,45 +89,56 @@ export async function getUsageStats(userId: string): Promise<UsageStats> {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const activeWhere = {
+    userId,
+    status: {
+      in: [...ACTIVE_USAGE_STATUSES],
+    },
+  };
   const [today, month, total, byTypeRows] = await Promise.all([
-    db.usageRecord.count({
+    db.usageRecord.aggregate({
       where: {
-        userId,
+        ...activeWhere,
         createdAt: {
           gte: startOfToday,
         },
       },
+      _sum: {
+        units: true,
+      },
     }),
-    db.usageRecord.count({
+    db.usageRecord.aggregate({
       where: {
-        userId,
+        ...activeWhere,
         createdAt: {
           gte: startOfMonth,
         },
       },
+      _sum: {
+        units: true,
+      },
     }),
-    db.usageRecord.count({
-      where: {
-        userId,
+    db.usageRecord.aggregate({
+      where: activeWhere,
+      _sum: {
+        units: true,
       },
     }),
     db.usageRecord.groupBy({
       by: ["type"],
-      where: {
-        userId,
-      },
-      _count: {
-        type: true,
+      where: activeWhere,
+      _sum: {
+        units: true,
       },
     }),
   ]);
 
   return {
-    today,
-    month,
-    total,
+    today: today._sum.units || 0,
+    month: month._sum.units || 0,
+    total: total._sum.units || 0,
     byType: Object.fromEntries(
-      USAGE_TYPES.map((type) => [type, byTypeRows.find((row) => row.type === type)?._count.type || 0]),
+      USAGE_TYPES.map((type) => [type, byTypeRows.find((row) => row.type === type)?._sum.units || 0]),
     ) as UsageStats["byType"],
   };
 }
@@ -208,23 +146,27 @@ export async function getUsageStats(userId: string): Promise<UsageStats> {
 export async function getUsageCenterData(userId: string): Promise<UsageCenterData> {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const activeWhere = {
+    userId,
+    status: {
+      in: [...ACTIVE_USAGE_STATUSES],
+    },
+  };
   const [todayRows, recentRows] = await Promise.all([
     db.usageRecord.groupBy({
       by: ["type"],
       where: {
-        userId,
+        ...activeWhere,
         createdAt: {
           gte: startOfToday,
         },
       },
-      _count: {
-        type: true,
+      _sum: {
+        units: true,
       },
     }),
     db.usageRecord.findMany({
-      where: {
-        userId,
-      },
+      where: activeWhere,
       orderBy: {
         createdAt: "desc",
       },
@@ -241,7 +183,7 @@ export async function getUsageCenterData(userId: string): Promise<UsageCenterDat
   return {
     generatedAt: now.toISOString(),
     summaries: USAGE_TYPES.map((type) => {
-      const today = todayRows.find((row) => row.type === type)?._count.type || 0;
+      const today = todayRows.find((row) => row.type === type)?._sum.units || 0;
       const dailyLimit = getDailyUsageLimit(type);
 
       return {

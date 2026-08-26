@@ -1,12 +1,12 @@
 import { generateCopywriting } from "@/lib/ai/copywriting";
 import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import { getTextProviderModelId } from "@/lib/ai/text-router";
-import { jsonError, settleTask } from "@/lib/api-errors";
+import { ApiError, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
 import { buildCopywritingDataFromAnalysis, isProductImageAnalysis, type ProductCopywritingOptions } from "@/lib/product-copywriting";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
-import { enforceUsageLimitAndRecord } from "@/lib/usage";
+import { classifyUsageFailure, finalizeUsage, getUsageRequestId, refundUsage, reserveUsage, type UsageFailureCode } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -56,49 +56,85 @@ export async function POST(request: Request) {
       outputSettings,
     });
 
-    await enforceUsageLimitAndRecord({
+    const requestId = getUsageRequestId(request);
+    const usageReservation = await reserveUsage({
       userId: user.id,
       type: "copywriting",
       model: getTextProviderModelId("product-copywriting", outputSettings),
+      requestId,
+      metadata: {
+        route: "/api/products/copywriting",
+        analysisHistoryId: analysisRecord.id,
+      },
     });
 
-    const result = await generateCopywriting(copywritingData, "product-copywriting");
-    const riskScan = scanProductContentRisk(JSON.stringify(result));
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
+    }
 
-    console.info("[product-risk-scan]", {
-      source: "product-copywriting",
-      level: riskScan.level,
-      matches: riskScan.matches,
+    const persistedResult = await (async () => {
+      let failureCode: UsageFailureCode = "PROVIDER_ERROR";
+
+      try {
+        const result = await generateCopywriting(copywritingData, "product-copywriting");
+        const riskScan = scanProductContentRisk(JSON.stringify(result));
+
+        console.info("[product-risk-scan]", {
+          source: "product-copywriting",
+          level: riskScan.level,
+          matches: riskScan.matches,
+        });
+
+        const output = { ...result, riskScan };
+        failureCode = "HISTORY_PERSIST_ERROR";
+        const history = await saveHistory({
+          userId: user.id,
+          assetId: analysisRecord.assetId || null,
+          type: "copywriting",
+          title: copywritingData.productName || analysisRecord.title || "商品文案",
+          input: {
+            source: "product-analysis",
+            analysisHistoryId: analysisRecord.id,
+            assetId: analysisRecord.assetId,
+            ...(outputSettings ? { outputSettings } : {}),
+            formData: copywritingData,
+            analysis: analysisRecord.output,
+          },
+          output,
+        });
+
+        return { history, output };
+      } catch (error) {
+        try {
+          await refundUsage({
+            usageRecordId: usageReservation.record.id,
+            userId: user.id,
+            failureCode: classifyUsageFailure(error, failureCode),
+          });
+        } catch (refundError) {
+          console.error("[usage] product copywriting refund failed", {
+            usageRecordId: usageReservation.record.id,
+            error: refundError instanceof Error ? refundError.message : String(refundError),
+          });
+        }
+
+        throw error;
+      }
+    })();
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: {
+        route: "/api/products/copywriting",
+        analysisHistoryId: analysisRecord.id,
+        historyId: persistedResult.history.id,
+      },
     });
-
-    const output = {
-      ...result,
-      riskScan,
-    };
-
-    const historyResult = await settleTask(
-      saveHistory({
-        userId: user.id,
-        assetId: analysisRecord.assetId || null,
-        type: "copywriting",
-        title: copywritingData.productName || analysisRecord.title || "商品文案",
-        input: {
-          source: "product-analysis",
-          analysisHistoryId: analysisRecord.id,
-          assetId: analysisRecord.assetId,
-          ...(outputSettings ? { outputSettings } : {}),
-          formData: copywritingData,
-          analysis: analysisRecord.output,
-        },
-        output,
-      }),
-    );
-    const warnings = [historyResult.error].filter((warning): warning is string => Boolean(warning));
 
     return NextResponse.json({
-      ...output,
-      historyId: historyResult.data?.id,
-      warnings: warnings.length ? warnings : undefined,
+      ...persistedResult.output,
+      historyId: persistedResult.history.id,
     });
   } catch (error) {
     return jsonError(error, "Product analysis copywriting generation failed.");

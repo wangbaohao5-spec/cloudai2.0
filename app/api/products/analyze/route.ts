@@ -1,12 +1,12 @@
 import { analyzeProductImageAsset } from "@/lib/ai/product-analysis";
 import { DashScopeVisionError } from "@/lib/ai/providers/dashscope-vision";
 import { getAssetForUser } from "@/lib/assets";
-import { ApiError, jsonError, settleTask } from "@/lib/api-errors";
+import { ApiError, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { saveHistory } from "@/lib/history";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { getFileUrl } from "@/lib/storage";
-import { enforceUsageLimit, recordUsage } from "@/lib/usage";
+import { classifyUsageFailure, finalizeUsage, getUsageRequestId, refundUsage, reserveUsage, type UsageFailureCode } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -103,38 +103,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "商品图片不存在或无权访问，请重新上传。" }, { status: 404 });
     }
 
-    await enforceUsageLimit({
+    const requestId = getUsageRequestId(request);
+    const usageReservation = await reserveUsage({
       userId: user.id,
       type: "product-analysis",
       model: "dashscope-vision",
+      requestId,
+      metadata: {
+        route: "/api/products/analyze",
+        assetId: asset.id,
+      },
     });
 
-    let imageUrl: string;
-
-    try {
-      imageUrl = await getFileUrl(asset.url, 30 * 60);
-
-      if (isDevelopment()) {
-        console.info("[product-analyze] storage", {
-          hasStoragePath: Boolean(asset.url),
-          signedUrlGenerated: Boolean(imageUrl),
-        });
-      }
-    } catch (error) {
-      console.error("[product-analyze] signed url failed", {
-        hasStoragePath: Boolean(asset.url),
-        errorMessage: error instanceof Error ? error.message : String(error),
-        ...getErrorCauseDetails(error),
-      });
-
-      return NextResponse.json({ error: PRODUCT_ANALYSIS_STORAGE_MESSAGE }, { status: 500 });
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
     }
 
-    const analysis = await analyzeProductImageAsset(imageUrl, productHint);
-    const title = getAnalysisTitle(analysis);
-    const [historyResult, usageResult] = await Promise.all([
-      settleTask(
-        saveHistory({
+    const persistedResult = await (async () => {
+      let failureCode: UsageFailureCode = "STORAGE_ERROR";
+
+      try {
+        const imageUrl = await getFileUrl(asset.url, 30 * 60);
+
+        if (isDevelopment()) {
+          console.info("[product-analyze] storage", {
+            hasStoragePath: Boolean(asset.url),
+            signedUrlGenerated: Boolean(imageUrl),
+          });
+        }
+
+        failureCode = "PROVIDER_ERROR";
+        const analysis = await analyzeProductImageAsset(imageUrl, productHint);
+        const title = getAnalysisTitle(analysis);
+        failureCode = "HISTORY_PERSIST_ERROR";
+        const history = await saveHistory({
           userId: user.id,
           assetId: asset.id,
           type: "product-analysis",
@@ -145,24 +147,54 @@ export async function POST(request: Request) {
             ...(productHint ? { productHint } : {}),
           },
           output: analysis,
-        }),
-      ),
-      settleTask(
-        recordUsage({
-          userId: user.id,
-          type: "product-analysis",
-          model: "dashscope-vision",
-        }),
-      ),
-    ]);
-    const warnings = [historyResult.error, usageResult.error].filter((warning): warning is string => Boolean(warning));
+        });
+
+        return { analysis, history, title };
+      } catch (error) {
+        if (failureCode === "STORAGE_ERROR") {
+          console.error("[product-analyze] signed url failed", {
+            hasStoragePath: Boolean(asset.url),
+            errorMessage: error instanceof Error ? error.message : String(error),
+            ...getErrorCauseDetails(error),
+          });
+        }
+
+        try {
+          await refundUsage({
+            usageRecordId: usageReservation.record.id,
+            userId: user.id,
+            failureCode: classifyUsageFailure(error, failureCode),
+          });
+        } catch (refundError) {
+          console.error("[usage] product analysis refund failed", {
+            usageRecordId: usageReservation.record.id,
+            error: refundError instanceof Error ? refundError.message : String(refundError),
+          });
+        }
+
+        if (failureCode === "STORAGE_ERROR") {
+          throw new ApiError(PRODUCT_ANALYSIS_STORAGE_MESSAGE, 500);
+        }
+
+        throw error;
+      }
+    })();
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: {
+        route: "/api/products/analyze",
+        assetId: asset.id,
+        historyId: persistedResult.history.id,
+      },
+    });
 
     return NextResponse.json({
       assetId: asset.id,
-      historyId: historyResult.data?.id,
-      title,
-      analysis,
-      warnings: warnings.length ? warnings : undefined,
+      historyId: persistedResult.history.id,
+      title: persistedResult.title,
+      analysis: persistedResult.analysis,
     } satisfies ProductAnalysisResponse);
   } catch (error) {
     if (error instanceof ApiError) {
