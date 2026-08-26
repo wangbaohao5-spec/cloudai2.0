@@ -1,3 +1,5 @@
+import { BETA_VIDEO_ENABLED } from "@/lib/beta-features";
+
 export type DashboardNavItem = {
   href: string;
   icon: DashboardNavIconName;
@@ -28,7 +30,7 @@ export const dashboardNavSections: DashboardNavSection[] = [
     items: [
       { label: "概览", href: "/dashboard", icon: "overview" },
       { label: "商品工作台", href: "/dashboard/products", icon: "productWorkspace" },
-      { label: "视频工坊", href: "/dashboard/video", icon: "videoStudio" },
+      ...(BETA_VIDEO_ENABLED ? [{ label: "视频工坊", href: "/dashboard/video", icon: "videoStudio" as const }] : []),
     ],
   },
   {

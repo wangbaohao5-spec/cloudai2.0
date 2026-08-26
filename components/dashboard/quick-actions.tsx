@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BETA_VIDEO_ENABLED } from "@/lib/beta-features";
 
 const quickActions = [
   {
@@ -29,13 +30,15 @@ const quickActions = [
     href: "/dashboard/copywriting",
     buttonLabel: "撰写文案",
   },
-  {
-    icon: "影",
-    title: "视频工坊",
-    description: "用于测试商品视频能力与素材创意，后续将扩展脚本、分镜和成片流程。",
-    href: "/dashboard/video",
-    buttonLabel: "进入工坊",
-  },
+  ...(BETA_VIDEO_ENABLED
+    ? [{
+        icon: "影",
+        title: "视频工坊",
+        description: "用于测试商品视频能力与素材创意，后续将扩展脚本、分镜和成片流程。",
+        href: "/dashboard/video",
+        buttonLabel: "进入工坊",
+      }]
+    : []),
 ];
 
 export function QuickActions() {

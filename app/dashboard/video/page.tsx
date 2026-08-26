@@ -2,6 +2,7 @@
 
 import { LongGenerationLoading } from "@/components/ui/loading";
 import type { VideoGenerationResult } from "@/lib/ai/types";
+import { BETA_VIDEO_ENABLED } from "@/lib/beta-features";
 import { FormEvent, useState } from "react";
 
 type VideoGenerateResponse = VideoGenerationResult & {
@@ -47,6 +48,18 @@ export default function VideoGenerationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastInput, setLastInput] = useState<VideoFormData | null>(null);
   const [result, setResult] = useState<VideoGenerateResponse | null>(null);
+
+  if (!BETA_VIDEO_ENABLED) {
+    return (
+      <main className="dashboard-content">
+        <section className="video-generation-panel glass-card">
+          <p className="eyebrow">Video Studio</p>
+          <h2>视频工坊</h2>
+          <p className="image-generation-intro">视频能力仍处于实验阶段，暂未向封闭内测开放。</p>
+        </section>
+      </main>
+    );
+  }
 
   async function submitVideoTask(data: VideoFormData) {
     setError("");

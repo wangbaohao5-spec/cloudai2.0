@@ -10,6 +10,7 @@ import type {
   ProductDetailPagePlanPage,
   ProductDetailPageStyle,
 } from "@/lib/ai/product-detail-page-plan-prompt-builder";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
 import { useState } from "react";
 
@@ -92,7 +93,8 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
     setIsPlanning(true);
 
     try {
-      const response = await fetch("/api/products/detail-page/plan", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/detail-page/plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -142,7 +144,8 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
     });
 
     try {
-      const response = await fetch("/api/products/detail-page/generate", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/detail-page/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

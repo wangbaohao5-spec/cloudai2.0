@@ -3,7 +3,7 @@ import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
 import { buildProductDetailPageImagePrompt } from "@/lib/ai/product-detail-page-image-prompt-builder";
 import type { ProductDetailPagePlanPage, ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import { buildProductVisualFidelityPrompt } from "@/lib/ai/product-visual-fidelity-prompt-builder";
-import { jsonError, settleTask } from "@/lib/api-errors";
+import { ApiError, jsonError } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
@@ -12,8 +12,10 @@ import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
 import { getFileUrl, uploadFile } from "@/lib/storage";
-import { enforceUsageLimitAndRecord } from "@/lib/usage";
+import { finalizeUsage, getUsageRequestId, reserveUsage } from "@/lib/usage";
+import { runReservedUsageTask } from "@/lib/usage-route";
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
 
@@ -57,10 +59,19 @@ function isProductVisualGenerationMode(value: string): value is ProductVisualGen
   return PRODUCT_VISUAL_GENERATION_MODES.includes(value as ProductVisualGenerationMode);
 }
 
-function decodeBase64Image(b64Json: string) {
+async function decodeBase64Image(b64Json: string) {
   const [, base64Payload] = b64Json.match(/^data:image\/\w+;base64,(.+)$/) || [];
+  const imageBuffer = Buffer.from(base64Payload || b64Json, "base64");
 
-  return Buffer.from(base64Payload || b64Json, "base64");
+  if (!imageBuffer.length) {
+    throw new Error("Detail page provider returned an empty image.");
+  }
+
+  try {
+    return await sharp(imageBuffer, { failOn: "error" }).png().toBuffer();
+  } catch {
+    throw new Error("Detail page provider returned invalid image data.");
+  }
 }
 
 function normalizeText(value: unknown) {
@@ -147,6 +158,7 @@ export async function POST(request: Request) {
     if (!isProductImageAnalysis(analysisRecord.output)) {
       return NextResponse.json({ error: "Product analysis result is invalid." }, { status: 400 });
     }
+    const analysis = analysisRecord.output;
 
     if (!analysisRecord.assetId) {
       return NextResponse.json({ error: "Product analysis history does not include a source image asset." }, { status: 400 });
@@ -164,7 +176,7 @@ export async function POST(request: Request) {
 
     const prompt = [
       buildProductDetailPageImagePrompt({
-        analysis: analysisRecord.output,
+        analysis,
         generationBrief,
         outputSettings,
         page,
@@ -172,7 +184,7 @@ export async function POST(request: Request) {
         style,
       }),
       buildProductVisualFidelityPrompt({
-        analysis: analysisRecord.output,
+        analysis,
         generationMode,
       }),
     ].join("\n\n");
@@ -181,53 +193,53 @@ export async function POST(request: Request) {
       outputSettings,
     }, { log: false });
 
-    await enforceUsageLimitAndRecord({
+    const usageReservation = await reserveUsage({
       userId: user.id,
       type: "image",
       model: imageEditRoute.modelId,
+      requestId: getUsageRequestId(request),
+      metadata: { route: "/api/products/detail-page/generate", analysisHistoryId, pageIndex: page.pageIndex },
     });
 
-    const sourceImageUrl = await getFileUrl(sourceAsset.url);
-    const editedImage = await editImage({
-      imageUrl: sourceImageUrl,
-      fileName: sourceAsset.name,
-      prompt,
-      task: "product-detail-page",
-      model: imageEditRoute.model,
-      outputSettings,
-    });
-    const imageBuffer = decodeBase64Image(editedImage.b64Json);
-    const fileName = `${sanitizeAssetName(sourceAsset.name)}-detail-page-${page.pageIndex}-${Date.now()}.png`;
-    const uploadedFile = await uploadFile({
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
+    }
+
+    const persistedResult = await runReservedUsageTask({
+      usageRecordId: usageReservation.record.id,
       userId: user.id,
-      type: "image",
-      name: fileName,
-      content: imageBuffer,
-      contentType: "image/png",
-    });
-    const asset = await createAsset({
-      userId: user.id,
-      type: "image",
-      name: fileName,
-      url: uploadedFile.path,
-    });
-    const output = {
-      imageUrl: uploadedFile.signedUrl,
-      assetId: asset.id,
-      storagePath: asset.url,
-      prompt,
-      page,
-      provider: editedImage.provider,
-      model: editedImage.model,
-      modelId: editedImage.modelId || imageEditRoute.modelId,
-      limitation: "AI 生成图中文字可能需要人工检查",
-    };
-    const historyResult = await settleTask(
-      saveHistory({
-        userId: user.id,
+      logLabel: "detail page image",
+      task: async ({ addRefundMetadata, setFailureCode }) => {
+        setFailureCode("STORAGE_ERROR");
+        const sourceImageUrl = await getFileUrl(sourceAsset.url);
+        setFailureCode("PROVIDER_ERROR");
+        const editedImage = await editImage({ imageUrl: sourceImageUrl, fileName: sourceAsset.name, prompt, task: "product-detail-page", model: imageEditRoute.model, outputSettings });
+        setFailureCode("INVALID_PROVIDER_OUTPUT");
+        const imageBuffer = await decodeBase64Image(editedImage.b64Json);
+        const fileName = `${sanitizeAssetName(sourceAsset.name)}-detail-page-${page.pageIndex}-${Date.now()}.png`;
+        setFailureCode("STORAGE_ERROR");
+        const uploadedFile = await uploadFile({ userId: user.id, type: "image", name: fileName, content: imageBuffer, contentType: "image/png" });
+        addRefundMetadata({ storagePath: uploadedFile.path });
+        setFailureCode("ASSET_PERSIST_ERROR");
+        const asset = await createAsset({ userId: user.id, type: "image", name: fileName, url: uploadedFile.path });
+        addRefundMetadata({ assetId: asset.id });
+        const output = {
+          imageUrl: uploadedFile.signedUrl,
+          assetId: asset.id,
+          storagePath: asset.url,
+          prompt,
+          page,
+          provider: editedImage.provider,
+          model: editedImage.model,
+          modelId: editedImage.modelId || imageEditRoute.modelId,
+          limitation: "AI 生成图中文字可能需要人工检查",
+        };
+        setFailureCode("HISTORY_PERSIST_ERROR");
+        const history = await saveHistory({
+          userId: user.id,
         assetId: asset.id,
         type: "image",
-        title: getProductTitle(analysisRecord.output, page),
+        title: getProductTitle(analysis, page),
         input: {
           source: "product-detail-page",
           analysisHistoryId: analysisRecord.id,
@@ -241,25 +253,38 @@ export async function POST(request: Request) {
           generationMode,
           ...(generationBrief ? { generationBrief } : {}),
           ...(outputSettings ? { outputSettings } : {}),
-          mustKeepDetails: analysisRecord.output.mustKeepDetails || [],
-          avoidChanges: analysisRecord.output.avoidChanges || [],
+          mustKeepDetails: analysis.mustKeepDetails || [],
+          avoidChanges: analysis.avoidChanges || [],
           page,
         },
-        output,
-      }),
-    );
-    const warnings = [historyResult.error].filter((warning): warning is string => Boolean(warning));
+          output,
+        });
+
+        return { asset, history, uploadedFile };
+      },
+    });
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: {
+        route: "/api/products/detail-page/generate",
+        analysisHistoryId,
+        pageIndex: page.pageIndex,
+        assetId: persistedResult.asset.id,
+        historyId: persistedResult.history.id,
+      },
+    });
 
     return NextResponse.json({
       status: "success" as const,
       type: "商品详情页",
-      imageUrl: uploadedFile.signedUrl,
-      assetId: asset.id,
-      storagePath: asset.url,
-      historyId: historyResult.data?.id,
+      imageUrl: persistedResult.uploadedFile.signedUrl,
+      assetId: persistedResult.asset.id,
+      storagePath: persistedResult.asset.url,
+      historyId: persistedResult.history.id,
       prompt,
       page,
-      warnings: warnings.length ? warnings : undefined,
     });
   } catch (error) {
     return jsonError(error, "Product detail page image generation failed.");

@@ -42,7 +42,7 @@ type UsageTransaction = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 
 function getRateLimitMessage(type: UsageType, retryAfterSeconds: number, windowSeconds: number) {
   if (windowSeconds >= 24 * 60 * 60) {
-    return "今日生成额度已达上限，请明天再试。";
+    return "过去 24 小时生成额度已达上限，请稍后再试。";
   }
 
   if (type === "video") {

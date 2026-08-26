@@ -13,6 +13,22 @@ function formatDateTime(createdAt: string) {
   }).format(new Date(createdAt));
 }
 
+function getUsageStatus(record: UsageRecord) {
+  if (record.status === "pending") {
+    return { label: "处理中", detail: "任务完成后将自动结算" };
+  }
+
+  if (record.status === "refunded") {
+    const systemFailureCodes = new Set(["ASSET_PERSIST_ERROR", "HISTORY_PERSIST_ERROR", "INTERNAL_ERROR", "STORAGE_ERROR"]);
+    return {
+      label: "已返还",
+      detail: systemFailureCodes.has(record.failureCode || "") ? "系统异常已返还" : "生成失败已返还",
+    };
+  }
+
+  return { label: "已完成", detail: `${record.units} 次额度` };
+}
+
 export function RecentUsageList({ records }: RecentUsageListProps) {
   return (
     <section className="dashboard-section glass-card">
@@ -26,16 +42,20 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
 
       {records.length ? (
         <div className="recent-task-list">
-          {records.map((record) => (
-            <article className="recent-task-item" key={record.id}>
-              <div>
-                <strong>{USAGE_TYPE_LABELS[record.type]}</strong>
-                <p>{record.model}</p>
-              </div>
-              <span>{formatDateTime(record.createdAt)}</span>
-              <em>额度使用</em>
-            </article>
-          ))}
+          {records.map((record) => {
+            const status = getUsageStatus(record);
+
+            return (
+              <article className="recent-task-item" key={record.id}>
+                <div>
+                  <strong>{USAGE_TYPE_LABELS[record.type] || record.type}</strong>
+                  <p>{status.detail}</p>
+                </div>
+                <span>{formatDateTime(record.createdAt)}</span>
+                <em>{status.label}</em>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <EmptyState

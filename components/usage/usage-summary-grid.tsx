@@ -7,7 +7,7 @@ type UsageSummaryGridProps = {
 
 function formatRule(windowSeconds: number, max: number) {
   if (windowSeconds >= 24 * 60 * 60) {
-    return `每日 ${max} 次`;
+    return `过去 24 小时 ${max} 次`;
   }
 
   if (windowSeconds >= 60) {
@@ -22,8 +22,8 @@ export function UsageSummaryGrid({ summaries }: UsageSummaryGridProps) {
     <section className="usage-stat-panel glass-card">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Quota Today</p>
-          <h2>今日额度使用</h2>
+          <p className="eyebrow">Quota 24H</p>
+          <h2>过去 24 小时额度</h2>
         </div>
         <span>按当前用户统计</span>
       </div>
@@ -32,10 +32,10 @@ export function UsageSummaryGrid({ summaries }: UsageSummaryGridProps) {
           <article className="usage-center-card" key={summary.type}>
             <div>
               <span>{summary.label}</span>
-              <strong>{summary.today}</strong>
+              <strong>{summary.usedLast24Hours}</strong>
             </div>
             <p>
-              今日额度 {summary.dailyLimit} 次，剩余 {summary.remainingToday} 次
+              上限 {summary.limitLast24Hours} 次，剩余 {summary.remainingLast24Hours} 次
             </p>
             <small>{USAGE_LIMITS[summary.type].map((rule) => formatRule(rule.windowSeconds, rule.max)).join(" / ")}</small>
           </article>

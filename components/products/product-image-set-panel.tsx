@@ -13,6 +13,7 @@ import type {
   ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
 import type { ImageSetStructureValidationResult } from "@/lib/ai/product-image-set-structure-validation";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
 import { formatProductOutputSettingsSummary } from "@/lib/product-output-settings";
@@ -295,7 +296,8 @@ export function ProductImageSetPanel({
     setIsPlanning(true);
 
     try {
-      const response = await fetch("/api/products/image-set/plan", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/image-set/plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -364,7 +366,8 @@ export function ProductImageSetPanel({
     });
 
     try {
-      const response = await fetch("/api/products/image-set/generate", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/image-set/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

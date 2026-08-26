@@ -2,6 +2,7 @@
 
 import { CopywritingForm } from "@/components/copywriting/copywriting-form";
 import { CopywritingResult } from "@/components/copywriting/copywriting-result";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { CopywritingFormData, CopywritingResult as CopywritingResultData } from "@/lib/types";
 import { useState } from "react";
 
@@ -15,7 +16,8 @@ export function CopywritingShell() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/copywriting", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/copywriting", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

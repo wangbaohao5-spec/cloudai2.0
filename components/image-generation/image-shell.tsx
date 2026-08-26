@@ -3,6 +3,7 @@
 import { ImageForm } from "@/components/image-generation/image-form";
 import { ImageResult } from "@/components/image-generation/image-result";
 import { ImageModeTabs } from "@/components/image-navigation/image-mode-tabs";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ImageGenerationFormData, ImageGenerationResult } from "@/lib/types";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,7 +20,8 @@ export function ImageShell() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/image/generate", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/image/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -50,3 +50,5 @@ export const USAGE_LIMITS = {
 export function getDailyUsageLimit(type: UsageType) {
   return USAGE_LIMITS[type].find((rule) => rule.windowSeconds >= 24 * 60 * 60)?.max || 0;
 }
+
+export const getRolling24HourUsageLimit = getDailyUsageLimit;

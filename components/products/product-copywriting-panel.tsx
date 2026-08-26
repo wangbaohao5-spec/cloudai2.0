@@ -3,6 +3,7 @@
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import { formatProductOutputSettingsSummary } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse, ProductOutputSettings } from "@/lib/product-types";
 import type { CopywritingResult } from "@/lib/types";
@@ -303,7 +304,8 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
     setIsCopywritingLoading(true);
 
     try {
-      const response = await fetch("/api/products/copywriting", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/copywriting", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

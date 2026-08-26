@@ -3,6 +3,7 @@
 import { ImageEditForm, type ImageEditFormData } from "@/components/image-edit/image-edit-form";
 import { ImageEditResult, type ImageEditViewResult } from "@/components/image-edit/image-edit-result";
 import { ImageModeTabs } from "@/components/image-navigation/image-mode-tabs";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import { getProductImageEditGoal } from "@/lib/product-image-edit-options";
 import { useState } from "react";
 
@@ -36,7 +37,8 @@ export function ImageEditShell() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/image/edit", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/image/edit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

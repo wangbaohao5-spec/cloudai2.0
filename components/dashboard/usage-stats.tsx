@@ -25,7 +25,7 @@ export function UsageStats({ stats }: UsageStatsProps) {
       </div>
       <div className="usage-stat-grid">
         <article className="usage-stat-card">
-          <span>今日额度使用</span>
+          <span>过去 24 小时额度使用</span>
           <strong>{stats.today}</strong>
         </article>
         <article className="usage-stat-card">

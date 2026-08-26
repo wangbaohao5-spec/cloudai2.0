@@ -2,7 +2,6 @@ import { enhanceImage, type ImageEnhanceInput } from "@/lib/ai/image-enhance-pro
 import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
-import { recordUsage } from "@/lib/usage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -22,33 +21,24 @@ export async function POST(request: Request) {
     }
 
     const result = await enhanceImage(body);
-    const [historyResult, usageResult] = await Promise.all([
-      settleTask(
-        saveHistory({
-          userId: user.id,
-          type: "image-enhance",
-          title: body.fileName,
-          input: {
-            fileName: body.fileName,
-            platform: body.platform,
-            purpose: body.purpose,
-            style: body.style,
-          },
-          output: {
-            imageUrl: result.imageUrl,
-            provider: result.provider,
-          },
-        }),
-      ),
-      settleTask(
-        recordUsage({
-          userId: user.id,
-          type: "image-enhance",
-          model: "mock-image-enhance",
-        }),
-      ),
-    ]);
-    const warnings = [historyResult.error, usageResult.error].filter(Boolean);
+    const historyResult = await settleTask(
+      saveHistory({
+        userId: user.id,
+        type: "image-enhance",
+        title: body.fileName,
+        input: {
+          fileName: body.fileName,
+          platform: body.platform,
+          purpose: body.purpose,
+          style: body.style,
+        },
+        output: {
+          imageUrl: result.imageUrl,
+          provider: result.provider,
+        },
+      }),
+    );
+    const warnings = [historyResult.error].filter(Boolean);
 
     return NextResponse.json({
       ...result,

@@ -5,6 +5,7 @@ import { ProductCreationCenter } from "@/components/products/product-creation-ce
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import { useEffect, useState } from "react";
@@ -209,7 +210,8 @@ export function ProductWorkflowShell() {
     setIsAnalyzing(true);
 
     try {
-      const response = await fetch("/api/products/analyze", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

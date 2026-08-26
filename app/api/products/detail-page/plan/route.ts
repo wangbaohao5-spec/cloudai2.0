@@ -1,4 +1,4 @@
-import { generateText } from "@/lib/ai/text-router";
+import { generateText, getTextProviderModelId } from "@/lib/ai/text-router";
 import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import {
   buildProductDetailPagePlanPrompt,
@@ -8,12 +8,14 @@ import {
   type ProductDetailPageSectionType,
   type ProductDetailPageStyle,
 } from "@/lib/ai/product-detail-page-plan-prompt-builder";
-import { jsonError } from "@/lib/api-errors";
+import { ApiError, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
+import { finalizeUsage, getUsageRequestId, reserveUsage } from "@/lib/usage";
+import { runReservedUsageTask } from "@/lib/usage-route";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -180,33 +182,62 @@ export async function POST(request: Request) {
       productTitle: analysisRecord.title,
       style,
     });
-    const response = await generateText({
-      messages: [
-        {
-          role: "system",
-          content: "你是 CloudAI 的电商详情页规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
-        },
-        { role: "user", content: prompt },
-      ],
-      jsonMode: true,
-      outputSettings,
-      task: "detail-page-plan",
-      temperature: 0.62,
+    const usageReservation = await reserveUsage({
+      userId: user.id,
+      type: "copywriting",
+      model: getTextProviderModelId("detail-page-plan", outputSettings),
+      requestId: getUsageRequestId(request),
+      metadata: { route: "/api/products/detail-page/plan", analysisHistoryId, count },
     });
-    const plan = normalizePlan(parseJsonResponse(response), count);
-    const riskScan = scanProductContentRisk(JSON.stringify(plan));
+
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
+    }
+
+    const result = await runReservedUsageTask({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      logLabel: "detail page planning",
+      task: async ({ setFailureCode }) => {
+        const response = await generateText({
+          messages: [
+            {
+              role: "system",
+              content: "你是 CloudAI 的电商详情页规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
+            },
+            { role: "user", content: prompt },
+          ],
+          jsonMode: true,
+          outputSettings,
+          task: "detail-page-plan",
+          temperature: 0.62,
+        });
+        setFailureCode("PARSE_ERROR");
+        const plan = normalizePlan(parseJsonResponse(response), count);
+        setFailureCode("INTERNAL_ERROR");
+        const riskScan = scanProductContentRisk(JSON.stringify(plan));
+
+        return { plan, riskScan };
+      },
+    });
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: { route: "/api/products/detail-page/plan", analysisHistoryId, count },
+    });
 
     console.info("[product-risk-scan]", {
       source: "detail-page-plan",
-      level: riskScan.level,
-      matches: riskScan.matches,
+      level: result.riskScan.level,
+      matches: result.riskScan.matches,
     });
 
     return NextResponse.json({
       count,
       style,
-      ...plan,
-      riskScan,
+      ...result.plan,
+      riskScan: result.riskScan,
     });
   } catch (error) {
     return jsonError(error, "Product detail page plan generation failed.");

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getDailyUsageLimit, USAGE_TYPE_LABELS, USAGE_TYPES, type UsageType } from "@/lib/usage-limits";
+import { getRolling24HourUsageLimit, USAGE_TYPE_LABELS, USAGE_TYPES, type UsageType } from "@/lib/usage-limits";
 import { ACTIVE_USAGE_STATUSES, assertUsageAvailable, lockUsageType, type UsageRecordInput } from "@/lib/usage-ledger";
 
 export {
@@ -19,7 +19,11 @@ export type UsageRecord = {
   id: string;
   type: UsageType;
   model: string;
+  status: "pending" | "succeeded" | "refunded" | string;
+  units: number;
+  failureCode: string | null;
   createdAt: string;
+  settledAt: string | null;
 };
 
 export type UsageStats = {
@@ -32,9 +36,9 @@ export type UsageStats = {
 export type UsageCenterSummary = {
   type: UsageType;
   label: string;
-  today: number;
-  dailyLimit: number;
-  remainingToday: number;
+  usedLast24Hours: number;
+  limitLast24Hours: number;
+  remainingLast24Hours: number;
 };
 
 export type UsageCenterData = {
@@ -87,7 +91,7 @@ export async function enforceUsageLimitAndRecord(record: UsageRecordInput) {
 
 export async function getUsageStats(userId: string): Promise<UsageStats> {
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfRollingWindow = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const activeWhere = {
     userId,
@@ -100,7 +104,7 @@ export async function getUsageStats(userId: string): Promise<UsageStats> {
       where: {
         ...activeWhere,
         createdAt: {
-          gte: startOfToday,
+          gte: startOfRollingWindow,
         },
       },
       _sum: {
@@ -145,20 +149,20 @@ export async function getUsageStats(userId: string): Promise<UsageStats> {
 
 export async function getUsageCenterData(userId: string): Promise<UsageCenterData> {
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfRollingWindow = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const activeWhere = {
     userId,
     status: {
       in: [...ACTIVE_USAGE_STATUSES],
     },
   };
-  const [todayRows, recentRows] = await Promise.all([
+  const [rollingRows, recentRows] = await Promise.all([
     db.usageRecord.groupBy({
       by: ["type"],
       where: {
         ...activeWhere,
         createdAt: {
-          gte: startOfToday,
+          gte: startOfRollingWindow,
         },
       },
       _sum: {
@@ -166,7 +170,7 @@ export async function getUsageCenterData(userId: string): Promise<UsageCenterDat
       },
     }),
     db.usageRecord.findMany({
-      where: activeWhere,
+      where: { userId },
       orderBy: {
         createdAt: "desc",
       },
@@ -175,7 +179,11 @@ export async function getUsageCenterData(userId: string): Promise<UsageCenterDat
         id: true,
         type: true,
         model: true,
+        status: true,
+        units: true,
+        failureCode: true,
         createdAt: true,
+        settledAt: true,
       },
     }),
   ]);
@@ -183,22 +191,26 @@ export async function getUsageCenterData(userId: string): Promise<UsageCenterDat
   return {
     generatedAt: now.toISOString(),
     summaries: USAGE_TYPES.map((type) => {
-      const today = todayRows.find((row) => row.type === type)?._sum.units || 0;
-      const dailyLimit = getDailyUsageLimit(type);
+      const usedLast24Hours = rollingRows.find((row) => row.type === type)?._sum.units || 0;
+      const limitLast24Hours = getRolling24HourUsageLimit(type);
 
       return {
         type,
         label: USAGE_TYPE_LABELS[type],
-        today,
-        dailyLimit,
-        remainingToday: Math.max(dailyLimit - today, 0),
+        usedLast24Hours,
+        limitLast24Hours,
+        remainingLast24Hours: Math.max(limitLast24Hours - usedLast24Hours, 0),
       };
     }),
     recentRecords: recentRows.map((record) => ({
       id: record.id,
       type: record.type as UsageType,
       model: record.model,
+      status: record.status,
+      units: record.units,
+      failureCode: record.failureCode,
       createdAt: record.createdAt.toISOString(),
+      settledAt: record.settledAt?.toISOString() || null,
     })),
   };
 }

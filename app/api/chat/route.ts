@@ -1,10 +1,11 @@
 import { generateChatReply } from "@/lib/ai/chat";
 import { getTextProviderResolution, TextProviderError } from "@/lib/ai/text-router";
 import { getCurrentUser } from "@/lib/current-user";
-import { settleTask } from "@/lib/api-errors";
+import { ApiError } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
 import type { ChatMessage } from "@/lib/types";
-import { enforceUsageLimitAndRecord } from "@/lib/usage";
+import { finalizeUsage, getUsageRequestId, reserveUsage } from "@/lib/usage";
+import { runReservedUsageTask } from "@/lib/usage-route";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -29,6 +30,10 @@ function getSafeErrorMessage(error: unknown) {
 }
 
 function getChatErrorStatus(error: unknown, message: string) {
+  if (error instanceof ApiError) {
+    return error.status;
+  }
+
   if (error instanceof TextProviderError) {
     if (error.kind === "configuration") {
       return 500;
@@ -63,6 +68,10 @@ function getChatErrorStatus(error: unknown, message: string) {
 }
 
 function getChatErrorMessage(error: unknown, message: string) {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
   if (error instanceof TextProviderError) {
     if (error.kind === "configuration") {
       return "创作助手文本模型未配置，请检查环境变量。";
@@ -175,38 +184,57 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "消息不能为空。" }, { status: 400 });
     }
 
-    await enforceUsageLimitAndRecord({
+    const usageReservation = await reserveUsage({
       userId: user.id,
       type: "chat",
       model: resolution.modelId,
+      requestId: getUsageRequestId(request),
+      metadata: { route: "/api/chat" },
     });
 
-    const reply = await generateChatReply(messages);
-
-    if (!reply.trim()) {
-      throw new Error("创作助手服务没有返回有效回复。");
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
     }
 
-    const lastUserMessage = [...messages].reverse().find((message) => message.role === "user")?.content || "AI 电商助手聊天";
-    const historyResult = await settleTask(
-      saveHistory({
-        userId: user.id,
-        type: "chat",
-        title: lastUserMessage.length > 32 ? `${lastUserMessage.slice(0, 32)}...` : lastUserMessage,
-        input: { messages },
-        output: { model: resolution.modelId, provider: resolution.provider, reply },
-      }),
-    );
-    const warnings = [historyResult.error].filter(Boolean);
+    const persistedResult = await runReservedUsageTask({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      logLabel: "chat",
+      task: async ({ setFailureCode }) => {
+        const reply = await generateChatReply(messages);
+
+        if (!reply.trim()) {
+          setFailureCode("INVALID_PROVIDER_OUTPUT");
+          throw new Error("创作助手服务没有返回有效回复。");
+        }
+
+        const lastUserMessage = [...messages].reverse().find((message) => message.role === "user")?.content || "AI 电商助手聊天";
+        setFailureCode("HISTORY_PERSIST_ERROR");
+        const history = await saveHistory({
+          userId: user.id,
+          type: "chat",
+          title: lastUserMessage.length > 32 ? `${lastUserMessage.slice(0, 32)}...` : lastUserMessage,
+          input: { messages },
+          output: { model: resolution.modelId, provider: resolution.provider, reply },
+        });
+
+        return { history, reply };
+      },
+    });
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: { route: "/api/chat", historyId: persistedResult.history.id },
+    });
 
     return NextResponse.json({
-      content: reply,
+      content: persistedResult.reply,
       model: resolution.modelId,
       provider: resolution.provider,
-      reply,
-      result: reply,
-      text: reply,
-      warnings: warnings.length ? warnings : undefined,
+      reply: persistedResult.reply,
+      result: persistedResult.reply,
+      text: persistedResult.reply,
     });
   } catch (error) {
     const safeMessage = getSafeErrorMessage(error);
@@ -236,7 +264,7 @@ export async function POST(request: Request) {
         message: getChatErrorMessage(error, safeMessage),
         debug: process.env.NODE_ENV === "development" ? safeMessage : undefined,
       },
-      { status },
+      { status, headers: error instanceof ApiError ? error.headers : undefined },
     );
   }
 }

@@ -6,8 +6,8 @@ type UsageCenterProps = {
   data: UsageCenterData;
 };
 
-function getTotalToday(data: UsageCenterData) {
-  return data.summaries.reduce((total, summary) => total + summary.today, 0);
+function getTotalLast24Hours(data: UsageCenterData) {
+  return data.summaries.reduce((total, summary) => total + summary.usedLast24Hours, 0);
 }
 
 export function UsageCenter({ data }: UsageCenterProps) {
@@ -18,7 +18,7 @@ export function UsageCenter({ data }: UsageCenterProps) {
         <h2>额度中心</h2>
         <p>查看图片、文案、视频和商品分析等能力的额度使用情况。</p>
         <div className="usage-center-hero-meta">
-          <span>今日已使用 {getTotalToday(data)} 次额度</span>
+          <span>过去 24 小时已使用 {getTotalLast24Hours(data)} 次额度</span>
           <span>更新于 {new Date(data.generatedAt).toLocaleString("zh-CN")}</span>
         </div>
       </div>

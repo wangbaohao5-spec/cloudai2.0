@@ -2,6 +2,7 @@
 
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessage } from "@/components/chat/chat-message";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ChatMessage as ChatMessageData } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 
@@ -64,7 +65,8 @@ export function ChatWindow() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

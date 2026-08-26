@@ -7,6 +7,7 @@ import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
 import type { ProductAnalysisResponse, ProductOutputSettings } from "@/lib/product-types";
 import { useState } from "react";
@@ -66,7 +67,8 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
     setIsGenerating(true);
 
     try {
-      const response = await fetch("/api/image/edit", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/image/edit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

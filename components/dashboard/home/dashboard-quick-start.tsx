@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { BETA_VIDEO_ENABLED } from "@/lib/beta-features";
 
 const quickStartItems = [
   { href: "/dashboard/products", label: "商品工作台" },
   { href: "/dashboard/image-edit", label: "商品图精修" },
   { href: "/dashboard/copywriting", label: "上架文案" },
-  { href: "/dashboard/video", label: "视频工坊" },
+  ...(BETA_VIDEO_ENABLED ? [{ href: "/dashboard/video", label: "视频工坊" }] : []),
   { href: "/dashboard/chat", label: "创作助手" },
 ];
 

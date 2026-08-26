@@ -5,12 +5,17 @@ import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
 import { enforceUsageLimitAndRecord } from "@/lib/usage";
+import { BETA_VIDEO_ENABLED } from "@/lib/beta-features";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    if (!BETA_VIDEO_ENABLED) {
+      return NextResponse.json({ error: "视频工坊暂未向封闭内测开放。" }, { status: 404 });
+    }
+
     const user = await getCurrentUser();
 
     if (!user) {

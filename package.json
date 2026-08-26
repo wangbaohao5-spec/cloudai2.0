@@ -13,6 +13,8 @@
     "beta:user:reset-password": "node scripts/beta-user.mjs reset-password",
     "beta:user:disable": "node scripts/beta-user.mjs disable",
     "beta:user:enable": "node scripts/beta-user.mjs enable",
+    "usage:pending:list": "node scripts/usage-admin.mjs pending:list",
+    "usage:refund": "node scripts/usage-admin.mjs refund",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio"

@@ -1,4 +1,4 @@
-import { generateText } from "@/lib/ai/text-router";
+import { generateText, getTextProviderModelId } from "@/lib/ai/text-router";
 import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
 import { validateImageSetStructure } from "@/lib/ai/product-image-set-structure-validation";
 import {
@@ -12,13 +12,15 @@ import {
   type ProductImageSetSmartCount,
   type ProductImageSetStructureMode,
 } from "@/lib/ai/product-image-set-plan-prompt-builder";
-import { jsonError } from "@/lib/api-errors";
+import { ApiError, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductVisualGenerationMode } from "@/lib/product-types";
+import { finalizeUsage, getUsageRequestId, reserveUsage } from "@/lib/usage";
+import { runReservedUsageTask } from "@/lib/usage-route";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -232,39 +234,64 @@ export async function POST(request: Request) {
       purpose,
       structureMode,
     });
-    const response = await generateText({
-      messages: [
-        {
-          role: "system",
-          content: "你是 CloudAI 的电商商品套图规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
-        },
-        { role: "user", content: prompt },
-      ],
-      jsonMode: true,
-      outputSettings,
-      task: "image-set-plan",
-      temperature: 0.62,
+    const usageReservation = await reserveUsage({
+      userId: user.id,
+      type: "copywriting",
+      model: getTextProviderModelId("image-set-plan", outputSettings),
+      requestId: getUsageRequestId(request),
+      metadata: { route: "/api/products/image-set/plan", analysisHistoryId, count },
     });
-    const plan = normalizePlan(parseJsonResponse(response), purpose, count);
-    const riskScan = scanProductContentRisk(JSON.stringify(plan));
-    const structureValidation = validateImageSetStructure({
-      customStructure,
-      images: plan.images,
-      structureMode,
+
+    if (!usageReservation.created) {
+      throw new ApiError("This generation request has already been reserved.", 409);
+    }
+
+    const result = await runReservedUsageTask({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      logLabel: "image set planning",
+      task: async ({ setFailureCode }) => {
+        const response = await generateText({
+          messages: [
+            {
+              role: "system",
+              content: "你是 CloudAI 的电商商品套图规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
+            },
+            { role: "user", content: prompt },
+          ],
+          jsonMode: true,
+          outputSettings,
+          task: "image-set-plan",
+          temperature: 0.62,
+        });
+        setFailureCode("PARSE_ERROR");
+        const plan = normalizePlan(parseJsonResponse(response), purpose, count);
+        setFailureCode("INTERNAL_ERROR");
+        const riskScan = scanProductContentRisk(JSON.stringify(plan));
+        const structureValidation = validateImageSetStructure({ customStructure, images: plan.images, structureMode });
+
+        return { plan, riskScan, structureValidation };
+      },
+    });
+
+    await finalizeUsage({
+      usageRecordId: usageReservation.record.id,
+      userId: user.id,
+      metadata: { route: "/api/products/image-set/plan", analysisHistoryId, count },
     });
 
     console.info("[product-risk-scan]", {
       source: "image-set-plan",
-      level: riskScan.level,
-      matches: riskScan.matches,
+      level: result.riskScan.level,
+      matches: result.riskScan.matches,
     });
 
     return NextResponse.json({
-      ...plan,
+      ...result.plan,
       customStructure,
-      riskScan,
+      riskScan: result.riskScan,
       structureMode,
-      structureValidation,
+      structureValidation: result.structureValidation,
     });
   } catch (error) {
     return jsonError(error, "Product image set plan generation failed.");

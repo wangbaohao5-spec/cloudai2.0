@@ -5,6 +5,7 @@ import { ProductWorkspaceTabs } from "@/components/products/product-workspace-ta
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -644,7 +645,8 @@ export function ProductWorkspaceShell({
     setIsAnalyzing(true);
 
     try {
-      const response = await fetch("/api/products/analyze", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

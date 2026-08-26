@@ -5,6 +5,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { LongGenerationLoading } from "@/components/ui/loading";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
+import { createGenerationAttempt } from "@/lib/generation-request";
 import { formatProductOutputSettingsSummary, getProductOutputSettingsLabel } from "@/lib/product-output-settings";
 import { PRODUCT_VISUAL_SCENES } from "@/lib/product-visual-options";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
@@ -86,7 +87,8 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
     setIsGenerating(true);
 
     try {
-      const response = await fetch("/api/products/scene-image", {
+      const generationAttempt = createGenerationAttempt();
+      const response = await generationAttempt.fetch("/api/products/scene-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
