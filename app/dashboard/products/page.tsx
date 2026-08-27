@@ -1,5 +1,6 @@
 import { ProductWorkspaceShell } from "@/components/products/product-workspace-shell";
 import { getCurrentUser } from "@/lib/current-user";
+import { hasProductAnalysisHistory } from "@/lib/first-product-onboarding-server";
 import { getLatestValidProductAnalysisHistoryId } from "@/lib/recent-product-analysis";
 import { redirect } from "next/navigation";
 
@@ -16,17 +17,26 @@ function getSearchParamValue(value?: string | string[]) {
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   const analysisHistoryId = getSearchParamValue(params?.analysis).trim();
+  const user = await getCurrentUser();
   let fallbackAnalysisHistoryId: string | null = null;
 
+  if (!user) {
+    redirect("/login");
+  }
+
   if (!analysisHistoryId) {
-    const user = await getCurrentUser();
-
-    if (!user) {
-      redirect("/login");
-    }
-
     fallbackAnalysisHistoryId = await getLatestValidProductAnalysisHistoryId(user.id);
   }
 
-  return <ProductWorkspaceShell fallbackAnalysisHistoryId={fallbackAnalysisHistoryId} initialAnalysisHistoryId={analysisHistoryId || undefined} restoreFromRecent={!analysisHistoryId} />;
+  const isFirstProductUser = !(await hasProductAnalysisHistory(user.id));
+
+  return (
+    <ProductWorkspaceShell
+      fallbackAnalysisHistoryId={fallbackAnalysisHistoryId}
+      initialAnalysisHistoryId={analysisHistoryId || undefined}
+      isFirstProductUser={isFirstProductUser}
+      restoreFromRecent={!analysisHistoryId}
+      userId={user.id}
+    />
+  );
 }

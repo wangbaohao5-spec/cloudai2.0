@@ -6,6 +6,12 @@ import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
+import {
+  activateFirstProductOnboarding,
+  dismissFirstProductOnboarding,
+  getFirstProductOnboardingStatus,
+  getFirstProductStartAction,
+} from "@/lib/first-product-onboarding";
 import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
@@ -22,8 +28,10 @@ type UploadedAsset = {
 type ProductWorkspaceShellProps = {
   fallbackAnalysisHistoryId?: string | null;
   initialAnalysisHistoryId?: string;
+  isFirstProductUser?: boolean;
   mode?: "workspace" | "create";
   restoreFromRecent?: boolean;
+  userId?: string;
 };
 
 type ProductWorkspaceStartPanelProps = {
@@ -161,15 +169,11 @@ function ProductWorkspaceStartPanel({
 }: ProductWorkspaceStartPanelProps) {
   const isPendingAnalysis = Boolean(uploadedAsset) || isUploading;
   const isBusy = isUploading || isAnalyzing || isRestoring;
-  const buttonLabel = isUploading ? "图片上传中..." : isAnalyzing ? "正在进行商品策划..." : "开始商品策划";
-  const statusLabel = isAnalyzing ? "正在策划" : isUploading ? "上传中" : uploadedAsset ? "准备开始商品策划" : "未上传";
-  const statusDescription = isAnalyzing
-    ? "CloudAI 正在理解商品信息并生成商品策划。"
-    : isUploading
-      ? "商品图片正在上传，请稍等。"
-      : uploadedAsset
-        ? "确认商品图片和补充信息后即可开始。"
-        : "请先上传一张主体清晰的商品图片。";
+  const startAction = getFirstProductStartAction({
+    hasUploadedAsset: Boolean(uploadedAsset),
+    isAnalyzing,
+    isUploading,
+  });
 
   function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -220,8 +224,8 @@ function ProductWorkspaceStartPanel({
           <div className="product-workspace-start-section-header">
             <span>01</span>
             <div>
-              <h2>上传商品图片</h2>
-              <p>支持 PNG、JPG、WebP。建议上传主体完整、光线清晰的商品原图。</p>
+              <h2>上传一张清晰的商品主图</h2>
+              <p>支持 JPG、PNG、WebP，单张不超过 4 MB。</p>
             </div>
           </div>
 
@@ -241,7 +245,7 @@ function ProductWorkspaceStartPanel({
             ) : (
               <div>
                 <strong>{isUploading ? "图片上传中..." : "拖拽或点击选择商品图"}</strong>
-                <p>上传后会在这里预览，确认无误后开始商品策划。</p>
+                <p>上传后会在这里预览，确认无误后分析商品。</p>
               </div>
             )}
           </label>
@@ -280,14 +284,14 @@ function ProductWorkspaceStartPanel({
         </section>
       </div>
 
-      <section className="cai-card cai-card--compact product-workspace-start-action" aria-label="开始商品策划">
+      <section className="cai-card cai-card--compact product-workspace-start-action" aria-label="分析商品">
         <div className="product-workspace-start-status" aria-live="polite">
-          <strong>{statusLabel}</strong>
-          <span>{statusDescription}</span>
+          <strong>{startAction.statusLabel}</strong>
+          <span>{startAction.statusDescription}</span>
         </div>
         <button className="cai-button cai-button--primary" disabled={!uploadedAsset || isBusy} type="button" onClick={onAnalyze}>
           {isAnalyzing ? <AiThinkingLoading size="sm" /> : isUploading || isRestoring ? <LoadingIndicator /> : null}
-          {buttonLabel}
+          {startAction.buttonLabel}
         </button>
         <p>商品策划完成后，后续图片生成会按实际任务消耗额度。</p>
         {error ? <p className="image-generation-error">{error}</p> : null}
@@ -375,8 +379,10 @@ function ProductProjectContextHeader({
 export function ProductWorkspaceShell({
   fallbackAnalysisHistoryId = null,
   initialAnalysisHistoryId = "",
+  isFirstProductUser = false,
   mode = "workspace",
   restoreFromRecent = false,
+  userId = "",
 }: ProductWorkspaceShellProps = {}) {
   const [error, setError] = useState("");
   const [creationCenterError, setCreationCenterError] = useState("");
@@ -390,6 +396,7 @@ export function ProductWorkspaceShell({
   const [creationCenterRefreshKey, setCreationCenterRefreshKey] = useState(0);
   const [productHint, setProductHint] = useState("");
   const [result, setResult] = useState<ProductAnalysisResponse | null>(null);
+  const [isFirstProductOnboardingActive, setIsFirstProductOnboardingActive] = useState(isFirstProductUser);
   const loadedCreationCenterRef = useRef<{ analysisHistoryId: string; refreshKey: number } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -406,6 +413,35 @@ export function ProductWorkspaceShell({
   }
 
   const [feedback, setFeedback] = useState<{ message: string; tone: "error" | "success" } | null>(null);
+
+  useEffect(() => {
+    if (!userId) {
+      setIsFirstProductOnboardingActive(isFirstProductUser);
+      return;
+    }
+
+    try {
+      if (isFirstProductUser) {
+        activateFirstProductOnboarding(window.localStorage, userId);
+      }
+
+      setIsFirstProductOnboardingActive(getFirstProductOnboardingStatus(window.localStorage, userId) === "active");
+    } catch {
+      setIsFirstProductOnboardingActive(isFirstProductUser);
+    }
+  }, [isFirstProductUser, userId]);
+
+  function handleDismissFirstProductOnboarding() {
+    if (userId) {
+      try {
+        dismissFirstProductOnboarding(window.localStorage, userId);
+      } catch {
+        // The guide still closes for this page when browser storage is unavailable.
+      }
+    }
+
+    setIsFirstProductOnboardingActive(false);
+  }
 
   function updateAnalysisUrl(analysisHistoryId?: string) {
     const url = new URL(window.location.href);
@@ -742,9 +778,11 @@ export function ProductWorkspaceShell({
           isCreationCenterLoading={isCreationCenterLoading}
           isUploading={isUploading}
           result={result}
+          firstProductOnboardingActive={isFirstProductOnboardingActive}
           uploadedAsset={uploadedAsset}
           onAnalyze={() => void handleAnalyze()}
           onGenerated={handleGenerated}
+          onDismissFirstProductOnboarding={handleDismissFirstProductOnboarding}
         />
       </section>
     </main>

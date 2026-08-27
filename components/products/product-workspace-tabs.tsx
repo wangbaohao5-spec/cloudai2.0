@@ -9,6 +9,7 @@ import { ProductImageEditPanel } from "@/components/products/product-image-edit-
 import { ProductImageSetPanel } from "@/components/products/product-image-set-panel";
 import { ProductOutputSettingsEditor } from "@/components/products/product-output-settings";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
+import { getFirstProductWorkspaceGuideStage } from "@/lib/first-product-onboarding";
 import { DEFAULT_PRODUCT_OUTPUT_SETTINGS } from "@/lib/product-output-settings";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
@@ -19,10 +20,12 @@ import type { ReactNode } from "react";
 type ProductWorkspaceTabsProps = {
   creationCenterData: ProductCreationCenterData | null;
   creationCenterError: string;
+  firstProductOnboardingActive: boolean;
   isAnalyzing: boolean;
   isCreationCenterLoading: boolean;
   isUploading: boolean;
   onAnalyze: () => void;
+  onDismissFirstProductOnboarding: () => void;
   onGenerated: () => void;
   result: ProductAnalysisResponse | null;
   uploadedAsset: UploadedAsset | null;
@@ -175,10 +178,12 @@ function ProductWorkspaceActionStrip({
 export function ProductWorkspaceTabs({
   creationCenterData,
   creationCenterError,
+  firstProductOnboardingActive,
   isAnalyzing,
   isCreationCenterLoading,
   isUploading,
   onAnalyze,
+  onDismissFirstProductOnboarding,
   onGenerated,
   result,
   uploadedAsset,
@@ -193,6 +198,12 @@ export function ProductWorkspaceTabs({
   const sceneImageCount = creationCenterData?.sceneImages.length || 0;
   const hasOriginalAsset = Boolean(creationCenterData?.originalAsset);
   const generatedAssetCount = imageEditCount + sceneImageCount + detailPageCount + imageSetCount;
+  const firstProductGuideStage = getFirstProductWorkspaceGuideStage({
+    copywritingCount,
+    dismissed: false,
+    enabled: firstProductOnboardingActive,
+    imageCount: generatedAssetCount,
+  });
   const tabCounts: Partial<Record<TabId, number>> = {
     assets: creationCenterData ? Number(hasOriginalAsset) + generatedAssetCount : 0,
     copywriting: copywritingCount,
@@ -277,6 +288,45 @@ export function ProductWorkspaceTabs({
         ))}
       </div>
 
+      {result && firstProductGuideStage ? (
+        <ProductWorkspaceEmptyState
+          eyebrow="推荐下一步"
+          marker="NEXT"
+          onDismiss={onDismissFirstProductOnboarding}
+          title={
+            firstProductGuideStage === "analysis-complete"
+              ? "接下来可以做什么"
+              : firstProductGuideStage === "copywriting-complete"
+                ? "上架文案已生成"
+                : "商品内容已准备"
+          }
+          description={
+            firstProductGuideStage === "analysis-complete"
+              ? "商品分析已完成。现在可以先生成一份上架文案，或者优化商品图片。"
+              : firstProductGuideStage === "copywriting-complete"
+                ? "文案已经自动保存。继续优化商品原图或生成商品套图，图片会自动进入素材库。"
+                : "文案和图片已经准备好，可以在素材库查看，也可以在素材包中统一整理当前商品内容。"
+          }
+          actions={
+            firstProductGuideStage === "analysis-complete"
+              ? [
+                  { label: "生成上架文案", onClick: () => switchTabAndFocus("copywriting", "product-copywriting-panel"), tone: "primary" },
+                  { label: "优化商品图", onClick: () => switchTabAndFocus("images", "product-image-edit-panel") },
+                  { label: "生成商品套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet") },
+                ]
+              : firstProductGuideStage === "copywriting-complete"
+                ? [
+                    { label: "优化商品图", onClick: () => switchTabAndFocus("images", "product-image-edit-panel"), tone: "primary" },
+                    { label: "生成商品套图", onClick: () => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet") },
+                  ]
+                : [
+                    { label: "查看素材库", onClick: () => switchTab("assets"), tone: "primary" },
+                    { label: "查看素材包", onClick: () => switchTab("export") },
+                  ]
+          }
+        />
+      ) : null}
+
       <div
         aria-labelledby="product-workspace-tab-analysis"
         className="product-workspace-panel"
@@ -317,7 +367,7 @@ export function ProductWorkspaceTabs({
             <ProductGenerationBriefEditor analysis={result.analysis} analysisHistoryId={result.historyId} onBriefChange={setGenerationBrief} />
             <ProductOutputSettingsEditor analysisHistoryId={result.historyId} onSettingsChange={setOutputSettings} />
             <ProductAnalysisResult analysis={result.analysis} defaultShowFullAnalysis showEnhancedFields showFullAnalysisToggle={false} title={result.title} />
-            {result.historyId ? (
+            {result.historyId && !firstProductGuideStage ? (
               <ProductWorkspaceActionStrip
                 title="下一步创作"
                 description="商品分析已完成。先确认生成要求和发布目标，再选择要制作的商品内容。"

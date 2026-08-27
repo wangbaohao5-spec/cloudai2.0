@@ -29,6 +29,7 @@ export type DashboardRecentOutput = {
 
 export type DashboardHomeData = {
   continueProduct: ProductHomeCard | null;
+  isFirstProductUser: boolean;
   recentProducts: ProductHomeCard[];
   recentOutputs: DashboardRecentOutput[];
   todayGenerated: {
@@ -377,6 +378,7 @@ export async function getDashboardHomeData(userId: string): Promise<DashboardHom
 
   return {
     continueProduct: recentProductCards[0] || null,
+    isFirstProductUser: productAnalysisRecords.length === 0,
     recentProducts: recentProductCards,
     recentOutputs,
     todayGenerated: {

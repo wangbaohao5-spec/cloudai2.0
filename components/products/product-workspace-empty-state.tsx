@@ -16,6 +16,7 @@ type ProductWorkspaceEmptyStateProps = {
   description: string;
   eyebrow?: string;
   marker?: string;
+  onDismiss?: () => void;
   title: string;
 };
 
@@ -25,10 +26,16 @@ export function ProductWorkspaceEmptyState({
   description,
   eyebrow = "下一步",
   marker = "AI",
+  onDismiss,
   title,
 }: ProductWorkspaceEmptyStateProps) {
   return (
     <section className="product-workspace-empty-state" aria-label={title}>
+      {onDismiss ? (
+        <button className="product-workspace-empty-dismiss" aria-label="关闭此提示" title="关闭此提示" type="button" onClick={onDismiss}>
+          ×
+        </button>
+      ) : null}
       <div className="product-workspace-empty-marker" aria-hidden="true">
         {marker}
       </div>

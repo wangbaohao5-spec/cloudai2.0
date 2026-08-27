@@ -2,6 +2,12 @@ import type { ProductHomeCard } from "@/lib/dashboard-home";
 import Link from "next/link";
 
 type ContinueProductCardProps = {
+  onboarding?: {
+    actionLabel: string;
+    description: string;
+    href: string;
+    title: string;
+  } | null;
   product: ProductHomeCard | null;
 };
 
@@ -14,7 +20,7 @@ function formatDate(value: string) {
   });
 }
 
-export function ContinueProductCard({ product }: ContinueProductCardProps) {
+export function ContinueProductCard({ onboarding = null, product }: ContinueProductCardProps) {
   if (!product) {
     return (
       <section className="continue-product-card continue-product-card-empty cai-card cai-card--muted">
@@ -22,16 +28,15 @@ export function ContinueProductCard({ product }: ContinueProductCardProps) {
           <span className="cai-empty__icon" aria-hidden="true">
             商
           </span>
-          <h2 className="cai-empty__title">开始第一个商品创作</h2>
-          <p className="cai-empty__description">上传一张商品图，CloudAI 会先分析商品，再帮助你生成上架文案、商品套图和详情页素材。</p>
+          <h2 className="cai-empty__title">{onboarding?.title || "还没有可继续的商品"}</h2>
+          <p className="cai-empty__description">{onboarding?.description || "新建商品后，可以从这里继续最近的商品创作。"}</p>
           <div className="dashboard-home-flow">
             <span>上传商品图</span>
-            <span>商品策划</span>
-            <span>商品套图</span>
-            <span>素材库</span>
+            <span>分析商品</span>
+            <span>生成上架内容</span>
           </div>
-          <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
-            创建商品
+          <Link className="cai-button cai-button--primary" href={onboarding?.href || "/dashboard/products/new"}>
+            {onboarding?.actionLabel || "新建商品"}
           </Link>
         </div>
       </section>

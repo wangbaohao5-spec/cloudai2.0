@@ -172,7 +172,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
           <div className="product-preview-actions">
             <ImageDownloadButton filename={buildImageDownloadFilename("image-edit")} imageUrl={result.imageUrl} />
           </div>
-          <p className="product-image-edit-result-note">优化图已生成，可放大查看或下载后用于商品素材整理。</p>
+          <p className="product-image-edit-result-note">优化图已生成并自动保存到素材库，可放大查看或下载。</p>
         </div>
       ) : null}
 
