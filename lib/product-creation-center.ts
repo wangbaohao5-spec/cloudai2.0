@@ -15,6 +15,10 @@ export type ProductCreationCenterAsset = {
   url: string;
 };
 
+export type ProductCreationCenterImageEdit = HistoryRecord & {
+  imageUrl: string | null;
+};
+
 export type ProductCreationCenterData = {
   product: {
     analysisHistoryId: string;
@@ -26,7 +30,7 @@ export type ProductCreationCenterData = {
   originalAsset: ProductCreationCenterAsset | null;
   copywriting: HistoryRecord[];
   detailPages: HistoryRecord[];
-  imageEdits: HistoryRecord[];
+  imageEdits: ProductCreationCenterImageEdit[];
   imageSetImages: HistoryRecord[];
   sceneImages: HistoryRecord[];
 };
@@ -131,6 +135,13 @@ function sortImageSetImages(left: HistoryRecord, right: HistoryRecord) {
   return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
 }
 
+function toProductCreationCenterImageEdit(record: HistoryRecord): ProductCreationCenterImageEdit {
+  return {
+    ...record,
+    imageUrl: record.originalUrl || null,
+  };
+}
+
 export async function getProductCreationCenterData(userId: string, analysisHistoryId: string): Promise<ProductCreationCenterData> {
   const analysisRecord = await getHistoryRecordForUser(userId, analysisHistoryId);
 
@@ -180,7 +191,9 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
     originalAsset,
     copywriting: historyRecords.filter((record) => isCopywritingForAnalysis(record, analysisRecord.id)),
     detailPages: historyRecords.filter((record) => isDetailPageForAnalysis(record, analysisRecord.id)).sort(sortDetailPages),
-    imageEdits: historyRecords.filter((record) => isImageEditForAnalysis(record, analysisRecord.id, analysisRecord.assetId)),
+    imageEdits: historyRecords
+      .filter((record) => isImageEditForAnalysis(record, analysisRecord.id, analysisRecord.assetId))
+      .map(toProductCreationCenterImageEdit),
     imageSetImages: historyRecords.filter((record) => isImageSetImageForAnalysis(record, analysisRecord.id)).sort(sortImageSetImages),
     sceneImages: historyRecords.filter((record) => isSceneImageForAnalysis(record, analysisRecord.id)),
   };

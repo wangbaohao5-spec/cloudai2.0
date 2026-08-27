@@ -1,6 +1,7 @@
 "use client";
 
-import type { ProductCreationCenterAsset } from "@/lib/product-creation-center";
+import type { ProductCreationCenterAsset, ProductCreationCenterData } from "@/lib/product-creation-center";
+import { getProductCreationCenterImageEditAssets } from "@/lib/product-creation-center-image-edits";
 import type { HistoryRecord } from "@/lib/types";
 import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
@@ -12,7 +13,7 @@ import { useState } from "react";
 type ProductAssetGalleryProps = {
   analysisHistoryId?: string;
   detailPages: HistoryRecord[];
-  imageEdits: HistoryRecord[];
+  imageEdits: ProductCreationCenterData["imageEdits"];
   imageSetImages: HistoryRecord[];
   originalAsset: ProductCreationCenterAsset | null;
   sceneImages: HistoryRecord[];
@@ -327,13 +328,10 @@ export function ProductAssetGallery({ analysisHistoryId, detailPages, imageEdits
         },
       ]
     : [];
-  const imageEditAssets = imageEdits.map((record) => ({
-    downloadFilename: buildImageDownloadFilename("image-edit", [record.title]),
-    id: record.id,
+  const imageEditAssets = getProductCreationCenterImageEditAssets(imageEdits).map((asset) => ({
+    ...asset,
+    downloadFilename: buildImageDownloadFilename("image-edit", [asset.title]),
     label: "原图优化",
-    previewUrl: record.previewUrl,
-    title: record.title,
-    url: getOutputUrl(record.output),
   }));
   const sceneImageAssets = sceneImages.map((record) => ({
     downloadFilename: buildImageDownloadFilename("scene-image", [record.title]),

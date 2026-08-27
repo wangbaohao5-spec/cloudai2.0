@@ -5,6 +5,7 @@ import { getRiskCategoryLabel } from "@/lib/ai/product-risk-labels";
 import type { ProductContentRiskScanResult } from "@/lib/ai/product-content-risk-scanner";
 import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
+import { buildProductCreationCenterImageEditMarkdown } from "@/lib/product-creation-center-image-edits";
 import {
   formatProductOutputSettingsSummary,
   getOutputLanguageLabel,
@@ -429,10 +430,6 @@ function buildImageSetStructureMarkdown(records: HistoryRecord[]) {
 function buildProductPackageMarkdown(data: ProductCreationCenterData) {
   const productName = data.analysis.productNameSuggestions[0] || data.product.title || "未命名商品";
   const originalAssets = data.originalAsset ? [{ title: data.originalAsset.name, url: data.originalAsset.url }] : [];
-  const imageEditAssets = data.imageEdits.map((record) => ({
-    title: record.title,
-    url: getOutputUrl(record.output),
-  }));
   const sceneImageAssets = data.sceneImages.map((record) => ({
     title: record.title,
     url: getOutputUrl(record.output),
@@ -473,7 +470,7 @@ function buildProductPackageMarkdown(data: ProductCreationCenterData) {
     "## 图片素材",
     buildImageAssetMarkdown("原商品图", originalAssets),
     "",
-    buildImageAssetMarkdown("商品图精修", imageEditAssets),
+    buildProductCreationCenterImageEditMarkdown(data.imageEdits),
     "",
     buildImageAssetMarkdown("营销场景图", sceneImageAssets),
     buildDetailPageMarkdown(data.detailPages),

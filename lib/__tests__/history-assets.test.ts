@@ -94,7 +94,11 @@ describe("history asset hydration", () => {
   it("does not expose a stale URL when the Asset is missing or belongs to another user", async () => {
     mocks.findMany.mockResolvedValue([]);
     const [record] = await hydrateHistoryAssetUrls("user-1", [
-      historyRecord({ imageUrl: "https://project.supabase.co/storage/v1/object/sign/cloudai-assets/private.png?token=old" }),
+      historyRecord({
+        imageUrl: "https://project.supabase.co/storage/v1/object/sign/cloudai-assets/private.png?token=old",
+        source: "product-image-edit",
+        type: "image-enhance",
+      }),
     ]);
 
     expect(record.output).not.toHaveProperty("imageUrl");
@@ -109,7 +113,7 @@ describe("history asset hydration", () => {
     ]);
     mocks.getFileUrl.mockRejectedValueOnce(new Error("signing failed")).mockResolvedValueOnce("https://storage.test/ok.png");
     const records = await hydrateHistoryAssetUrls("user-1", [
-      historyRecord({ id: "failed", assetId: "asset-1", imageUrl: "https://storage.test/old.png" }),
+      historyRecord({ id: "failed", assetId: "asset-1", imageUrl: "https://storage.test/old.png", source: "product-image-edit", type: "image-enhance" }),
       historyRecord({ id: "ok", assetId: "asset-2" }),
     ]);
 
