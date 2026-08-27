@@ -3,6 +3,7 @@
 import { HistoryItem } from "@/components/history/history-item";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import type { HistoryRecord } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 
@@ -46,7 +47,7 @@ export function HistoryList() {
 
     try {
       const url = cursor ? `/api/history?cursor=${encodeURIComponent(cursor)}` : "/api/history";
-      const response = await fetch(url, {
+      const response = await fetchWithAuthHandling(url, {
         cache: "no-store",
       });
 
@@ -91,14 +92,14 @@ export function HistoryList() {
   }, [activeFilter, records]);
 
   async function handleDelete(id: string) {
-    await fetch(`/api/history/${id}`, {
+    await fetchWithAuthHandling(`/api/history/${id}`, {
       method: "DELETE",
     });
     await loadRecords();
   }
 
   async function handleClear() {
-    await fetch("/api/history", {
+    await fetchWithAuthHandling("/api/history", {
       method: "DELETE",
     });
     setRecords([]);

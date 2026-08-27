@@ -1,4 +1,5 @@
 import { TextProviderError, type AIMessage, type AIProvider, type GenerateAIResponseOptions } from "@/lib/ai/provider";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderTimeoutError } from "@/lib/ai/provider-http";
 import { getOptionalEnv } from "@/lib/server-env";
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
@@ -83,7 +84,7 @@ export const deepseekProvider: AIProvider = {
         task: options.task || "default",
       });
 
-      response = await fetch(DEEPSEEK_API_URL, {
+      response = await fetchProvider(DEEPSEEK_API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -95,7 +96,7 @@ export const deepseekProvider: AIProvider = {
           temperature: options.temperature ?? 0.7,
           response_format: options.jsonMode ? { type: "json_object" } : undefined,
         }),
-      });
+      }, PROVIDER_TIMEOUTS.text);
     } catch (error) {
       console.error("[deepseek-text] fetch failed", {
         cause: getCauseSummary(error),
@@ -106,8 +107,8 @@ export const deepseekProvider: AIProvider = {
       });
 
       throw new TextProviderError({
-        kind: "network",
-        message: "DeepSeek text provider network request failed.",
+        kind: error instanceof ProviderTimeoutError ? "timeout" : "network",
+        message: error instanceof ProviderTimeoutError ? error.message : "DeepSeek text provider network request failed.",
         model,
         provider: "deepseek",
         status: 502,
@@ -120,7 +121,7 @@ export const deepseekProvider: AIProvider = {
     if (!response.ok) {
       console.error("[deepseek-text] http error", {
         errorCode: data?.error?.code,
-        errorMessage: data?.error?.message,
+        errorMessage: process.env.NODE_ENV === "development" ? data?.error?.message : undefined,
         errorStatus: data?.error?.status,
         endpointHost: "api.deepseek.com",
         model,

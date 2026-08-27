@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getRequiredEnv, getSupabaseUrl } from "@/lib/server-env";
+import sharp from "sharp";
 
 export type AssetFileType = "image" | "video" | "upload";
 
@@ -33,6 +34,8 @@ export const ASSET_UPLOAD_LIMITS = {
   video: 100 * MB,
   upload: 10 * MB,
 } satisfies Record<AssetFileType, number>;
+
+export const USER_UPLOAD_MAX_BYTES = 4 * MB;
 
 const ALLOWED_CONTENT_TYPES = {
   image: ["image/png", "image/jpeg", "image/webp"],
@@ -95,6 +98,30 @@ export function validateAssetFile({
 
   if (size > ASSET_UPLOAD_LIMITS[type]) {
     throw new Error(`File is too large. Maximum size is ${Math.floor(ASSET_UPLOAD_LIMITS[type] / MB)}MB.`);
+  }
+}
+
+export async function validateImageBytes(content: ArrayBuffer | Buffer | Uint8Array, contentType: string) {
+  const normalizedContentType = contentType.split(";")[0]?.trim().toLowerCase();
+  const expectedFormat = normalizedContentType === "image/jpeg" ? "jpeg" : normalizedContentType?.replace("image/", "");
+  const buffer = content instanceof ArrayBuffer
+    ? Buffer.from(content)
+    : Buffer.from(content.buffer, content.byteOffset, content.byteLength);
+
+  try {
+    const image = sharp(buffer);
+    const metadata = await image.metadata();
+    await image.stats();
+
+    if (!metadata.format || metadata.format !== expectedFormat) {
+      throw new Error("Image content does not match its declared file type.");
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === "Image content does not match its declared file type.") {
+      throw error;
+    }
+
+    throw new Error("File content is not a valid PNG, JPEG, or WebP image.");
   }
 }
 

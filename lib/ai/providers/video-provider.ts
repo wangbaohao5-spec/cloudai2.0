@@ -1,5 +1,6 @@
 import type { VideoGenerationResult } from "@/lib/ai/types";
 import { getOptionalEnv, getRequiredEnv } from "@/lib/server-env";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderRequestError } from "@/lib/ai/provider-http";
 
 const DASHSCOPE_VIDEO_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis";
 const DASHSCOPE_TASK_API_URL = "https://dashscope.aliyuncs.com/api/v1/tasks";
@@ -70,12 +71,11 @@ function getVideoUrl(output?: DashScopeTaskResponse["output"]) {
 }
 
 async function requestDashScope<T>(url: string, init: RequestInit) {
-  const response = await fetch(url, init);
+  const response = await fetchProvider(url, init, PROVIDER_TIMEOUTS.video);
   const data = (await response.json()) as T;
 
   if (!response.ok) {
-    const errorData = data as { message?: string; code?: string };
-    throw new Error(errorData.message || errorData.code || "DashScope video request failed.");
+    throw new ProviderRequestError("视频生成服务暂时不可用，请稍后重试。", 502);
   }
 
   return data;

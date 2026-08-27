@@ -5,6 +5,7 @@ import { ProductCreationCenter } from "@/components/products/product-creation-ce
 import { ProductCopywritingPanel } from "@/components/products/product-copywriting-panel";
 import { ProductImageEditPanel } from "@/components/products/product-image-edit-panel";
 import { ProductSceneImagePanel } from "@/components/products/product-scene-image-panel";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
@@ -107,7 +108,7 @@ export function ProductWorkflowShell() {
       setError("");
 
       try {
-        const response = await fetch(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
+        const response = await fetchWithAuthHandling(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
           cache: "no-store",
         });
 
@@ -181,7 +182,7 @@ export function ProductWorkflowShell() {
       formData.append("file", file);
       formData.append("type", "upload");
 
-      const response = await fetch("/api/assets/upload", {
+      const response = await fetchWithAuthHandling("/api/assets/upload", {
         method: "POST",
         body: formData,
       });

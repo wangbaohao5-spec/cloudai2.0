@@ -1,4 +1,5 @@
 import { createAsset } from "@/lib/assets";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderRequestError } from "@/lib/ai/provider-http";
 import type { AssetFileType } from "@/lib/storage";
 import { uploadFile, validateAssetFile } from "@/lib/storage";
 
@@ -30,10 +31,10 @@ function extensionFromContentType(contentType: string | null, type: AssetFileTyp
 }
 
 export async function saveRemoteAsset({ userId, type, sourceUrl, name }: SaveRemoteAssetInput) {
-  const response = await fetch(sourceUrl);
+  const response = await fetchProvider(sourceUrl, {}, PROVIDER_TIMEOUTS.image);
 
   if (!response.ok) {
-    throw new Error(`Failed to download generated ${type} asset.`);
+    throw new ProviderRequestError("生成结果暂时无法保存，请稍后重试。", 502);
   }
 
   const contentType = response.headers.get("content-type") || (type === "video" ? "video/mp4" : "image/png");

@@ -5,6 +5,7 @@ import { ProductWorkspaceTabs } from "@/components/products/product-workspace-ta
 import { AiThinkingLoading } from "@/components/ui/loading";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
@@ -135,7 +136,7 @@ function clearStoredAnalysisHistoryId(analysisHistoryId?: string) {
 }
 
 async function fetchCreationCenterData(analysisHistoryId: string) {
-  const response = await fetch(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
+  const response = await fetchWithAuthHandling(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
     cache: "no-store",
   });
 
@@ -602,7 +603,7 @@ export function ProductWorkspaceShell({
       formData.append("file", file);
       formData.append("type", "upload");
 
-      const response = await fetch("/api/assets/upload", {
+      const response = await fetchWithAuthHandling("/api/assets/upload", {
         method: "POST",
         body: formData,
       });

@@ -2,7 +2,7 @@ import { createAsset } from "@/lib/assets";
 import { getErrorMessage, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
 import type { AssetFileType } from "@/lib/storage";
-import { uploadFile, validateAssetFile } from "@/lib/storage";
+import { deleteFile, uploadFile, USER_UPLOAD_MAX_BYTES, validateAssetFile, validateImageBytes } from "@/lib/storage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -28,12 +28,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File is required." }, { status: 400 });
     }
 
+    const content = await file.arrayBuffer();
+
     try {
       validateAssetFile({
         type,
         contentType: file.type,
         size: file.size,
       });
+      if (file.size > USER_UPLOAD_MAX_BYTES) {
+        throw new Error("File is too large. Maximum size is 4MB.");
+      }
+      if (type === "image" || type === "upload") {
+        await validateImageBytes(content, file.type);
+      }
     } catch (error) {
       return NextResponse.json({ error: getErrorMessage(error, "Invalid file.") }, { status: 400 });
     }
@@ -42,15 +50,31 @@ export async function POST(request: Request) {
       userId: user.id,
       type,
       name: file.name,
-      content: await file.arrayBuffer(),
+      content,
       contentType: file.type || undefined,
     });
-    const asset = await createAsset({
-      userId: user.id,
-      type,
-      name: file.name,
-      url: uploadedFile.path,
-    });
+    let asset;
+
+    try {
+      asset = await createAsset({
+        userId: user.id,
+        type,
+        name: file.name,
+        url: uploadedFile.path,
+      });
+    } catch (error) {
+      try {
+        await deleteFile(uploadedFile.path);
+      } catch (cleanupError) {
+        console.warn("[asset-upload] storage cleanup failed", {
+          cleanupErrorName: cleanupError instanceof Error ? cleanupError.name : typeof cleanupError,
+          type,
+          userId: user.id,
+        });
+      }
+
+      throw error;
+    }
 
     return NextResponse.json({
       assetId: asset.id,

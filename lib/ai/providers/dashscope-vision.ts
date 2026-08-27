@@ -1,6 +1,7 @@
 import type { ProductImageAnalysis } from "@/lib/product-types";
 import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rules";
 import { getOptionalEnv } from "@/lib/server-env";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderTimeoutError } from "@/lib/ai/provider-http";
 
 const DASHSCOPE_VISION_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 const DASHSCOPE_VISION_MODEL = getOptionalEnv("DASHSCOPE_VISION_MODEL") || "qwen-vl-plus";
@@ -191,7 +192,7 @@ export async function analyzeDashScopeProductImage(imageUrl: string, productHint
   }
 
   try {
-    response = await fetch(DASHSCOPE_VISION_API_URL, {
+    response = await fetchProvider(DASHSCOPE_VISION_API_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -257,7 +258,7 @@ ${normalizedProductHint || "用户未提供补充信息，请仅基于图片可�
           type: "json_object",
         },
       }),
-    });
+    }, PROVIDER_TIMEOUTS.vision);
   } catch (error) {
     console.error("[dashscope-vision] fetch failed", {
       ...getSafeEndpoint(),
@@ -266,9 +267,10 @@ ${normalizedProductHint || "用户未提供补充信息，请仅基于图片可�
       ...getErrorCauseDetails(error),
     });
 
-    throw new DashScopeVisionError(PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE, {
-      code: "FETCH_FAILED",
-      safeDebug: error instanceof Error ? error.message : "fetch failed",
+    throw new DashScopeVisionError(error instanceof ProviderTimeoutError ? error.message : PRODUCT_ANALYSIS_UNAVAILABLE_MESSAGE, {
+      status: error instanceof ProviderTimeoutError ? 504 : undefined,
+      code: error instanceof ProviderTimeoutError ? "TIMEOUT" : "FETCH_FAILED",
+      safeDebug: error instanceof ProviderTimeoutError ? "provider timeout" : "provider fetch failed",
     });
   }
 

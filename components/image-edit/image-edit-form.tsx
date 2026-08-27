@@ -3,6 +3,7 @@
 import { buildProductImageEditPrompt } from "@/lib/ai/product-image-edit-prompt-builder";
 import type { ProductImageEditGoalId } from "@/lib/product-image-edit-options";
 import { ImageEditGoalSelector } from "@/components/image-edit/image-edit-goal-selector";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import { useState } from "react";
 
 type UploadedAsset = {
@@ -47,7 +48,7 @@ export function ImageEditForm({ disabled, error, onError, onSubmit, onUploadChan
     formData.append("file", file);
     formData.append("type", "upload");
 
-    const response = await fetch("/api/assets/upload", {
+    const response = await fetchWithAuthHandling("/api/assets/upload", {
       method: "POST",
       body: formData,
     });

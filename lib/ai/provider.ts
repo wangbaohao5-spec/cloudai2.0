@@ -78,7 +78,7 @@ type TextProviderConfig = {
   task?: TextGenerationTask;
 };
 
-export type TextProviderErrorKind = "auth" | "configuration" | "model-not-found" | "network" | "rate-limit" | "server" | "unknown";
+export type TextProviderErrorKind = "auth" | "configuration" | "model-not-found" | "network" | "rate-limit" | "server" | "timeout" | "unknown";
 
 export class TextProviderError extends Error {
   kind: TextProviderErrorKind;
@@ -252,7 +252,7 @@ function getRunnableTextProviderConfig(
       return config;
     }
 
-    if (options.strictProviderConfig) {
+    if (options.strictProviderConfig || process.env.NODE_ENV === "production") {
       throw new TextProviderError({
         kind: "configuration",
         message: "OpenAI-compatible text provider is not fully configured.",

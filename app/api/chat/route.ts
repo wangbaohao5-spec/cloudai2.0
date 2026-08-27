@@ -51,6 +51,10 @@ function getChatErrorStatus(error: unknown, message: string) {
       return 429;
     }
 
+    if (error.kind === "timeout") {
+      return 504;
+    }
+
     if (error.kind === "network" || error.kind === "server") {
       return 502;
     }
@@ -87,6 +91,10 @@ function getChatErrorMessage(error: unknown, message: string) {
 
     if (error.kind === "rate-limit") {
       return "模型服务请求过于频繁，请稍后重试。";
+    }
+
+    if (error.kind === "timeout") {
+      return "生成服务响应超时，请稍后重试。";
     }
 
     if (error.kind === "server" || error.kind === "network") {

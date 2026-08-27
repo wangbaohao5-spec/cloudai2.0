@@ -1,4 +1,5 @@
 import { TextProviderError, type AIMessage, type AIProvider, type GenerateAIResponseOptions } from "@/lib/ai/provider";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderTimeoutError } from "@/lib/ai/provider-http";
 import { getOptionalEnv } from "@/lib/server-env";
 
 type OpenAICompatibleTextResponse = {
@@ -112,7 +113,7 @@ export const openAICompatibleTextProvider: AIProvider = {
         task: options.task || "default",
       });
 
-      response = await fetch(endpoint, {
+      response = await fetchProvider(endpoint, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -124,7 +125,7 @@ export const openAICompatibleTextProvider: AIProvider = {
           temperature: options.temperature ?? 0.7,
           response_format: options.jsonMode ? { type: "json_object" } : undefined,
         }),
-      });
+      }, PROVIDER_TIMEOUTS.text);
     } catch (error) {
       console.error("[openai-compatible-text] fetch failed", {
         cause: getCauseSummary(error),
@@ -135,8 +136,8 @@ export const openAICompatibleTextProvider: AIProvider = {
       });
 
       throw new TextProviderError({
-        kind: "network",
-        message: "OpenAI-compatible text provider network request failed.",
+        kind: error instanceof ProviderTimeoutError ? "timeout" : "network",
+        message: error instanceof ProviderTimeoutError ? error.message : "OpenAI-compatible text provider network request failed.",
         model,
         provider: "openai-compatible",
         status: 502,
@@ -150,7 +151,7 @@ export const openAICompatibleTextProvider: AIProvider = {
       console.error("[openai-compatible-text] http error", {
         endpointHost,
         errorCode: data?.error?.code,
-        errorMessage: data?.error?.message,
+        errorMessage: process.env.NODE_ENV === "development" ? data?.error?.message : undefined,
         errorStatus: data?.error?.status || data?.error?.type,
         model,
         provider: "openai-compatible",
@@ -174,7 +175,7 @@ export const openAICompatibleTextProvider: AIProvider = {
 
     if (!content) {
       console.error("[openai-compatible-text] invalid response", {
-        endpoint,
+        endpointHost,
         model,
         provider: "openai-compatible",
       });

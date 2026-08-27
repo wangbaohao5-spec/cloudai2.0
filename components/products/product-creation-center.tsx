@@ -5,6 +5,7 @@ import { ProductContentPackage } from "@/components/products/product-content-pac
 import { ProductCreationActions } from "@/components/products/product-creation-actions";
 import { ProductCreationProgress } from "@/components/products/product-creation-progress";
 import { ProductCreationSummary } from "@/components/products/product-creation-summary";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { useEffect, useState } from "react";
 
@@ -32,7 +33,7 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
       setError("");
 
       try {
-        const response = await fetch(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
+        const response = await fetchWithAuthHandling(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
           cache: "no-store",
         });
 

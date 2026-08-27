@@ -176,34 +176,55 @@ export async function reserveUsage(record: UsageReservationInput) {
 }
 
 export async function finalizeUsage(input: UsageSettlementInput) {
-  return db.$transaction(async (tx) => {
-    await lockUsageRecord(tx, input.usageRecordId);
-    const record = await tx.usageRecord.findFirst({
-      where: { id: input.usageRecordId, userId: input.userId },
+  try {
+    return await db.$transaction(async (tx) => {
+      await lockUsageRecord(tx, input.usageRecordId);
+      const record = await tx.usageRecord.findFirst({
+        where: { id: input.usageRecordId, userId: input.userId },
+      });
+
+      if (!record) {
+        throw new ApiError("Usage reservation not found.", 404);
+      }
+
+      if (record.status === "succeeded") {
+        return record;
+      }
+
+      if (record.status === "refunded") {
+        throw new ApiError("Refunded usage cannot be finalized.", 409);
+      }
+
+      return tx.usageRecord.update({
+        where: { id: record.id },
+        data: {
+          status: "succeeded",
+          settledAt: new Date(),
+          failureCode: null,
+          ...(input.metadata ? { metadata: toMetadata(input.metadata) } : {}),
+        },
+      });
     });
+  } catch (error) {
+    let requestId: string | null = null;
 
-    if (!record) {
-      throw new ApiError("Usage reservation not found.", 404);
+    try {
+      requestId = (await db.usageRecord.findFirst({
+        where: { id: input.usageRecordId, userId: input.userId },
+        select: { requestId: true },
+      }))?.requestId || null;
+    } catch {
+      // Keep the original settlement error as the source of truth.
     }
 
-    if (record.status === "succeeded") {
-      return record;
-    }
-
-    if (record.status === "refunded") {
-      throw new ApiError("Refunded usage cannot be finalized.", 409);
-    }
-
-    return tx.usageRecord.update({
-      where: { id: record.id },
-      data: {
-        status: "succeeded",
-        settledAt: new Date(),
-        failureCode: null,
-        ...(input.metadata ? { metadata: toMetadata(input.metadata) } : {}),
-      },
+    console.error("[usage] finalize failed; reservation remains pending", {
+      errorName: error instanceof Error ? error.name : typeof error,
+      requestId,
+      route: typeof input.metadata?.route === "string" ? input.metadata.route : undefined,
+      usageRecordId: input.usageRecordId,
     });
-  });
+    throw error;
+  }
 }
 
 export async function refundUsage(input: UsageRefundInput) {

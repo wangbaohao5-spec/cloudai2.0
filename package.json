@@ -2,6 +2,10 @@
   "name": "cloudai-next-mvp",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

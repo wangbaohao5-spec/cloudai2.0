@@ -1,5 +1,6 @@
 import type { ImageEditInput, ImageEditResult } from "@/lib/ai/image-edit-provider";
 import { getOptionalEnv } from "@/lib/server-env";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderRequestError } from "@/lib/ai/provider-http";
 import sharp from "sharp";
 
 type GeminiImageResponse = {
@@ -72,7 +73,7 @@ function getEndpointLogInfo(endpoint: string) {
 }
 
 async function loadNormalizedImageBase64(imageUrl: string) {
-  const response = await fetch(imageUrl);
+  const response = await fetchProvider(imageUrl, {}, PROVIDER_TIMEOUTS.image);
 
   if (!response.ok) {
     throw new GeminiImageProviderError("Gemini 图片模型读取源图片失败。");
@@ -168,27 +169,6 @@ function getSafeDetailsSummary(details: unknown) {
   });
 }
 
-function getUpstreamErrorMessage(status: number, error?: GeminiImageResponse["error"]) {
-  const upstreamCode = error?.code || status;
-  const upstreamStatus = error?.status || "";
-  const upstreamMessage = error?.message || "";
-  const suffix = [upstreamCode, upstreamStatus, upstreamMessage].filter(Boolean).join(" ");
-
-  if (status === 401 || status === 403) {
-    return `Gemini 图片模型未授权：${suffix}`;
-  }
-
-  if (status === 404) {
-    return `Gemini 图片模型不存在或当前账号不可用：${suffix}`;
-  }
-
-  if (status === 429) {
-    return `Gemini 图片模型限流：${suffix}`;
-  }
-
-  return `Gemini 图片模型请求失败：${suffix || status}`;
-}
-
 function parseGeminiResponseText(text: string): GeminiImageResponse | null {
   if (!text) {
     return null;
@@ -223,7 +203,7 @@ export async function editImageWithGemini(input: ImageEditInput): Promise<ImageE
   let response: Response;
 
   try {
-    response = await fetch(endpoint, {
+    response = await fetchProvider(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -250,8 +230,12 @@ export async function editImageWithGemini(input: ImageEditInput): Promise<ImageE
           responseModalities: ["TEXT", "IMAGE"],
         },
       }),
-    });
+    }, PROVIDER_TIMEOUTS.image);
   } catch (error) {
+    if (error instanceof ProviderRequestError) {
+      throw error;
+    }
+
     const cause = error instanceof Error && error.cause && typeof error.cause === "object" ? error.cause : undefined;
 
     console.error("[gemini-image] fetch failed", {
@@ -278,11 +262,11 @@ export async function editImageWithGemini(input: ImageEditInput): Promise<ImageE
       statusText: response.statusText,
       code: data?.error?.code,
       upstreamStatus: data?.error?.status,
-      message: data?.error?.message?.slice(0, 500) || responseText.slice(0, 500),
+      message: process.env.NODE_ENV === "development" ? data?.error?.message?.slice(0, 500) || responseText.slice(0, 500) : undefined,
       details: getSafeDetailsSummary(data?.error?.details),
     });
 
-    throw new GeminiImageProviderError(getUpstreamErrorMessage(response.status, data?.error));
+    throw new ProviderRequestError("Gemini 图片服务暂时不可用，请稍后重试。", 502);
   }
 
   logGeminiResponseDiagnostics(data);

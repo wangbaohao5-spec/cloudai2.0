@@ -1,6 +1,7 @@
 "use client";
 
 import type { HistoryRecord } from "@/lib/types";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -49,7 +50,7 @@ export function HistoryMediaPreview({ record, variant = "detail" }: HistoryMedia
       }
 
       try {
-        const response = await fetch(`/api/assets/${record.assetId}/url`, {
+        const response = await fetchWithAuthHandling(`/api/assets/${record.assetId}/url`, {
           cache: "no-store",
         });
 

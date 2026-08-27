@@ -3,6 +3,7 @@
 import { LongGenerationLoading } from "@/components/ui/loading";
 import type { VideoGenerationResult } from "@/lib/ai/types";
 import { BETA_VIDEO_ENABLED } from "@/lib/beta-features";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import { FormEvent, useState } from "react";
 
 type VideoGenerateResponse = VideoGenerationResult & {
@@ -73,7 +74,7 @@ export default function VideoGenerationPage() {
     });
 
     try {
-      const response = await fetch("/api/video/generate", {
+      const response = await fetchWithAuthHandling("/api/video/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

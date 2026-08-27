@@ -61,7 +61,7 @@ function getSafeDebug(error: unknown) {
 
 function getAnalysisErrorStatus(error: unknown) {
   if (error instanceof DashScopeVisionError) {
-    return error.status === 401 || error.status === 403 || error.status === 429 ? error.status : 500;
+    return error.status === 401 || error.status === 403 || error.status === 429 || error.status === 504 ? error.status : 500;
   }
 
   return 500;

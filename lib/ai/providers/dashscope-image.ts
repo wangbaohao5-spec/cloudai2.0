@@ -1,4 +1,5 @@
 import { getRequiredEnv } from "@/lib/server-env";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderRequestError } from "@/lib/ai/provider-http";
 
 const DASHSCOPE_IMAGE_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis";
 const DASHSCOPE_TASK_API_URL = "https://dashscope.aliyuncs.com/api/v1/tasks";
@@ -37,12 +38,11 @@ function sleep(ms: number) {
 }
 
 async function requestDashScope<T>(url: string, init: RequestInit) {
-  const response = await fetch(url, init);
+  const response = await fetchProvider(url, init, PROVIDER_TIMEOUTS.image);
   const data = (await response.json()) as T;
 
   if (!response.ok) {
-    const errorData = data as { message?: string; code?: string };
-    throw new Error(errorData.message || errorData.code || "DashScope image request failed.");
+    throw new ProviderRequestError("图片生成服务暂时不可用，请稍后重试。", 502);
   }
 
   return data;

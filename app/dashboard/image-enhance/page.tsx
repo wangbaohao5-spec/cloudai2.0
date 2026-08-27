@@ -5,6 +5,7 @@ import { EnhanceResult } from "@/components/image-enhance/enhance-result";
 import { ImageUpload } from "@/components/image-enhance/image-upload";
 import { ImageModeTabs } from "@/components/image-navigation/image-mode-tabs";
 import type { ImageEnhanceInput, ImageEnhanceResult } from "@/lib/ai/image-enhance-provider";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import { useState } from "react";
 
 export default function ImageEnhancePage() {
@@ -21,7 +22,7 @@ export default function ImageEnhancePage() {
     setLastInput(data);
 
     try {
-      const response = await fetch("/api/image-enhance", {
+      const response = await fetchWithAuthHandling("/api/image-enhance", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

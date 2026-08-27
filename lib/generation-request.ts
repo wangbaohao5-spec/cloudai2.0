@@ -1,3 +1,5 @@
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
+
 type Fetcher = typeof fetch;
 
 export type GenerationAttempt = {
@@ -5,7 +7,7 @@ export type GenerationAttempt = {
   fetch: Fetcher;
 };
 
-export function createGenerationAttempt(fetcher: Fetcher = fetch): GenerationAttempt {
+export function createGenerationAttempt(fetcher: Fetcher = fetchWithAuthHandling): GenerationAttempt {
   const requestId = crypto.randomUUID();
 
   return {

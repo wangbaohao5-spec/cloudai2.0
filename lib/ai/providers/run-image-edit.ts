@@ -1,6 +1,7 @@
 import type { ImageEditInput, ImageEditResult } from "@/lib/ai/image-edit-provider";
 import { getRequiredEnv } from "@/lib/server-env";
 import sharp from "sharp";
+import { fetchProvider, PROVIDER_TIMEOUTS, ProviderRequestError } from "@/lib/ai/provider-http";
 
 type RunImageEditResponse = {
   data?: Array<{
@@ -180,7 +181,7 @@ function getNormalizedFileName(fileName?: string) {
 }
 
 async function loadNormalizedImageBlob(imageUrl: string) {
-  const response = await fetch(imageUrl);
+  const response = await fetchProvider(imageUrl, {}, PROVIDER_TIMEOUTS.image);
 
   if (!response.ok) {
     throw new Error("Failed to load source image for edit.");
@@ -200,7 +201,7 @@ async function loadNormalizedImageBlob(imageUrl: string) {
 }
 
 async function loadResultUrlAsBase64(resultUrl: string) {
-  const response = await fetch(resultUrl);
+  const response = await fetchProvider(resultUrl, {}, PROVIDER_TIMEOUTS.image);
 
   if (!response.ok) {
     throw new Error("图片编辑服务返回了图片链接，但服务端读取失败，请稍后重试或切换模型。");
@@ -236,13 +237,13 @@ export async function editImageWithRunApi(input: ImageEditInput): Promise<ImageE
   formData.append("response_format", "b64_json");
   formData.append("image", imageBlob, getNormalizedFileName(input.fileName));
 
-  const response = await fetch(getRunApiUrl(), {
+  const response = await fetchProvider(getRunApiUrl(), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
     },
     body: formData,
-  });
+  }, PROVIDER_TIMEOUTS.image);
   const data = await readRunApiResponse(response);
   const requestId = response.headers.get("x-request-id") || response.headers.get("request-id") || response.headers.get("x-ratelimit-request-id");
 
@@ -254,10 +255,7 @@ export async function editImageWithRunApi(input: ImageEditInput): Promise<ImageE
       responseStatus: response.status,
     });
 
-    const error = getSafeRunApiError(data);
-    const upstreamMessage = [error.status || response.status, error.code, error.message].filter(Boolean).join(" ");
-
-    throw new Error(upstreamMessage ? `图片编辑服务请求失败：${upstreamMessage}` : "图片编辑服务暂时不可用，请稍后重试。");
+    throw new ProviderRequestError("图片编辑服务暂时不可用，请稍后重试。", 502);
   }
 
   const candidate = data ? getRunApiImageCandidate(data) : "";

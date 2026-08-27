@@ -3,6 +3,7 @@
 import { ProductDetailPagePanel } from "@/components/products/product-detail-page-panel";
 import { ProductWorkspaceEmptyState } from "@/components/products/product-workspace-empty-state";
 import { WorkspaceToast } from "@/components/ui/workspace-toast";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { DEFAULT_FORBIDDEN_PRODUCT_CLAIMS, getProductGenerationBriefFromSession } from "@/lib/product-generation-brief";
 import {
@@ -109,7 +110,7 @@ function buildFallbackBriefFromAnalysis(analysis: ProductImageAnalysis): Product
 }
 
 async function fetchCreationCenterData(analysisHistoryId: string) {
-  const response = await fetch(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
+  const response = await fetchWithAuthHandling(`/api/products/creation-center?id=${encodeURIComponent(analysisHistoryId)}`, {
     cache: "no-store",
   });
 
