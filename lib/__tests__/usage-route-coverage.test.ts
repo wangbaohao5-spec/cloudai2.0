@@ -161,6 +161,17 @@ describe("remaining usage route coverage", () => {
     expect(mocks.finalizeUsage).not.toHaveBeenCalled();
   });
 
+  it("returns a fresh image URL without persisting it in image generation history", async () => {
+    const response = await imagePost(post({ product: "商品", platform: "淘宝", purpose: "主图", style: "简约" }));
+    const data = await response.json();
+    const historyInput = mocks.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(response.status).toBe(200);
+    expect(data.imageUrl).toBe("https://example.test/result.png");
+    expect(historyInput.output).not.toHaveProperty("imageUrl");
+    expect(historyInput.output).toEqual(expect.objectContaining({ assetId: "asset-1", storagePath: "generated/result.png" }));
+  });
+
   it("refunds scene image Asset and History persistence failures", async () => {
     const body = { analysisHistoryId: "analysis-1", scene: "客厅" };
     mocks.createAsset.mockRejectedValueOnce(new Error("asset failed"));
@@ -173,10 +184,24 @@ describe("remaining usage route coverage", () => {
     expect(mocks.refundUsage).toHaveBeenLastCalledWith(expect.objectContaining({ failureCode: "HISTORY_PERSIST_ERROR" }));
   });
 
+  it("returns a fresh scene URL without persisting it in history", async () => {
+    const response = await scenePost(post({ analysisHistoryId: "analysis-1", scene: "客厅" }));
+    const data = await response.json();
+    const historyInput = mocks.saveHistory.mock.calls.at(-1)?.[0];
+
+    expect(response.status).toBe(200);
+    expect(data.imageUrl).toBe("https://example.test/result.png");
+    expect(historyInput.output).not.toHaveProperty("imageUrl");
+  });
+
   it("settles each image-set image independently", async () => {
     const body = { analysisHistoryId: "analysis-1", count: 3, purpose: "detail-page", image: { imageIndex: 1, imageType: "hero" } };
-    expect((await imageSetPost(post(body))).status).toBe(200);
+    const successResponse = await imageSetPost(post(body));
+    const successData = await successResponse.json();
+    expect(successResponse.status).toBe(200);
+    expect(successData.imageUrl).toBe("https://example.test/result.png");
     expect(mocks.finalizeUsage).toHaveBeenCalledTimes(1);
+    expect(mocks.saveHistory.mock.calls.at(-1)?.[0].output).not.toHaveProperty("imageUrl");
 
     mocks.editImage.mockRejectedValueOnce(new Error("provider failed"));
     expect((await imageSetPost(post({ ...body, image: { imageIndex: 2, imageType: "selling-point" } }))).status).toBe(500);
@@ -185,8 +210,12 @@ describe("remaining usage route coverage", () => {
 
   it("settles each detail-page image independently", async () => {
     const body = { analysisHistoryId: "analysis-1", style: "ecommerce", page: { pageIndex: 1, sectionType: "hero" } };
-    expect((await detailPagePost(post(body))).status).toBe(200);
+    const successResponse = await detailPagePost(post(body));
+    const successData = await successResponse.json();
+    expect(successResponse.status).toBe(200);
+    expect(successData.imageUrl).toBe("https://example.test/result.png");
     expect(mocks.finalizeUsage).toHaveBeenCalledTimes(1);
+    expect(mocks.saveHistory.mock.calls.at(-1)?.[0].output).not.toHaveProperty("imageUrl");
 
     mocks.editImage.mockRejectedValueOnce(new Error("provider failed"));
     expect((await detailPagePost(post({ ...body, page: { pageIndex: 2, sectionType: "selling-point" } }))).status).toBe(500);

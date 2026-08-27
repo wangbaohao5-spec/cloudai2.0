@@ -1,6 +1,7 @@
 import { ApiError } from "@/lib/api-errors";
 import { getAssetForUser } from "@/lib/assets";
 import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
+import { hydrateHistoryAssetUrls } from "@/lib/history-assets";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
 import type { ProductImageAnalysis } from "@/lib/product-types";
 import { getFileUrl, getImagePreviewUrlOrOriginal } from "@/lib/storage";
@@ -145,7 +146,7 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
     throw new ApiError("Product analysis result is invalid.", 400);
   }
 
-  const [historyRecords, originalAssetRecord] = await Promise.all([
+  const [relatedHistoryRecords, originalAssetRecord] = await Promise.all([
     getProductRelatedHistory({
       userId,
       analysisHistoryId: analysisRecord.id,
@@ -153,6 +154,7 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
     }),
     analysisRecord.assetId ? getAssetForUser(userId, analysisRecord.assetId) : Promise.resolve(null),
   ]);
+  const historyRecords = await hydrateHistoryAssetUrls(userId, relatedHistoryRecords);
   const originalAsset = originalAssetRecord
     ? await (async () => {
         const originalUrl = await getFileUrl(originalAssetRecord.url);

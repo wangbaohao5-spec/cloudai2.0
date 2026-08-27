@@ -29,12 +29,19 @@ export async function GET(_request: Request, context: AssetUrlRouteContext) {
 
     const url = await getFileUrl(asset.url);
 
-    return NextResponse.json({
-      assetId: asset.id,
-      type: asset.type,
-      name: asset.name,
-      url,
-    });
+    return NextResponse.json(
+      {
+        assetId: asset.id,
+        type: asset.type,
+        name: asset.name,
+        url,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   } catch (error) {
     return jsonError(error, "Asset URL could not be loaded.");
   }

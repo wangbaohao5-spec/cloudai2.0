@@ -62,7 +62,6 @@ export async function POST(request: Request) {
         });
         addRefundMetadata({ assetId: storedAsset.asset.id, storagePath: storedAsset.asset.url });
         const output = {
-          imageUrl: storedAsset.signedUrl,
           assetId: storedAsset.asset.id,
           storagePath: storedAsset.asset.url,
           taskId: generatedImage.taskId,

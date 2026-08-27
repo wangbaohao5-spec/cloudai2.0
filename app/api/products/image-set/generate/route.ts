@@ -259,7 +259,6 @@ export async function POST(request: Request) {
         const asset = await createAsset({ userId: user.id, type: "image", name: fileName, url: uploadedFile.path });
         addRefundMetadata({ assetId: asset.id });
         const output = {
-          imageUrl: uploadedFile.signedUrl,
           assetId: asset.id,
           storagePath: asset.url,
           prompt,
