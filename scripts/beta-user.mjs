@@ -6,7 +6,8 @@ import { createInterface } from "node:readline/promises";
 import { pathToFileURL } from "node:url";
 import { hashPassword } from "../lib/password.ts";
 
-const OPERATIONS = new Set(["create", "reset-password", "disable", "enable"]);
+const WRITE_OPERATIONS = new Set(["create", "reset-password", "disable", "enable"]);
+const OPERATIONS = new Set([...WRITE_OPERATIONS, "status"]);
 
 export function normalizeBetaEmail(value) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -23,23 +24,12 @@ export async function createBetaUser(client, input, hasher = hashPassword) {
   validateEmail(email);
   const existing = await client.user.findUnique({ where: { email } });
 
-  if (existing?.isActive || existing?.passwordHash) {
-    throw new Error("Existing active or credentialed users cannot be overwritten. Use reset-password or enable instead.");
+  if (existing) {
+    throw new Error("An account with this email already exists. Use status, reset-password, or enable instead.");
   }
 
   const passwordHash = await hasher(input.password);
   const name = input.name?.trim() || null;
-
-  if (existing) {
-    return client.user.update({
-      where: { id: existing.id },
-      data: {
-        ...(name ? { name } : {}),
-        passwordHash,
-        isActive: true,
-      },
-    });
-  }
 
   return client.user.create({
     data: {
@@ -100,6 +90,56 @@ export async function enableBetaUser(client, emailValue) {
     where: { id: existing.id },
     data: { isActive: true },
   });
+}
+
+export async function getBetaUserStatus(client, emailValue) {
+  const email = normalizeBetaEmail(emailValue);
+  validateEmail(email);
+  const user = await client.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      isActive: true,
+      passwordHash: true,
+      createdAt: true,
+      _count: {
+        select: {
+          historyRecords: true,
+          assets: true,
+          usageRecords: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  return {
+    userId: user.id,
+    email: user.email,
+    active: user.isActive,
+    passwordConfigured: Boolean(user.passwordHash),
+    createdAt: user.createdAt,
+    historyCount: user._count.historyRecords,
+    assetCount: user._count.assets,
+    usageCount: user._count.usageRecords,
+  };
+}
+
+export function formatBetaUserStatus(status) {
+  return {
+    userId: status.userId,
+    email: status.email,
+    status: status.active ? "active" : "disabled",
+    passwordConfigured: status.passwordConfigured ? "yes" : "no",
+    createdAt: status.createdAt instanceof Date ? status.createdAt.toISOString() : String(status.createdAt),
+    historyCount: status.historyCount,
+    assetCount: status.assetCount,
+    usageCount: status.usageCount,
+  };
 }
 
 function loadLocalEnvironment() {
@@ -195,6 +235,18 @@ function getDirectDatabaseTarget(value = process.env.DIRECT_URL) {
   };
 }
 
+function printOperationContext(target, operation, email) {
+  console.log(`Environment: ${target.host}/${target.database}`);
+  console.log(`Operation: ${operation}`);
+  console.log(`Email: ${email}`);
+}
+
+function printUserResult(label, user) {
+  console.log(`${label}:`);
+  console.log(`Email: ${user.email}`);
+  console.log(`User ID: ${user.id}`);
+}
+
 export function createDirectPrismaClient(
   Client = PrismaClient,
   directUrl = process.env.DIRECT_URL,
@@ -215,14 +267,29 @@ export function createDirectPrismaClient(
 }
 
 async function runCli() {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error("Beta user operations require an interactive terminal and explicit confirmation.");
-  }
-
   loadLocalEnvironment();
   const operation = process.argv[2];
   if (!OPERATIONS.has(operation)) {
-    throw new Error("Usage: beta-user.mjs <create|reset-password|disable|enable>");
+    throw new Error("Usage: beta-user.mjs <create|reset-password|disable|enable|status> [email]");
+  }
+
+  if (operation === "status") {
+    const email = normalizeBetaEmail(process.argv[3]);
+    validateEmail(email);
+    const target = getDirectDatabaseTarget();
+    const client = createDirectPrismaClient();
+
+    try {
+      printOperationContext(target, operation, email);
+      console.table([formatBetaUserStatus(await getBetaUserStatus(client, email))]);
+    } finally {
+      await client.$disconnect();
+    }
+    return;
+  }
+
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    throw new Error("Beta user write operations require an interactive terminal and explicit confirmation.");
   }
 
   const email = normalizeBetaEmail(await promptText("Email: "));
@@ -231,8 +298,8 @@ async function runCli() {
 
   try {
     const existing = await client.user.findUnique({ where: { email } });
-    if (operation === "create" && (existing?.isActive || existing?.passwordHash)) {
-      throw new Error("Existing active or credentialed users cannot be overwritten. Use reset-password or enable instead.");
+    if (operation === "create" && existing) {
+      throw new Error("An account with this email already exists. Use status, reset-password, or enable instead.");
     }
     if (operation !== "create" && !existing) {
       throw new Error("User not found.");
@@ -245,13 +312,7 @@ async function runCli() {
     const password = operation === "create" || operation === "reset-password" ? await promptHidden("Password: ") : "";
     const target = getDirectDatabaseTarget();
 
-    console.log(`Database host: ${target.host}`);
-    console.log(`Database name: ${target.database}`);
-    console.log(`Operation: ${operation}`);
-    console.log(`Email: ${email}`);
-    if (operation === "create" && existing) {
-      console.log("Existing inactive placeholder will receive credentials and be activated.");
-    }
+    printOperationContext(target, operation, email);
 
     const confirmation = (await promptText("Proceed? (y/N) ")).trim().toLowerCase();
     if (confirmation !== "y") {
@@ -260,17 +321,18 @@ async function runCli() {
     }
 
     if (operation === "create") {
-      await createBetaUser(client, { email, name, password });
-      console.log("Beta user created and enabled successfully.");
+      const user = await createBetaUser(client, { email, name, password });
+      printUserResult("Created and enabled", user);
     } else if (operation === "reset-password") {
-      await resetBetaUserPassword(client, { email, password });
-      console.log("Password reset successfully.");
+      const user = await resetBetaUserPassword(client, { email, password });
+      printUserResult("Password reset", user);
+      console.log(`Account status: ${user.isActive ? "active" : "disabled"}`);
     } else if (operation === "disable") {
-      await disableBetaUser(client, email);
-      console.log("Beta user disabled successfully.");
+      const user = await disableBetaUser(client, email);
+      printUserResult("Disabled", user);
     } else {
-      await enableBetaUser(client, email);
-      console.log("Beta user enabled successfully.");
+      const user = await enableBetaUser(client, email);
+      printUserResult("Enabled", user);
     }
   } finally {
     await client.$disconnect();
