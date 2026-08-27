@@ -77,6 +77,11 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
               <dd>{PLATFORM_CONTACT.wechat || "联系方式暂未配置"}</dd>
             </div>
           </dl>
+          <div className="header-action-panel-actions">
+            <Link className="header-action-panel-link" href="/dashboard/support">
+              前往反馈与支持
+            </Link>
+          </div>
         </HeaderActionPopover>
 
         <ThemeQuickToggle />

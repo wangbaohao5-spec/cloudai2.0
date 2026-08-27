@@ -102,6 +102,9 @@ export function DashboardUserMenu({ children, userEmail, userName }: DashboardUs
           </div>
 
           <div className="dashboard-user-menu-group" aria-label="其它">
+            <Link className="dashboard-user-menu-item" href="/dashboard/support" onClick={() => setOpen(false)}>
+              <span>反馈与支持</span>
+            </Link>
             <button className="dashboard-user-menu-item is-disabled" disabled type="button">
               <span>邀请任务</span>
               <em>即将开放</em>
