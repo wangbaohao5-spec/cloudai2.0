@@ -4,4 +4,3 @@ allowBuilds:
   prisma: true
   sharp: true
 verifyDepsBeforeRun: false
-storeDir: C:\Users\15924\AppData\Local\pnpm\store
