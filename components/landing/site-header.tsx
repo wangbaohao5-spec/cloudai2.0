@@ -1,32 +1,44 @@
+import Link from "next/link";
+
+type SiteHeaderProps = {
+  isAuthenticated: boolean;
+};
+
 const navItems = [
+  { href: "#product", label: "产品" },
   { href: "#workflow", label: "工作流" },
-  { href: "#capabilities", label: "核心能力" },
-  { href: "#showcase", label: "生成示例" },
+  { href: "#beta", label: "封闭内测" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ isAuthenticated }: SiteHeaderProps) {
   return (
-    <header className="site-header">
-      <nav className="navbar" aria-label="主导航">
-        <a className="logo" href="#hero" aria-label="CloudAI 首页">
-          <span className="logo-mark">C</span>
+    <header className="landing-header">
+      <nav className="landing-shell landing-nav" aria-label="官网主导航">
+        <a className="landing-logo" href="#hero" aria-label="CloudAI 官网首页">
+          <span className="landing-logo-mark" aria-hidden="true">C</span>
           <span>CloudAI</span>
         </a>
-        <button className="nav-toggle" type="button" aria-label="打开导航菜单" aria-expanded="false">
-          <span />
-          <span />
-          <span />
-        </button>
-        <ul className="nav-links">
+        <ul className="landing-nav-links">
           {navItems.map((item) => (
             <li key={item.href}>
               <a href={item.href}>{item.label}</a>
             </li>
           ))}
         </ul>
-        <a className="nav-cta" href="/dashboard/products">
-          进入工作台
-        </a>
+        <div className="landing-nav-actions">
+          {!isAuthenticated && <Link href="/login">登录</Link>}
+          <Link className="landing-nav-cta" href="/dashboard/products">进入工作台</Link>
+        </div>
+        <details className="landing-mobile-nav">
+          <summary aria-label="打开导航菜单">菜单</summary>
+          <div>
+            {navItems.map((item) => (
+              <a href={item.href} key={item.href}>{item.label}</a>
+            ))}
+            {!isAuthenticated && <Link href="/login">登录</Link>}
+            <Link className="landing-mobile-cta" href="/dashboard/products">进入工作台</Link>
+          </div>
+        </details>
       </nav>
     </header>
   );

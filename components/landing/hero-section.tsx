@@ -1,63 +1,56 @@
 import Link from "next/link";
 
-const workflowStatus = [
-  { label: "AI 分析", value: "完成" },
-  { label: "文案", value: "3 条" },
-  { label: "详情页", value: "2 张" },
-  { label: "套图", value: "5 张" },
-  { label: "素材库", value: "已生成" },
-];
+type HeroSectionProps = {
+  isAuthenticated: boolean;
+};
 
-export function HeroSection() {
+const outputs = ["商品分析", "上架文案", "商品图片", "套图与详情页"];
+
+export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   return (
-    <section id="hero" className="hero section">
-      <div className="hero-content">
-        <p className="eyebrow">AI 电商商品创作工作台</p>
-        <h1>一张商品图，生成整套电商素材</h1>
-        <p className="hero-description">
-          上传商品图片后，CloudAI 会帮你完成商品分析、卖点文案、详情页图片、场景图、商品套图和素材库，让商品内容从上传到交付形成完整工作流。
-        </p>
-        <div className="hero-actions">
-          <Link className="button primary" href="/dashboard/products">
-            进入工作台
-          </Link>
-          <Link className="button secondary" href="#showcase">
-            查看生成示例
-          </Link>
-        </div>
-      </div>
-
-      <div className="hero-panel hero-workflow-preview" aria-label="商品工作流模拟面板">
-        <div className="panel-header">
-          <span />
-          <span />
-          <span />
-        </div>
-
-        <div className="hero-product-card">
-          <div className="hero-product-image">
-            <span>Product</span>
-          </div>
-          <div>
-            <p className="eyebrow">当前商品</p>
-            <h2>Freeplus 温和洁面乳</h2>
-            <p>温和清洁 · 保留瓶型包装 · 详情页素材生成中</p>
+    <section id="hero" className="landing-hero" aria-labelledby="landing-hero-title">
+      <div className="landing-shell landing-hero-inner">
+        <div className="landing-hero-copy">
+          <p className="landing-status">封闭内测 · 仅向受邀用户开放</p>
+          <h1 id="landing-hero-title">AI 电商商品上架内容工作台</h1>
+          <p className="landing-hero-description">
+            从一张商品图开始，先分析商品、确认卖点，再制作上架文案与商品图片，逐步完成套图和详情页。所有内容围绕同一个商品，在同一工作区整理并继续创作。
+          </p>
+          <div className="landing-hero-actions">
+            <Link className="landing-button landing-button-primary" href={isAuthenticated ? "/dashboard/products" : "#product"}>
+              {isAuthenticated ? "进入工作台" : "查看产品"}
+            </Link>
+            <Link className="landing-button landing-button-secondary" href={isAuthenticated ? "#workflow" : "/login"}>
+              {isAuthenticated ? "了解工作流" : "已有内测账号？登录"}
+            </Link>
           </div>
         </div>
 
-        <div className="hero-analysis-card">
-          <strong>AI 分析完成</strong>
-          <p>已整理商品类别、目标用户、核心卖点、材质质感和后续生成需要保留的包装细节。</p>
-        </div>
-
-        <div className="hero-workflow-status">
-          {workflowStatus.map((item) => (
-            <article key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </article>
-          ))}
-        </div>
+        <figure className="landing-context-map" aria-labelledby="landing-context-caption">
+          <figcaption id="landing-context-caption">
+            <span>产品结构说明</span>
+            <strong>一个商品，一条持续的内容工作流</strong>
+          </figcaption>
+          <div className="landing-context-flow">
+            <div className="landing-context-source">
+              <span>起点</span>
+              <strong>商品图</strong>
+            </div>
+            <div className="landing-context-connector" aria-hidden="true" />
+            <div className="landing-context-product">
+              <span>同一商品上下文</span>
+              <strong>分析与生成要求</strong>
+              <small>信息确认后，再继续创作</small>
+            </div>
+            <div className="landing-context-connector" aria-hidden="true" />
+            <div className="landing-context-outputs">
+              {outputs.map((output) => (
+                <span key={output}>{output}</span>
+              ))}
+            </div>
+          </div>
+          <p>结构示意，不代表具体商品生成结果。</p>
+        </figure>
       </div>
     </section>
   );
