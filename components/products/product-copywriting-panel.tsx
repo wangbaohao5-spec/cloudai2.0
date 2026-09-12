@@ -366,7 +366,7 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
       <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
         <p className="eyebrow">Next Step</p>
         <h2>上架文案</h2>
-        <p className="image-generation-intro">先完成商品图片分析，CloudAI 会把识别到的类别、卖点和目标用户转成可发布的商品上架文案。</p>
+        <p className="image-generation-intro">先完成商品图片分析，Vahoro 会把识别到的类别、卖点和目标用户转成可发布的商品上架文案。</p>
       </section>
     );
   }

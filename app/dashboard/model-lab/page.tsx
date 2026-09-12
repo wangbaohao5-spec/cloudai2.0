@@ -369,7 +369,7 @@ export default function ModelLabPage() {
           <div className="model-lab-subsection">
             <div>
               <h3>测试商品清单</h3>
-              <p>这些类目是 CloudAI 当前测试中最常见、也最容易暴露保真问题的商品类型。</p>
+              <p>这些类目是 Vahoro 当前测试中最常见、也最容易暴露保真问题的商品类型。</p>
             </div>
             <div className="model-lab-grid">
               {imageModelProductCases.map((productCase) => (

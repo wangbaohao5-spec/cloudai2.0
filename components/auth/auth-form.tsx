@@ -50,7 +50,7 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
     <form className="auth-form" onSubmit={handleSubmit}>
       <label>
         邮箱
-        <input autoComplete="email" name="email" placeholder="you@cloudai.app" required type="email" />
+        <input autoComplete="email" name="email" placeholder="you@example.com" required type="email" />
       </label>
       <label>
         密码
@@ -61,7 +61,7 @@ export function AuthForm({ callbackUrl }: AuthFormProps) {
       </button>
       {error ? <p className="auth-error">{error}</p> : null}
       <p className="auth-switch">
-        CloudAI 目前处于封闭内测阶段。
+        Vahoro 目前处于封闭内测阶段。
         <Link href="/register">查看内测说明</Link>
       </p>
     </form>

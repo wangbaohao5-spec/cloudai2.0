@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CloudAI - AI 电商商品创作工作台",
-  description:
-    "CloudAI 是面向电商创作者的商品内容创作工作台，支持商品策划、上架文案、商品图精修、商品套图和素材包整理。",
+  applicationName: BRAND.name,
+  title: `${BRAND.name} — ${BRAND.descriptor}`,
+  description: BRAND.description,
+  openGraph: {
+    description: BRAND.description,
+    locale: "zh_CN",
+    siteName: BRAND.name,
+    title: `${BRAND.name} — ${BRAND.descriptor}`,
+    type: "website",
+  },
 };
 
 export default function RootLayout({

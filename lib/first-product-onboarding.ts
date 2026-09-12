@@ -31,7 +31,7 @@ export function getFirstProductDashboardOnboarding(isFirstProductUser: boolean) 
 
   return {
     title: "创建第一个商品",
-    description: "上传一张商品图，CloudAI 会帮你完成商品分析、文案和视觉素材。",
+    description: "上传一张商品图，Vahoro 会帮你完成商品分析、文案和视觉素材。",
     actionLabel: "开始创建商品",
     href: "/dashboard/products/new",
   };

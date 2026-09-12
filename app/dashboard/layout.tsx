@@ -16,7 +16,7 @@ export default async function DashboardLayout({
 
   return (
     <DashboardShellClient
-      header={<DashboardHeader userEmail={user.email} userName={user.name || "CloudAI User"} />}
+      header={<DashboardHeader userEmail={user.email} userName={user.name || "Vahoro User"} />}
     >
       {children}
     </DashboardShellClient>

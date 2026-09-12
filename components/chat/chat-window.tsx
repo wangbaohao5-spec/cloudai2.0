@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 const initialMessages: ChatMessageData[] = [
   {
     role: "assistant",
-    content: "你好，我是 CloudAI 创作助手。你可以问我商品卖点、平台风格、素材策略、主图点击力或上架内容优化。",
+    content: "你好，我是 Vahoro 创作助手。你可以问我商品卖点、平台风格、素材策略、主图点击力或上架内容优化。",
   },
 ];
 
@@ -125,7 +125,7 @@ export function ChatWindow() {
             <div className="chat-avatar" aria-hidden="true">
               AI
             </div>
-            <div className="chat-bubble">CloudAI 正在思考...</div>
+            <div className="chat-bubble">Vahoro 正在思考...</div>
           </article>
         ) : null}
       </div>

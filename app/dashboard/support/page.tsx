@@ -10,14 +10,14 @@ export default function SupportPage() {
         <div className="dashboard-support-header">
           <p className="eyebrow">Beta Support</p>
           <h1>反馈与支持</h1>
-          <p>如果你在使用 CloudAI 时遇到问题，或有功能建议，可以通过下面的方式联系我们。</p>
+          <p>如果你在使用 Vahoro 时遇到问题，或有功能建议，可以通过下面的方式联系我们。</p>
         </div>
 
         <section className="dashboard-support-grid">
           <article className="dashboard-support-card dashboard-support-card--primary cai-card cai-card--compact">
             <div>
-              <h2>联系 CloudAI</h2>
-              <p>CloudAI 当前处于 Beta 测试阶段。如果你遇到问题或有建议，欢迎直接反馈。</p>
+              <h2>联系 Vahoro</h2>
+              <p>Vahoro 当前处于 Beta 测试阶段。如果你遇到问题或有建议，欢迎直接反馈。</p>
             </div>
 
             {contact.mailto ? (

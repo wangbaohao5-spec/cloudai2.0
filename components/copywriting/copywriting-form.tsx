@@ -93,7 +93,7 @@ export function CopywritingForm({ error, isLoading, onSubmit }: CopywritingFormP
       <button className="cai-button cai-button--primary cai-button--full" disabled={isLoading} type="submit">
         {isLoading ? "生成中..." : "生成文案"}
       </button>
-      {isLoading ? <p className="copywriting-helper">CloudAI 正在生成上架内容...</p> : null}
+      {isLoading ? <p className="copywriting-helper">Vahoro 正在生成上架内容...</p> : null}
       {error ? (
         <p className="copywriting-error" aria-live="polite">
           {error}

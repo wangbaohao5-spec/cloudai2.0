@@ -21,7 +21,7 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
       </details>
       <div>
         <p className="eyebrow">Dashboard</p>
-        <h1>CloudAI 工作台</h1>
+        <h1>Vahoro 工作台</h1>
       </div>
       <div className="dashboard-header-actions">
         <HeaderActionPopover icon="plan" label="套餐">
@@ -29,7 +29,7 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
             <strong>套餐</strong>
             <span>创作额度与套餐能力</span>
           </div>
-          <p>CloudAI 套餐与创作额度功能正在准备中。</p>
+          <p>Vahoro 套餐与创作额度功能正在准备中。</p>
           <p>正式内测阶段将支持套餐开通、续费和额度管理。</p>
           <div className="header-action-panel-actions">
             <Link className="header-action-panel-link" href="/dashboard/subscription">

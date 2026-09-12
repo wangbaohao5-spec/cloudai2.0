@@ -9,7 +9,7 @@ export default async function AccountPage() {
     redirect("/login");
   }
 
-  const userName = session.user.name || "CloudAI User";
+  const userName = session.user.name || "Vahoro User";
   const userEmail = session.user.email || "未记录邮箱";
   const displayName = userName === userEmail ? "未设置用户名" : userName;
 
@@ -47,7 +47,7 @@ export default async function AccountPage() {
           <article className="dashboard-account-card cai-card cai-card--compact">
             <div>
               <h2>外观设置</h2>
-              <p>选择 CloudAI 的界面主题。Header 中的深色 / 浅色快捷切换会继续保留。</p>
+              <p>选择 Vahoro 的界面主题。Header 中的深色 / 浅色快捷切换会继续保留。</p>
             </div>
             <ThemeSelector />
           </article>

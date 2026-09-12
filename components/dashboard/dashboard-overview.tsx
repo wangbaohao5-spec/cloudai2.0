@@ -14,8 +14,8 @@ export function DashboardOverview({ recentHistory, usageStats }: DashboardOvervi
     <main className="dashboard-content">
       <section className="dashboard-overview">
         <div className="dashboard-overview-hero glass-card">
-          <p className="eyebrow">CloudAI Workspace</p>
-          <h2>欢迎使用 CloudAI</h2>
+          <p className="eyebrow">Vahoro Workspace</p>
+          <h2>欢迎使用 Vahoro</h2>
           <p>你的 AI 电商创作助手</p>
         </div>
 

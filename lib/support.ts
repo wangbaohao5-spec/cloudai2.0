@@ -1,4 +1,6 @@
-export const SUPPORT_FEEDBACK_SUBJECT = "CloudAI Beta Feedback";
+import { BRAND } from "@/lib/brand";
+
+export const SUPPORT_FEEDBACK_SUBJECT = `${BRAND.name} Beta Feedback`;
 
 export const SUPPORT_FEEDBACK_TEMPLATE = `问题类型：
 发生页面：

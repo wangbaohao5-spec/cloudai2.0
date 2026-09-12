@@ -1,4 +1,4 @@
-# CloudAI Closed Beta Account Operations
+# Vahoro Closed Beta Account Operations
 
 本手册用于 5-30 人规模的封闭内测账号运营。账号由管理员创建，不开放公开注册，也不使用日常 SQL 作为账号管理手段。
 
@@ -20,7 +20,7 @@
 ## 邀请模板
 
 ```text
-CloudAI Closed Beta
+Vahoro Closed Beta
 
 访问地址：
 <production-url>
@@ -39,7 +39,7 @@ CloudAI Closed Beta
 5. 尝试生成上架文案或商品图片
 
 遇到问题：
-在 CloudAI 的“反馈与支持”中联系我们。
+在 Vahoro 的“反馈与支持”中联系我们。
 ```
 
 不要把真实测试者名单、密码或长期有效凭据写入仓库。不要在同一条公开消息中长期保存邮箱、密码和管理员信息。当前不要求用户首次登录后强制修改密码；用户自助修改密码留给后续 C1 账号能力。

@@ -27,7 +27,7 @@ function getAccountLabels(userName: string, userEmail: string) {
   }
 
   return {
-    primary: normalizedEmail || normalizedName || "CloudAI User",
+    primary: normalizedEmail || normalizedName || "Vahoro User",
     secondary: "",
   };
 }

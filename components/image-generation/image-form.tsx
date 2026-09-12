@@ -99,7 +99,7 @@ export function ImageForm({ error, isLoading, onRegenerate, onSubmit, resultImag
         </button>
       ) : null}
       <p className="image-generation-helper">
-        {isLoading ? "CloudAI 正在生成电商视觉，请保持页面打开。" : "系统会自动生成适合平台和用途的电商视觉 Prompt。"}
+        {isLoading ? "Vahoro 正在生成电商视觉，请保持页面打开。" : "系统会自动生成适合平台和用途的电商视觉 Prompt。"}
       </p>
       <p className="image-generation-error" aria-live="polite">
         {error || "错误提示将在这里显示。"}

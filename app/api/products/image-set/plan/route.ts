@@ -255,7 +255,7 @@ export async function POST(request: Request) {
           messages: [
             {
               role: "system",
-              content: "你是 CloudAI 的电商商品套图规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
+              content: "你是 Vahoro 的电商商品套图规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
             },
             { role: "user", content: prompt },
           ],

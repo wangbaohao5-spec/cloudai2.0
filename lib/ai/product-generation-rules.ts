@@ -29,7 +29,7 @@ export const PRODUCT_VISUAL_FIDELITY_RULES = `
 `.trim();
 
 export const PRODUCT_GENERATION_RULES_BLOCK = `
-CloudAI 商品内容生成统一规范：
+Vahoro 商品内容生成统一规范：
 
 ${PRODUCT_TRUTHFULNESS_RULES}
 

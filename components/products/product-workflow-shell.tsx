@@ -249,7 +249,7 @@ export function ProductWorkflowShell() {
           <p className="eyebrow">Product Workflow</p>
           <h2>商品图 AI 分析</h2>
           <p className="image-generation-intro">
-            上传商品图片，CloudAI 会识别商品类别、特点、卖点、目标用户和使用场景。分析完成后，右侧会继续引导你生成商品文案。
+            上传商品图片，Vahoro 会识别商品类别、特点、卖点、目标用户和使用场景。分析完成后，右侧会继续引导你生成商品文案。
           </p>
 
           <div className="product-workflow-steps" aria-label="商品工作流进度">
@@ -274,7 +274,7 @@ export function ProductWorkflowShell() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img alt={uploadedAsset.name || "商品图片预览"} src={uploadedAsset.url} />
               ) : (
-                <p>选择图片后会自动上传为 CloudAI Asset。</p>
+                <p>选择图片后会自动上传为 Vahoro Asset。</p>
               )}
             </div>
             {uploadedAsset ? <span>{uploadedAsset.name}</span> : null}

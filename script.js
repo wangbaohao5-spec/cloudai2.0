@@ -341,7 +341,7 @@ if (generatorForm && generatedTitle && generatedPoints && generatedDescription &
     const submitButton = generatorForm.querySelector('button[type="submit"]');
 
     generatedTitle.textContent = '正在生成...';
-    renderPoints(['请稍候，CloudAI 正在通过后端 API 生成文案。']);
+    renderPoints(['请稍候，Vahoro 正在通过后端 API 生成文案。']);
     generatedDescription.textContent = '';
     copyButton.disabled = true;
     copyButton.textContent = '一键复制';
@@ -493,7 +493,7 @@ if (imageModal && modalClose && modalImage) {
 if (contactForm) {
   contactForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    alert('感谢关注 CloudAI，我们会尽快与您联系！');
+    alert('感谢关注 Vahoro，我们会尽快与您联系！');
     contactForm.reset();
   });
 }

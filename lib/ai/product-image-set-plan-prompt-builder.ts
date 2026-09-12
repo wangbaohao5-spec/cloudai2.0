@@ -192,7 +192,7 @@ export function buildProductImageSetPlanPrompt({
   const outputSettingsPrompt = buildProductOutputSettingsPrompt(outputSettings);
 
   return [
-    `你是 CloudAI 的电商商品套图策划助手，请规划 ${count} 张商品图片结构。`,
+    `你是 Vahoro 的电商商品套图策划助手，请规划 ${count} 张商品图片结构。`,
     "本轮只输出套图规划，不生成图片。",
     "必须严格输出 JSON，不要输出 Markdown，不要添加解释文字。",
     "JSON 结构必须是：",

@@ -201,7 +201,7 @@ function ProductWorkspaceStartPanel({
             ...
           </div>
           <h2 className="cai-empty__title">正在恢复最近商品</h2>
-          <p className="cai-empty__description">CloudAI 正在读取当前商品分析记录，请稍等片刻。</p>
+          <p className="cai-empty__description">Vahoro 正在读取当前商品分析记录，请稍等片刻。</p>
         </div>
       </section>
     );
@@ -215,7 +215,7 @@ function ProductWorkspaceStartPanel({
         <p>
           {isPendingAnalysis
             ? "确认商品图片和补充信息后，开始生成当前商品的创作上下文。"
-            : "上传一张商品图片，CloudAI 会先完成商品策划，再帮助你继续生成上架文案、原图优化、商品套图和素材包。"}
+            : "上传一张商品图片，Vahoro 会先完成商品策划，再帮助你继续生成上架文案、原图优化、商品套图和素材包。"}
         </p>
       </div>
 

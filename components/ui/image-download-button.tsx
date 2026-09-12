@@ -25,7 +25,7 @@ function sanitizeSegment(value: string) {
 function sanitizeFilename(value: string) {
   const normalized = value.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
 
-  return normalized || "cloudai-image.png";
+  return normalized || "vahoro-image.png";
 }
 
 function getExtensionFromContentType(contentType: string) {
@@ -74,10 +74,10 @@ export function buildImageDownloadFilename(type: string, parts: Array<number | s
     .map((part) => (part == null ? "" : sanitizeSegment(String(part))))
     .filter(Boolean);
 
-  return sanitizeFilename(["cloudai", ...safeParts, getDateStamp()].join("-") + ".png");
+  return sanitizeFilename(["vahoro", ...safeParts, getDateStamp()].join("-") + ".png");
 }
 
-export function ImageDownloadButton({ className = "", filename = "cloudai-image.png", imageUrl, label = "下载图片" }: ImageDownloadButtonProps) {
+export function ImageDownloadButton({ className = "", filename = "vahoro-image.png", imageUrl, label = "下载图片" }: ImageDownloadButtonProps) {
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const [status, setStatus] = useState("");

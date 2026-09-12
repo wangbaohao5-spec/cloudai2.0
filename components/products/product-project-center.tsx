@@ -17,7 +17,7 @@ export function ProductProjectCenter({ result }: ProductProjectCenterProps) {
           <div>
             <p className="eyebrow">ALL PRODUCTS</p>
             <h1>全部商品</h1>
-            <p>查看已经在 CloudAI 中创建过的商品，并继续之前的创作。</p>
+            <p>查看已经在 Vahoro 中创建过的商品，并继续之前的创作。</p>
           </div>
           <Link className="cai-button cai-button--primary" href="/dashboard/products/new">
             新建商品

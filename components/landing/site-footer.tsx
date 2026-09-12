@@ -1,3 +1,5 @@
+import { BrandLockup } from "@/components/brand/brand-lockup";
+import { BRAND } from "@/lib/brand";
 import Link from "next/link";
 
 type SiteFooterProps = {
@@ -9,9 +11,8 @@ export function SiteFooter({ isAuthenticated }: SiteFooterProps) {
     <footer className="landing-footer">
       <div className="landing-shell landing-footer-grid">
         <div className="landing-footer-brand">
-          <a className="landing-logo" href="#hero" aria-label="CloudAI 官网首页">
-            <span className="landing-logo-mark" aria-hidden="true">C</span>
-            <span>CloudAI</span>
+          <a className="landing-logo" href="#hero" aria-label={`${BRAND.name} 官网首页`}>
+            <BrandLockup className="landing-logo-mark" />
           </a>
           <p>AI 电商商品上架内容工作台</p>
         </div>
@@ -33,7 +34,7 @@ export function SiteFooter({ isAuthenticated }: SiteFooterProps) {
         </div>
       </div>
       <div className="landing-shell landing-footer-bottom">
-        <span>© 2026 CloudAI</span>
+        <span>© 2026 {BRAND.name}</span>
         <span>为真实商品内容工作流而设计</span>
       </div>
     </footer>

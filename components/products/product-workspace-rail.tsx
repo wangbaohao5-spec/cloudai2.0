@@ -85,7 +85,7 @@ function getWorkspaceStatus({
   if (!uploadedAsset) {
     return {
       label: "未上传",
-      description: "上传商品原图后，CloudAI 会创建当前商品创作上下文。",
+      description: "上传商品原图后，Vahoro 会创建当前商品创作上下文。",
     };
   }
 
@@ -144,7 +144,7 @@ export function ProductWorkspaceRail({
       mode === "restoring"
         ? {
             label: "正在恢复",
-            description: "CloudAI 正在读取最近商品，请稍等片刻。",
+            description: "Vahoro 正在读取最近商品，请稍等片刻。",
           }
         : mode === "pending"
           ? {
@@ -153,7 +153,7 @@ export function ProductWorkspaceRail({
             }
           : {
               label: "未开始",
-              description: "先上传商品图片，CloudAI 会创建当前商品创作上下文。",
+              description: "先上传商品图片，Vahoro 会创建当前商品创作上下文。",
             };
 
     return (

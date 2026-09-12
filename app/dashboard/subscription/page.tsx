@@ -7,14 +7,14 @@ export default function SubscriptionPage() {
         <div className="dashboard-subscription-header">
           <p className="eyebrow">Subscription</p>
           <h1>订阅</h1>
-          <p>查看 CloudAI 未来套餐、创作额度和正式内测订阅能力的准备情况。</p>
+          <p>查看 Vahoro 未来套餐、创作额度和正式内测订阅能力的准备情况。</p>
         </div>
 
         <section className="dashboard-subscription-grid">
           <article className="dashboard-subscription-card dashboard-subscription-card--primary cai-card cai-card--compact">
             <div>
               <h2>当前套餐</h2>
-              <p>CloudAI 当前处于内测准备阶段，暂未开放正式在线订阅。</p>
+              <p>Vahoro 当前处于内测准备阶段，暂未开放正式在线订阅。</p>
             </div>
             <span className="cai-badge cai-badge--neutral">暂无正式订阅套餐</span>
           </article>
@@ -36,7 +36,7 @@ export default function SubscriptionPage() {
           <article className="dashboard-subscription-card cai-card cai-card--compact">
             <div>
               <h2>套餐入口</h2>
-              <p>CloudAI 正在准备正式内测套餐与支付体系，当前阶段暂不开放在线订阅。</p>
+              <p>Vahoro 正在准备正式内测套餐与支付体系，当前阶段暂不开放在线订阅。</p>
             </div>
             <div className="dashboard-subscription-actions">
               <button className="cai-button cai-button--primary" disabled type="button">

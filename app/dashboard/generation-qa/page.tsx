@@ -148,7 +148,7 @@ export default function GenerationQaPage() {
         <div className="generation-qa-hero glass-card">
           <span>内部 QA 页</span>
           <h1>生成规范 QA</h1>
-          <p>用于检查 CloudAI 在商品文案、详情页规划、套图规划和图片生成 Prompt 中是否遵守品牌授权、真实性、绝对化宣传和保真规则。</p>
+          <p>用于检查 Vahoro 在商品文案、详情页规划、套图规划和图片生成 Prompt 中是否遵守品牌授权、真实性、绝对化宣传和保真规则。</p>
           <p className="generation-qa-notice">本页只作为开发和内测检查清单，不调用模型、不接数据库、不消耗额度，也不代表法律意见。</p>
         </div>
 

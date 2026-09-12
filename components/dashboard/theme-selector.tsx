@@ -13,7 +13,7 @@ const themes: Array<{
 }> = [
   {
     id: "cloudai-dark",
-    label: "CloudAI Dark",
+    label: "Vahoro Dark",
     swatchClassName: "theme-swatch cloudai-dark",
   },
   {

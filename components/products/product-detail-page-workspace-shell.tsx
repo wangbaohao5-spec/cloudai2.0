@@ -297,7 +297,7 @@ export function ProductDetailPageWorkspaceShell() {
     return (
       <main className="dashboard-content">
         <section className="product-detail-page-workspace">
-          <ProductWorkspaceEmptyState eyebrow="正在加载" marker="..." title="正在加载详情页制作上下文" description="CloudAI 正在读取当前商品分析记录，请稍等片刻。" />
+          <ProductWorkspaceEmptyState eyebrow="正在加载" marker="..." title="正在加载详情页制作上下文" description="Vahoro 正在读取当前商品分析记录，请稍等片刻。" />
         </section>
       </main>
     );

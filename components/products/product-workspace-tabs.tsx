@@ -70,7 +70,7 @@ function CreationCenterState({
         eyebrow="正在同步"
         marker="..."
         title="正在加载商品素材"
-        description="CloudAI 正在刷新当前商品，请稍等片刻。"
+        description="Vahoro 正在刷新当前商品，请稍等片刻。"
       />
     );
   }
@@ -339,7 +339,7 @@ export function ProductWorkspaceTabs({
             eyebrow="开始创建"
             marker="01"
             title="从一张商品图开始"
-            description="上传商品原图后，CloudAI 会先分析商品信息，再帮你生成文案、可用视觉素材、商品套图和素材库。"
+            description="上传商品原图后，Vahoro 会先分析商品信息，再帮你生成文案、可用视觉素材、商品套图和素材库。"
             checklist={[
               { label: "上传清晰商品图", done: false },
               { label: "补充卖点或必须保留的细节", done: false },

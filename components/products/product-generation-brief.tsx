@@ -177,7 +177,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
         <div>
           <p className="eyebrow">Generation Brief</p>
           <h3>商品卖点 & 生成要求</h3>
-          <p>CloudAI 会根据商品分析整理一份生成任务书。你可以按需编辑卖点、风格和必须保留的细节，后续生成图片和详情页时会优先参考这些内容。</p>
+          <p>Vahoro 会根据商品分析整理一份生成任务书。你可以按需编辑卖点、风格和必须保留的细节，后续生成图片和详情页时会优先参考这些内容。</p>
         </div>
         <div className="product-generation-brief-summary" aria-label="生成任务书摘要">
           <span>卖点 {brief.coreSellingPoints.length}</span>
@@ -305,7 +305,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
       <div className="product-generation-brief-risk" id="product-risk-confirmations">
         <div>
           <h4>风险确认</h4>
-          <p>请确认哪些品牌、授权、认证、材质或功效信息可以使用。未明确提供的信息，CloudAI 会尽量避免自动生成。如果后续生成结果出现风险提示，请回到这里补充或限制相关表述。</p>
+          <p>请确认哪些品牌、授权、认证、材质或功效信息可以使用。未明确提供的信息，Vahoro 会尽量避免自动生成。如果后续生成结果出现风险提示，请回到这里补充或限制相关表述。</p>
         </div>
 
         <div className="product-generation-brief-grid">

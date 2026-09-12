@@ -1,10 +1,10 @@
-# CloudAI Closed Beta Release Definition
+# Vahoro Closed Beta Release Definition
 
 Status: FROZEN  
 Positioning: AI 电商商品上架内容创作工作台  
 Initial cohort: 5-10 invited testers
 
-本文件定义首批 CloudAI Closed Beta 的开放范围、运营边界和暂停条件。除 bug、P0/P1 或明确的 Beta 反馈外，不在本阶段继续结构性重构。
+本文件定义首批 Vahoro Closed Beta 的开放范围、运营边界和暂停条件。除 bug、P0/P1 或明确的 Beta 反馈外，不在本阶段继续结构性重构。
 
 ## 1. Beta Goal
 

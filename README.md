@@ -1,47 +1,19 @@
-# CloudAI 静态官网基础版
+# Vahoro
 
-CloudAI 是一个现代 AI 工具平台官网首页示例，使用纯前端技术构建，适合作为产品展示页或后续接入 AI 能力的基础框架。
+Vahoro 是 AI 电商商品上架内容工作台，围绕一个商品完成分析、策划、上架文案、商品图片、详情页与素材整理。
 
-## 页面内容
-
-- 顶部导航栏：包含 Logo、首页、功能、关于入口
-- Hero 首页区域：展示 CloudAI 品牌定位与行动按钮
-- AI 文案生成工具展示区域：展示提示词与生成文案示例
-- AI 图片生成工具展示区域：展示三张科技风格视觉卡片
-- 产品功能介绍：展示基础功能卖点
-- 关于区域：说明当前静态基础版定位
-- 联系方式区域：包含基础联系表单
-
-## 技术栈
-
-- HTML
-- CSS
-- JavaScript
-
-当前版本不使用后端服务，不接入任何 API，只提供基础静态网站框架。
-
-## 本地运行
-
-在仓库根目录启动任意静态服务器，例如：
+## Development
 
 ```bash
-python3 -m http.server 4173
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-然后在浏览器中打开：
+项目使用 Node.js 24 和 pnpm 11.20.0。数据库结构由 Prisma 管理；日常构建不会自动执行 migration。
 
-```text
-http://127.0.0.1:4173/index.html
-```
+## Closed Beta
 
-也可以直接用浏览器打开 `index.html` 查看页面。
+- [Beta 范围](docs/BETA-SCOPE.md)
+- [Beta 账号运营](docs/BETA-OPERATIONS.md)
 
-## 文件结构
-
-```text
-.
-├── index.html
-├── styles.css
-├── script.js
-└── README.md
-```
+封闭测试账号由管理员创建，当前不开放公开注册。

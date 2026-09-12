@@ -88,7 +88,7 @@ const countOptions: Array<{ description: string; label: string; value: ProductIm
 ];
 
 const structureModeOptions: Array<{ description: string; label: string; value: ProductImageSetStructureMode }> = [
-  { value: "smart", label: "智能匹配", description: "CloudAI 自动规划每张图类型。" },
+  { value: "smart", label: "智能匹配", description: "Vahoro 自动规划每张图类型。" },
   { value: "custom", label: "自定义配置", description: "手动设置不同图片类型数量。" },
 ];
 
@@ -484,7 +484,7 @@ export function ProductImageSetPanel({
       <section className="product-image-set-panel glass-card cai-panel">
         <p className="eyebrow">Image Set</p>
         <h2>商品套图规划</h2>
-        <p className="image-generation-intro">完成商品分析后，CloudAI 可以根据商品卖点和目标用途规划一组商品图片结构。</p>
+        <p className="image-generation-intro">完成商品分析后，Vahoro 可以根据商品卖点和目标用途规划一组商品图片结构。</p>
       </section>
     );
   }
@@ -709,7 +709,7 @@ export function ProductImageSetPanel({
       ) : (
         <div className="product-image-set-placeholder">
           <strong>套图规划会显示在这里</strong>
-          <p>选择用途和数量后，CloudAI 会给出每张图的目标、文案、画面建议和保真要求。</p>
+          <p>选择用途和数量后，Vahoro 会给出每张图的目标、文案、画面建议和保真要求。</p>
         </div>
       )}
     </section>

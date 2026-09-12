@@ -3,5 +3,5 @@
   <rect width="800" height="600" fill="#07111f"/>
   <circle cx="220" cy="160" r="130" fill="#78f7c8" opacity=".75"/>
   <path d="M0 500C170 390 260 420 410 330s260-120 390-40v310H0z" fill="url(#g)"/>
-  <text x="56" y="88" fill="#f8fbff" font-family="Arial" font-size="42" font-weight="700">CloudAI Vision</text>
+  <text x="56" y="88" fill="#f8fbff" font-family="Arial" font-size="42" font-weight="700">Vahoro Vision</text>
 </svg>

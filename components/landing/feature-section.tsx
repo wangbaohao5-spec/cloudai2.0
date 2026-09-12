@@ -23,7 +23,7 @@ const capabilities = [
   {
     marker: "商品理解",
     title: "先理解商品，再开始生成",
-    description: "CloudAI 会整理商品信息、可见特征和卖点方向。你可以在生成前确认内容，减少错误信息继续扩散。",
+    description: "Vahoro 会整理商品信息、可见特征和卖点方向。你可以在生成前确认内容，减少错误信息继续扩散。",
     details: ["商品分析", "卖点确认", "生成要求"],
   },
   {
@@ -152,7 +152,7 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
         <div className="landing-shell landing-beta-inner">
           <div>
             <h2 id="beta-title">用一个真实商品，完成第一条工作流</h2>
-            <p>CloudAI 目前仅向受邀用户开放。已有内测账号，可以直接进入商品工作台。</p>
+            <p>Vahoro 目前仅向受邀用户开放。已有内测账号，可以直接进入商品工作台。</p>
           </div>
           <div className="landing-beta-actions">
             <Link className="landing-button landing-button-primary" href="/dashboard/products">

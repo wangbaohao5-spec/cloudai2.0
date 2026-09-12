@@ -1,4 +1,6 @@
 import { AuthForm } from "@/components/auth/auth-form";
+import { BrandLockup } from "@/components/brand/brand-lockup";
+import { BRAND } from "@/lib/brand";
 import { CLOSED_BETA_REGISTRATION_CONTENT } from "@/lib/auth-page-content";
 import Link from "next/link";
 
@@ -34,12 +36,14 @@ export function AuthShell({ callbackUrl, mode }: AuthShellProps) {
       <section className="auth-shell">
         <div className="auth-brand-panel">
           <div className="auth-brand-copy">
-            <p className="auth-brand-eyebrow">CLOUDAI WORKSPACE</p>
+            <div className="auth-brand-lockup">
+              <BrandLockup className="auth-brand-mark" />
+            </div>
             <h1>从一张商品图开始</h1>
-            <p>上传商品图，CloudAI 会帮你完成商品策划、上架文案、商品图精修、商品套图和 Markdown 商品素材包。</p>
+            <p>上传商品图，Vahoro 会帮你完成商品策划、上架文案、商品图精修、商品套图和 Markdown 商品素材包。</p>
           </div>
 
-          <div className="auth-flow-preview" aria-label="CloudAI 商品创作流程">
+          <div className="auth-flow-preview" aria-label={`${BRAND.name} 商品创作流程`}>
             {flowSteps.map((step, index) => (
               <article className={index === 1 ? "auth-flow-step active" : "auth-flow-step"} key={step.title}>
                 <span className="auth-flow-step-index">{String(index + 1).padStart(2, "0")}</span>
@@ -53,8 +57,8 @@ export function AuthShell({ callbackUrl, mode }: AuthShellProps) {
         </div>
 
         <section className="auth-card glass-card">
-          <p className="eyebrow">{isRegister ? CLOSED_BETA_REGISTRATION_CONTENT.eyebrow : "CloudAI Account"}</p>
-          <h1>{isRegister ? CLOSED_BETA_REGISTRATION_CONTENT.title : "登录 CloudAI"}</h1>
+          <p className="eyebrow">{isRegister ? CLOSED_BETA_REGISTRATION_CONTENT.eyebrow : `${BRAND.name} Account`}</p>
+          <h1>{isRegister ? CLOSED_BETA_REGISTRATION_CONTENT.title : `登录 ${BRAND.name}`}</h1>
           <p>
             {isRegister
               ? CLOSED_BETA_REGISTRATION_CONTENT.description
