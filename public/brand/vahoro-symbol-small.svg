@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <title>Vahoro</title>
+  <g stroke="#174f46" stroke-width="2.1" stroke-linecap="square" stroke-linejoin="round">
+    <path d="M5 5V19H15"/>
+    <path d="M5 5H18V10"/>
+    <path d="M10 9V16H19"/>
+  </g>
+</svg>

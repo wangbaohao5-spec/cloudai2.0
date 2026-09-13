@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vahoro A8 Symbol Refinement</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #18211e;
+        --muted: #66716d;
+        --paper: #f2f5f1;
+        --surface: #fbfcfa;
+        --surface-2: #e9eeea;
+        --line: #d3dbd6;
+        --brand: #174f46;
+        --action: #08766b;
+        --dark: #0b1312;
+        --dark-surface: #14201d;
+        --reverse: #eef4f1;
+        --reverse-muted: #aab8b3;
+      }
+
+      * { box-sizing: border-box; }
+      html { overflow-x: clip; background: var(--paper); }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1480px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 48px 0 80px;
+      }
+
+      h1, h2, h3, p, dl, dd { margin: 0; }
+
+      .board-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 28px;
+        align-items: end;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1 {
+        max-width: 820px;
+        font-size: clamp(34px, 5vw, 62px);
+        line-height: 1.04;
+        font-weight: 620;
+        overflow-wrap: anywhere;
+      }
+
+      h2 { font-size: 23px; font-weight: 640; }
+      h3 { font-size: 14px; font-weight: 680; }
+
+      .eyebrow,
+      .tag,
+      .board-status {
+        color: var(--brand);
+        font-size: 11px;
+        font-weight: 720;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .lede {
+        max-width: 710px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .board-status { padding-bottom: 5px; color: var(--muted); text-align: right; }
+      section { padding-top: 48px; }
+
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 28px;
+        margin-bottom: 18px;
+      }
+
+      .section-head p { max-width: 670px; color: var(--muted); font-size: 13px; }
+
+      .variant-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
+      }
+
+      .variant {
+        min-width: 0;
+        padding: 24px;
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .variant-head,
+      .score-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .variant-id { font-size: 19px; font-weight: 740; }
+
+      .symbol-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 154px;
+        margin: 20px 0;
+        border: 1px solid var(--line);
+      }
+
+      .symbol-field {
+        display: grid;
+        place-items: center;
+        color: var(--brand);
+        background: var(--surface-2);
+      }
+
+      .symbol-field.dark { color: var(--reverse); background: var(--dark); }
+      .symbol-field + .symbol-field { border-left: 1px solid var(--line); }
+      .symbol-field svg { width: 78px; height: 78px; }
+
+      .summary {
+        min-height: 42px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .score-strip {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .score {
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+
+      .score dt { color: var(--muted); font-size: 10px; line-height: 1.2; }
+      .score dd { margin-top: 3px; font-size: 13px; font-weight: 720; }
+
+      .score-table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+
+      table { width: 100%; min-width: 940px; border-collapse: collapse; font-size: 12px; }
+      th, td { padding: 12px 14px; text-align: center; border-bottom: 1px solid var(--line); }
+      th:first-child, td:first-child { position: sticky; left: 0; text-align: left; background: var(--surface); }
+      thead th { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+      tbody tr:last-child td { border-bottom: 0; }
+      tbody td:first-child { font-weight: 720; }
+      .risk-low { color: #216747; }
+      .risk-mid { color: #8a5c19; }
+
+      .size-board {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border: 1px solid var(--line);
+      }
+
+      .size-theme { min-width: 0; padding: 28px; }
+      .size-theme.light { background: var(--surface); }
+      .size-theme.dark { color: var(--reverse); background: var(--dark); }
+      .size-theme + .size-theme { border-left: 1px solid var(--line); }
+
+      .theme-title { margin-bottom: 20px; color: inherit; font-size: 12px; font-weight: 720; }
+
+      .size-row {
+        display: grid;
+        grid-template-columns: 66px repeat(5, minmax(46px, 1fr));
+        gap: 14px;
+        align-items: center;
+        min-width: 0;
+        padding: 16px 0;
+        border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+      }
+
+      .size-row:first-of-type { border-top: 0; }
+      .size-id { font-size: 13px; font-weight: 720; }
+
+      .size-sample { display: grid; justify-items: center; gap: 6px; min-width: 0; }
+      .size-sample svg { display: block; }
+      .size-sample span { color: currentColor; opacity: .58; font-size: 10px; }
+
+      .lockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
+      }
+
+      .lockup-cell {
+        min-height: 130px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 26px;
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .lockup { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); }
+      .lockup svg { width: 32px; height: 32px; flex: 0 0 auto; color: var(--brand); }
+      .lockup-name { font-size: 28px; line-height: 1; }
+      .w1 { font-family: Arial, Helvetica, sans-serif; font-weight: 600; }
+      .w2 { font-family: "Segoe UI", "PingFang SC", sans-serif; font-weight: 560; }
+      .lockup-code { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+      .context-grid {
+        display: grid;
+        grid-template-columns: 1.2fr .8fr .8fr;
+        gap: 14px;
+      }
+
+      .mock {
+        min-width: 0;
+        min-height: 210px;
+        overflow: hidden;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+
+      .mock-label { padding: 12px 14px; color: var(--muted); font-size: 10px; font-weight: 700; border-bottom: 1px solid var(--line); }
+      .mock svg { color: var(--brand); }
+
+      .landing-nav {
+        height: 66px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .mini-lockup { display: inline-flex; align-items: center; gap: 10px; }
+      .mini-lockup svg { width: 28px; height: 28px; }
+      .mini-lockup span { font-size: 20px; font-weight: 610; }
+      .nav-lines { display: flex; gap: 8px; }
+      .nav-lines i { width: 42px; height: 7px; display: block; background: #dfe5e1; }
+      .hero-lines { padding: 34px 20px; }
+      .hero-lines i { width: 70%; height: 17px; display: block; margin-bottom: 12px; background: #cbd6d0; }
+      .hero-lines i:nth-child(2) { width: 48%; height: 9px; background: #dfe5e1; }
+
+      .sidebar-preview { display: grid; grid-template-columns: 154px 1fr; min-height: 174px; }
+      .sidebar { padding: 17px 14px; background: #eef2ef; border-right: 1px solid var(--line); }
+      .sidebar .mini-lockup span { font-size: 18px; }
+      .sidebar-lines { margin-top: 24px; }
+      .sidebar-lines i { width: 100%; height: 9px; display: block; margin-top: 12px; background: #d6ded9; }
+      .workspace-lines { padding: 22px; }
+      .workspace-lines i { width: 66%; height: 12px; display: block; margin-bottom: 15px; background: #dce3de; }
+      .workspace-lines i:nth-child(2) { width: 92%; height: 74px; }
+
+      .compact-stack { display: grid; grid-template-rows: 1fr 1fr; min-height: 174px; }
+      .collapsed { display: flex; align-items: flex-start; gap: 20px; padding: 18px; background: #eef2ef; border-bottom: 1px solid var(--line); }
+      .collapsed-box { width: 46px; height: 66px; display: grid; place-items: center; background: #e1e8e3; border: 1px solid #cfd9d2; border-radius: 6px; }
+      .collapsed-box svg { width: 24px; height: 24px; }
+      .favicon-line { display: flex; align-items: center; gap: 18px; padding: 18px; }
+      .favicon-tile { width: 32px; height: 32px; display: grid; place-items: center; color: var(--reverse); background: var(--brand); border-radius: 6px; }
+      .favicon-tile svg { width: 16px; height: 16px; color: inherit; }
+
+      .auth-preview {
+        min-height: 174px;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--dark);
+      }
+
+      .auth-card { width: min(250px, 100%); padding: 20px; color: var(--reverse); border: 1px solid #2a3834; background: var(--dark-surface); }
+      .auth-card .mini-lockup { margin-bottom: 24px; }
+      .auth-card svg { color: var(--reverse); }
+      .auth-line { height: 30px; margin-top: 10px; border: 1px solid #33433e; }
+
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border: 1px solid var(--line);
+      }
+
+      .comparison-item { min-height: 220px; display: grid; place-items: center; gap: 12px; padding: 30px; background: var(--surface); text-align: center; }
+      .comparison-item + .comparison-item { border-left: 1px solid var(--line); }
+      .comparison-item svg { width: 86px; height: 86px; color: var(--brand); }
+      .comparison-item p { max-width: 340px; color: var(--muted); font-size: 13px; }
+
+      svg.symbol {
+        overflow: visible;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: var(--symbol-stroke, 2.1);
+        stroke-linecap: square;
+        stroke-linejoin: round;
+      }
+
+      svg.symbol.soft { stroke-linecap: round; }
+
+      @media (max-width: 980px) {
+        .variant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .context-grid { grid-template-columns: 1fr 1fr; }
+        .mock:first-child { grid-column: 1 / -1; }
+      }
+
+      @media (max-width: 680px) {
+        main { width: min(100% - 24px, 1480px); padding-top: 28px; }
+        .board-header { grid-template-columns: 1fr; }
+        .board-status { text-align: left; }
+        .section-head { display: block; }
+        .section-head p { margin-top: 8px; }
+        .variant-grid, .size-board, .lockup-grid, .context-grid, .comparison { grid-template-columns: 1fr; }
+        .size-theme + .size-theme,
+        .comparison-item + .comparison-item { border-left: 0; border-top: 1px solid var(--line); }
+        .lockup-cell + .lockup-cell { border-left: 0; }
+        .mock:first-child { grid-column: auto; }
+        .size-row { grid-template-columns: 48px repeat(5, minmax(34px, 1fr)); gap: 7px; }
+        .lockup-cell { align-items: flex-start; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <svg aria-hidden="true" width="0" height="0" style="position:absolute">
+      <defs>
+        <symbol id="a8-original" viewBox="0 0 24 24">
+          <path d="M5 4.5V19.5H15.5" />
+          <path d="M5 4.5H19V10" />
+          <path d="M10 9V16H20" />
+          <path d="M10 9H15.5" />
+        </symbol>
+
+        <symbol id="a8-r1" viewBox="0 0 24 24">
+          <path d="M5 4.5V19.5H15" />
+          <path d="M5 4.5H18.5V9.25" />
+          <path d="M10 9.25V15.75H19" />
+          <path d="M10 9.25H14" />
+        </symbol>
+        <symbol id="a8-r1-small" viewBox="0 0 24 24">
+          <path d="M5 5V19H15" />
+          <path d="M5 5H19V10" />
+          <path d="M10 9V16H19" />
+        </symbol>
+
+        <symbol id="a8-r2" viewBox="0 0 24 24">
+          <path d="M5.25 4.5V19.5H14.75" />
+          <path d="M5.25 4.5H18.25V9" />
+          <path d="M10.25 9.5V15.75H18.75" />
+          <path d="M10.25 9.5H13.25" />
+        </symbol>
+        <symbol id="a8-r2-small" viewBox="0 0 24 24">
+          <path d="M5 5V19H15" />
+          <path d="M5 5H18V10" />
+          <path d="M10 9V16H19" />
+        </symbol>
+
+        <symbol id="a8-r3" viewBox="0 0 24 24">
+          <path d="M5.25 4.25V19.25H15.5" />
+          <path d="M5.25 4.25H18.75V9.5" />
+          <path d="M10.5 9.5V16H19.25" />
+          <path d="M10.5 9.5H13.75" />
+        </symbol>
+        <symbol id="a8-r3-small" viewBox="0 0 24 24">
+          <path d="M5 5V19H16" />
+          <path d="M5 5H19V10" />
+          <path d="M11 9V16H19" />
+        </symbol>
+
+        <symbol id="a8-r4" viewBox="0 0 24 24">
+          <path d="M5 4.75V18.25A1.25 1.25 0 0 0 6.25 19.5H15" />
+          <path d="M5 4.75H17.25A1.25 1.25 0 0 1 18.5 6V9.25" />
+          <path d="M10 9.25V14.5A1.25 1.25 0 0 0 11.25 15.75H19" />
+          <path d="M10 9.25H13.75" />
+        </symbol>
+        <symbol id="a8-r4-small" viewBox="0 0 24 24">
+          <path d="M5 5V17.5A1.5 1.5 0 0 0 6.5 19H15" />
+          <path d="M5 5H17.5A1.5 1.5 0 0 1 19 6.5V10" />
+          <path d="M10 9V14.5A1.5 1.5 0 0 0 11.5 16H19" />
+        </symbol>
+
+        <symbol id="a8-r5" viewBox="0 0 24 24">
+          <path d="M5 4.5V19H15.25" />
+          <path d="M5 4.5H18.75V9.5" />
+          <path d="M10.5 9V16.25H19" />
+          <path d="M10.5 9H13.5" />
+        </symbol>
+        <symbol id="a8-r5-small" viewBox="0 0 24 24">
+          <path d="M5 5V19H15" />
+          <path d="M5 5H19V10" />
+          <path d="M11 9V16H19" />
+        </symbol>
+
+        <symbol id="a8-r6" viewBox="0 0 24 24">
+          <path d="M5 4.5V19.5H15" />
+          <path d="M5 4.5H18.5V9" />
+          <path d="M10 9.25V16H19" />
+          <path d="M10 9.25H12.75" />
+        </symbol>
+        <symbol id="a8-r6-small" viewBox="0 0 24 24">
+          <path d="M5 5V19H15" />
+          <path d="M5 5H18V10" />
+          <path d="M10 9V16H19" />
+        </symbol>
+
+        <symbol id="a2" viewBox="0 0 24 24">
+          <path d="M17.5 4H5V20H16" />
+          <path d="M10 9H20V17H13" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <main>
+      <header class="board-header">
+        <div>
+          <p class="eyebrow">B10-7C3 · Local refinement review</p>
+          <h1>Vahoro A8 Symbol Refinement</h1>
+          <p class="lede">只在 Shared Structure 内调整比例、开口、线长、圆角与重心。所有图形均为本地低保真候选，不属于正式品牌资产。</p>
+        </div>
+        <p class="board-status">24 × 24 base · Monochrome · Review only</p>
+      </header>
+
+      <section>
+        <div class="section-head">
+          <h2>A8 Original</h2>
+          <p>原版保留在板上作为变化基准。主要问题是右侧线段较多、内部横线形成 E 的暗示，整体视觉略向右偏。</p>
+        </div>
+        <div class="comparison">
+          <div class="comparison-item">
+            <svg class="symbol"><use href="#a8-original" /></svg>
+            <div><h3>A8 · Shared Structure</h3><p>概念明确，但交叉横线和右侧端点需要收敛。</p></div>
+          </div>
+          <div class="comparison-item" style="background:var(--dark);color:var(--reverse)">
+            <svg class="symbol" style="color:var(--reverse)"><use href="#a8-original" /></svg>
+            <div><h3>Reverse</h3><p style="color:var(--reverse-muted)">单色反白成立，偏重问题在深色背景下更明显。</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>A8 Refinements</h2>
+          <p>六个候选均沿用左侧主框、右上开口与内层内容平面，没有引入新符号语义。</p>
+        </div>
+        <div class="variant-grid">
+          <article class="variant">
+            <div class="variant-head"><span class="variant-id">A8-R1</span><span class="tag">Balanced Aperture</span></div>
+            <div class="symbol-pair"><div class="symbol-field"><svg class="symbol"><use href="#a8-r1" /></svg></div><div class="symbol-field dark"><svg class="symbol"><use href="#a8-r1" /></svg></div></div>
+            <p class="summary">收短内部横线与外框底边，减轻 E 误读并把重心拉回中心。</p>
+            <div class="score-strip"><dl class="score"><dt>Brand</dt><dd>9</dd></dl><dl class="score"><dt>Balance</dt><dd>9</dd></dl><dl class="score"><dt>16px</dt><dd>8</dd></dl><dl class="score"><dt>C/E risk</dt><dd>Low</dd></dl><dl class="score"><dt>Generic</dt><dd>Low</dd></dl></div>
+          </article>
+          <article class="variant">
+            <div class="variant-head"><span class="variant-id">A8-R2</span><span class="tag">Short Register</span></div>
+            <div class="symbol-pair"><div class="symbol-field"><svg class="symbol"><use href="#a8-r2" /></svg></div><div class="symbol-field dark"><svg class="symbol"><use href="#a8-r2" /></svg></div></div>
+            <p class="summary">进一步缩短内横线并压缩右上伸展，优先服务 favicon 和折叠 Sidebar。</p>
+            <div class="score-strip"><dl class="score"><dt>Brand</dt><dd>8</dd></dl><dl class="score"><dt>Balance</dt><dd>9</dd></dl><dl class="score"><dt>16px</dt><dd>9</dd></dl><dl class="score"><dt>C/E risk</dt><dd>Low</dd></dl><dl class="score"><dt>Generic</dt><dd>Low</dd></dl></div>
+          </article>
+          <article class="variant">
+            <div class="variant-head"><span class="variant-id">A8-R3</span><span class="tag">Wide Content Plane</span></div>
+            <div class="symbol-pair"><div class="symbol-field"><svg class="symbol"><use href="#a8-r3" /></svg></div><div class="symbol-field dark"><svg class="symbol"><use href="#a8-r3" /></svg></div></div>
+            <p class="summary">扩大内层纵向间距，强化两层内容关系，保持较稳定的外部轮廓。</p>
+            <div class="score-strip"><dl class="score"><dt>Brand</dt><dd>8</dd></dl><dl class="score"><dt>Balance</dt><dd>8</dd></dl><dl class="score"><dt>16px</dt><dd>7</dd></dl><dl class="score"><dt>C/E risk</dt><dd>Low</dd></dl><dl class="score"><dt>Generic</dt><dd>Mid</dd></dl></div>
+          </article>
+          <article class="variant">
+            <div class="variant-head"><span class="variant-id">A8-R4</span><span class="tag">Soft Editorial</span></div>
+            <div class="symbol-pair"><div class="symbol-field"><svg class="symbol soft"><use href="#a8-r4" /></svg></div><div class="symbol-field dark"><svg class="symbol soft"><use href="#a8-r4" /></svg></div></div>
+            <p class="summary">在相同结构中加入克制圆角，降低工具图标感，提升 Auth 与 Landing 的亲和度。</p>
+            <div class="score-strip"><dl class="score"><dt>Brand</dt><dd>8</dd></dl><dl class="score"><dt>Balance</dt><dd>9</dd></dl><dl class="score"><dt>16px</dt><dd>8</dd></dl><dl class="score"><dt>C/E risk</dt><dd>Low</dd></dl><dl class="score"><dt>Generic</dt><dd>Low</dd></dl></div>
+          </article>
+          <article class="variant">
+            <div class="variant-head"><span class="variant-id">A8-R5</span><span class="tag">Optical Lift</span></div>
+            <div class="symbol-pair"><div class="symbol-field"><svg class="symbol"><use href="#a8-r5" /></svg></div><div class="symbol-field dark"><svg class="symbol"><use href="#a8-r5" /></svg></div></div>
+            <p class="summary">内层略向下展开、外框略收紧，用不对称高度抵消右侧视觉重量。</p>
+            <div class="score-strip"><dl class="score"><dt>Brand</dt><dd>8</dd></dl><dl class="score"><dt>Balance</dt><dd>8</dd></dl><dl class="score"><dt>16px</dt><dd>8</dd></dl><dl class="score"><dt>C/E risk</dt><dd>Low</dd></dl><dl class="score"><dt>Generic</dt><dd>Mid</dd></dl></div>
+          </article>
+          <article class="variant">
+            <div class="variant-head"><span class="variant-id">A8-R6</span><span class="tag">Quiet Break</span></div>
+            <div class="symbol-pair"><div class="symbol-field"><svg class="symbol"><use href="#a8-r6" /></svg></div><div class="symbol-field dark"><svg class="symbol"><use href="#a8-r6" /></svg></div></div>
+            <p class="summary">用最短内横线形成安静断点，保留 Shared Structure，同时最少依赖通用框架语法。</p>
+            <div class="score-strip"><dl class="score"><dt>Brand</dt><dd>9</dd></dl><dl class="score"><dt>Balance</dt><dd>9</dd></dl><dl class="score"><dt>16px</dt><dd>8</dd></dl><dl class="score"><dt>C/E risk</dt><dd>Very low</dd></dl><dl class="score"><dt>Generic</dt><dd>Very low</dd></dl></div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Evaluation Matrix</h2>
+          <p>风险项采用 Low / Mid 表示，其他指标为 10 分制。胜出依据优先看识别、小尺寸和非通用性。</p>
+        </div>
+        <div class="score-table-wrap">
+          <table>
+            <thead><tr><th>Candidate</th><th>Brand fit</th><th>Distinct</th><th>Balance</th><th>C/E risk</th><th>Frame risk</th><th>16px</th><th>24px</th><th>Dark/light</th><th>Lockup</th><th>Favicon</th></tr></thead>
+            <tbody>
+              <tr><td>A8-R1</td><td>9</td><td>9</td><td>9</td><td class="risk-low">Low</td><td class="risk-low">Low</td><td>8</td><td>9</td><td>10</td><td>9</td><td>8</td></tr>
+              <tr><td>A8-R2</td><td>8</td><td>8</td><td>9</td><td class="risk-low">Low</td><td class="risk-low">Low</td><td>9</td><td>9</td><td>10</td><td>9</td><td>9</td></tr>
+              <tr><td>A8-R3</td><td>8</td><td>8</td><td>8</td><td class="risk-low">Low</td><td class="risk-mid">Mid</td><td>7</td><td>9</td><td>10</td><td>8</td><td>7</td></tr>
+              <tr><td>A8-R4</td><td>8</td><td>8</td><td>9</td><td class="risk-low">Low</td><td class="risk-low">Low</td><td>8</td><td>9</td><td>10</td><td>9</td><td>8</td></tr>
+              <tr><td>A8-R5</td><td>8</td><td>8</td><td>8</td><td class="risk-low">Low</td><td class="risk-mid">Mid</td><td>8</td><td>9</td><td>10</td><td>8</td><td>8</td></tr>
+              <tr><td>A8-R6</td><td>9</td><td>9</td><td>9</td><td class="risk-low">Very low</td><td class="risk-low">Very low</td><td>8</td><td>9</td><td>10</td><td>9</td><td>8</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Small-size Test</h2>
+          <p>仅展示前三名 R1、R2、R6。16px 使用独立简化路径，20px 以上使用完整结构。</p>
+        </div>
+        <div class="size-board">
+          <div class="size-theme light">
+            <p class="theme-title">Light surface</p>
+            <div class="size-row" data-size-row="a8-r1"><span class="size-id">R1</span></div>
+            <div class="size-row" data-size-row="a8-r2"><span class="size-id">R2</span></div>
+            <div class="size-row" data-size-row="a8-r6"><span class="size-id">R6</span></div>
+          </div>
+          <div class="size-theme dark">
+            <p class="theme-title">Dark surface</p>
+            <div class="size-row" data-size-row="a8-r1"><span class="size-id">R1</span></div>
+            <div class="size-row" data-size-row="a8-r2"><span class="size-id">R2</span></div>
+            <div class="size-row" data-size-row="a8-r6"><span class="size-id">R6</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Wordmark Lockups</h2>
+          <p>W1 与 W2 仅用于衡量节奏和重量，不代表最终字体授权结论。</p>
+        </div>
+        <div class="lockup-grid">
+          <div class="lockup-cell"><div class="lockup"><svg class="symbol"><use href="#a8-r1" /></svg><span class="lockup-name w1">Vahoro</span></div><span class="lockup-code">R1 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="symbol"><use href="#a8-r1" /></svg><span class="lockup-name w2">Vahoro</span></div><span class="lockup-code">R1 + W2</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="symbol"><use href="#a8-r2" /></svg><span class="lockup-name w1">Vahoro</span></div><span class="lockup-code">R2 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="symbol"><use href="#a8-r2" /></svg><span class="lockup-name w2">Vahoro</span></div><span class="lockup-code">R2 + W2</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="symbol"><use href="#a8-r6" /></svg><span class="lockup-name w1">Vahoro</span></div><span class="lockup-code">R6 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="symbol"><use href="#a8-r6" /></svg><span class="lockup-name w2">Vahoro</span></div><span class="lockup-code">R6 + W2</span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Real-context Mock</h2>
+          <p>使用 R6 + W2 作为统一样例，仅验证比例和环境适配，不模拟正式页面视觉。</p>
+        </div>
+        <div class="context-grid">
+          <article class="mock">
+            <div class="mock-label">LANDING HEADER · LIGHT</div>
+            <div class="landing-nav"><div class="mini-lockup"><svg class="symbol"><use href="#a8-r6" /></svg><span class="w2">Vahoro</span></div><div class="nav-lines"><i></i><i></i><i></i></div></div>
+            <div class="hero-lines"><i></i><i></i></div>
+          </article>
+          <article class="mock">
+            <div class="mock-label">DASHBOARD SIDEBAR · EXPANDED</div>
+            <div class="sidebar-preview"><div class="sidebar"><div class="mini-lockup"><svg class="symbol"><use href="#a8-r6" /></svg><span class="w2">Vahoro</span></div><div class="sidebar-lines"><i></i><i></i><i></i><i></i></div></div><div class="workspace-lines"><i></i><i></i></div></div>
+          </article>
+          <article class="mock">
+            <div class="mock-label">COMPACT UI · 24 / 16</div>
+            <div class="compact-stack"><div class="collapsed"><div class="collapsed-box"><svg class="symbol"><use href="#a8-r6" /></svg></div><span class="font-note">Sidebar collapsed</span></div><div class="favicon-line"><div class="favicon-tile"><svg class="symbol"><use href="#a8-r6-small" /></svg></div><span class="font-note">Favicon-sized preview</span></div></div>
+          </article>
+          <article class="mock">
+            <div class="mock-label">AUTH HEADER · DARK</div>
+            <div class="auth-preview"><div class="auth-card"><div class="mini-lockup"><svg class="symbol"><use href="#a8-r6" /></svg><span class="w2">Vahoro</span></div><div class="auth-line"></div><div class="auth-line"></div></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Best A8 vs A2 Backup</h2>
+          <p>A8-R6 优先品牌识别，A2 保留为结构稳定性参照，不继续精修。</p>
+        </div>
+        <div class="comparison">
+          <div class="comparison-item">
+            <svg class="symbol"><use href="#a8-r6" /></svg>
+            <div><h3>A8-R6 · Primary candidate</h3><p>Shared Structure 叙事更完整，非通用性更强；16px 需使用简化版。</p></div>
+          </div>
+          <div class="comparison-item">
+            <svg class="symbol"><use href="#a2" /></svg>
+            <div><h3>A2 · Backup reference</h3><p>外轮廓更稳定、缩放更直接，但品牌专属性和内容组织语义较弱。</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const sizes = [16, 20, 24, 32, 38];
+      document.querySelectorAll("[data-size-row]").forEach((row) => {
+        const id = row.dataset.sizeRow;
+        sizes.forEach((size) => {
+          const sample = document.createElement("div");
+          sample.className = "size-sample";
+          const symbolId = size === 16 ? `${id}-small` : id;
+          sample.innerHTML = `<svg class="symbol" width="${size}" height="${size}" viewBox="0 0 24 24" aria-label="${id.toUpperCase()} at ${size}px"><use href="#${symbolId}" /></svg><span>${size}</span>`;
+          row.appendChild(sample);
+        });
+      });
+    </script>
+  </body>
+</html>

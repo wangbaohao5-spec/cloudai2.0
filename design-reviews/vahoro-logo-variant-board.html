@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vahoro Logo Variant Board</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #18201e;
+        --muted: #66716d;
+        --paper: #f4f6f3;
+        --surface: #fbfcfa;
+        --line: #d7ded9;
+        --brand: #174f46;
+        --dark: #0b1312;
+        --dark-ink: #edf3f0;
+        --dark-muted: #aab8b3;
+      }
+
+      * { box-sizing: border-box; }
+
+      html { background: var(--paper); }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1440px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 52px 0 80px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: end;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1, h2, h3, p { margin: 0; }
+
+      h1 {
+        max-width: 760px;
+        font-size: clamp(32px, 4vw, 58px);
+        line-height: 1.04;
+        font-weight: 620;
+      }
+
+      h2 { font-size: 22px; font-weight: 620; }
+      h3 { font-size: 14px; font-weight: 650; }
+
+      .eyebrow,
+      .section-index,
+      .status {
+        color: var(--brand);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .lede {
+        max-width: 700px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      .status {
+        padding-bottom: 6px;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      section { padding-top: 48px; }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: baseline;
+        margin-bottom: 18px;
+      }
+
+      .section-head p {
+        max-width: 660px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .variant-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
+      }
+
+      .variant {
+        min-width: 0;
+        min-height: 286px;
+        padding: 22px;
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .variant-top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .variant-id { font-size: 18px; font-weight: 720; }
+
+      .symbol-stage {
+        display: grid;
+        place-items: center;
+        height: 126px;
+        margin: 18px 0;
+        color: var(--brand);
+        background: #edf1ed;
+      }
+
+      .symbol-stage svg { width: 72px; height: 72px; }
+
+      .meta {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .meta dt { color: var(--ink); font-weight: 650; }
+      .meta dd { margin: 0; }
+
+      .wordmark-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border: 1px solid var(--line);
+      }
+
+      .wordmark-option { padding: 30px; background: var(--surface); }
+      .wordmark-option + .wordmark-option { border-left: 1px solid var(--line); }
+
+      .wordmark-large {
+        margin: 30px 0 24px;
+        color: var(--ink);
+        font-size: clamp(48px, 7vw, 92px);
+        line-height: 1;
+      }
+
+      .wordmark-w1 {
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 600;
+      }
+
+      .wordmark-w2 {
+        font-family: "Segoe UI", "PingFang SC", sans-serif;
+        font-weight: 560;
+      }
+
+      .font-note { color: var(--muted); font-size: 13px; }
+
+      .lockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
+      }
+
+      .lockup-cell {
+        min-height: 126px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 26px;
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--ink);
+      }
+
+      .lockup svg { width: 32px; height: 32px; color: var(--brand); flex: 0 0 auto; }
+      .lockup-name { font-size: 27px; line-height: 1; }
+      .lockup-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+      .size-board {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border: 1px solid var(--line);
+      }
+
+      .size-theme { padding: 28px; min-width: 0; }
+      .size-theme.dark { color: var(--dark-ink); background: var(--dark); }
+      .size-theme.light { color: var(--ink); background: var(--surface); }
+      .size-theme + .size-theme { border-left: 1px solid var(--line); }
+
+      .size-title {
+        margin-bottom: 22px;
+        color: inherit;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .size-row {
+        display: grid;
+        grid-template-columns: 56px repeat(5, minmax(44px, 1fr));
+        gap: 14px;
+        align-items: center;
+        min-width: 0;
+        padding: 14px 0;
+        border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+      }
+
+      .size-row:first-of-type { border-top: 0; }
+      .size-id { font-size: 13px; font-weight: 700; }
+
+      .size-sample {
+        display: grid;
+        justify-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .size-sample svg { display: block; }
+      .size-sample span { color: currentColor; opacity: .58; font-size: 10px; }
+
+      .recommendation {
+        display: grid;
+        grid-template-columns: .85fr 1.15fr;
+        gap: 0;
+        border: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      .recommendation > div { padding: 30px; }
+      .recommendation > div + div { border-left: 1px solid var(--line); }
+      .recommendation ol { margin: 16px 0 0; padding-left: 22px; }
+      .recommendation li { padding: 4px 0; }
+      .recommendation p { color: var(--muted); font-size: 14px; }
+
+      svg.brand-symbol {
+        overflow: visible;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.15;
+        stroke-linecap: square;
+        stroke-linejoin: round;
+      }
+
+      svg.brand-symbol.soft { stroke-linecap: round; }
+
+      @media (max-width: 920px) {
+        .variant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .size-board, .recommendation { grid-template-columns: 1fr; }
+        .size-theme + .size-theme,
+        .recommendation > div + div { border-left: 0; border-top: 1px solid var(--line); }
+      }
+
+      @media (max-width: 620px) {
+        main { width: min(100% - 24px, 1440px); padding-top: 28px; }
+        header { grid-template-columns: 1fr; }
+        .status { text-align: left; }
+        .section-head { display: block; }
+        .section-head p { margin-top: 8px; }
+        .variant-grid, .wordmark-grid, .lockup-grid { grid-template-columns: 1fr; }
+        .wordmark-option + .wordmark-option,
+        .lockup-cell + .lockup-cell { border-left: 0; }
+        .size-row { grid-template-columns: 42px repeat(5, minmax(32px, 1fr)); gap: 6px; }
+        .lockup-cell { align-items: flex-start; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <svg aria-hidden="true" width="0" height="0" style="position:absolute">
+      <defs>
+        <symbol id="a1" viewBox="0 0 24 24">
+          <path d="M18.5 4.5H5V19.5H15.5" />
+          <path d="M9.5 8.5H20V16H9.5" />
+        </symbol>
+        <symbol id="a1-small" viewBox="0 0 24 24">
+          <path d="M18.5 5H5V19H16" />
+          <path d="M10 9H19V15H10" />
+        </symbol>
+        <symbol id="a2" viewBox="0 0 24 24">
+          <path d="M17.5 4H5V20H16" />
+          <path d="M10 9H20V17H13" />
+        </symbol>
+        <symbol id="a2-small" viewBox="0 0 24 24">
+          <path d="M18 5H5V19H16" />
+          <path d="M11 9H19V16" />
+        </symbol>
+        <symbol id="a3" viewBox="0 0 24 24">
+          <path d="M15 5H4.5V19.5H15.5" />
+          <path d="M9 8.5V4.5H19.5V16H16" />
+          <path d="M9 8.5H16V16" />
+        </symbol>
+        <symbol id="a3-small" viewBox="0 0 24 24">
+          <path d="M15 5H5V19H16" />
+          <path d="M10 9V5H19V16H16" />
+        </symbol>
+        <symbol id="a4" viewBox="0 0 24 24">
+          <path d="M18.5 5H5V19H14.5" />
+          <path d="M9 10V8.5H20V16.5H12" />
+          <path d="M9 10V16.5" />
+        </symbol>
+        <symbol id="a4-small" viewBox="0 0 24 24">
+          <path d="M18 5H5V19H15" />
+          <path d="M10 9H19V16H12" />
+        </symbol>
+        <symbol id="a5" viewBox="0 0 24 24">
+          <path d="M17 4.5H6V19.5H18V15" />
+          <path d="M10 8.5H20V13.5H13.5" />
+        </symbol>
+        <symbol id="a5-small" viewBox="0 0 24 24">
+          <path d="M17 5H6V19H18V15" />
+          <path d="M10 9H19V13" />
+        </symbol>
+        <symbol id="a6" viewBox="0 0 24 24">
+          <path d="M18 4.5H6.5A2 2 0 0 0 4.5 6.5V17.5A2 2 0 0 0 6.5 19.5H15" />
+          <path d="M10 8.5H18.5A1.5 1.5 0 0 1 20 10V15A1.5 1.5 0 0 1 18.5 16.5H10" />
+        </symbol>
+        <symbol id="a6-small" viewBox="0 0 24 24">
+          <path d="M18 5H7A2 2 0 0 0 5 7V17A2 2 0 0 0 7 19H16" />
+          <path d="M10 9H18A1 1 0 0 1 19 10V15H10" />
+        </symbol>
+        <symbol id="a7" viewBox="0 0 24 24">
+          <path d="M17 4.5H4.5V19.5H15" />
+          <path d="M9 8.5H19.5V16.5H16" />
+          <path d="M9 12.5H16" />
+        </symbol>
+        <symbol id="a7-small" viewBox="0 0 24 24">
+          <path d="M17 5H5V19H15" />
+          <path d="M10 9H19V16H16" />
+        </symbol>
+        <symbol id="a8" viewBox="0 0 24 24">
+          <path d="M5 4.5V19.5H15.5" />
+          <path d="M5 4.5H19V10" />
+          <path d="M10 9V16H20" />
+          <path d="M10 9H15.5" />
+        </symbol>
+        <symbol id="a8-small" viewBox="0 0 24 24">
+          <path d="M5 5V19H16" />
+          <path d="M5 5H19V10" />
+          <path d="M10 9V16H19" />
+        </symbol>
+        <symbol id="b1" viewBox="0 0 24 24">
+          <path d="M18 4.5H5V19.5H10" />
+          <path d="M9 8.5H20V16.5H16" />
+          <path d="M10 16.5L12 19L14.5 15.5" />
+        </symbol>
+        <symbol id="b1-small" viewBox="0 0 24 24">
+          <path d="M18 5H5V19H10" />
+          <path d="M10 9H19V16H16" />
+          <path d="M10 16L12 19L14 16" />
+        </symbol>
+        <symbol id="b2" viewBox="0 0 24 24">
+          <path d="M17.5 4.5H5V19.5H9.5" />
+          <path d="M10 8.5H20V16.5H15.5" />
+          <path d="M9.5 15L12 19L15.5 13.5" />
+        </symbol>
+        <symbol id="b2-small" viewBox="0 0 24 24">
+          <path d="M18 5H5V19H10" />
+          <path d="M10 9H19V16H16" />
+          <path d="M10 15L12 19L15 14" />
+        </symbol>
+        <symbol id="b3" viewBox="0 0 24 24">
+          <path d="M5 4.5H19V10" />
+          <path d="M5 4.5V19.5H9.5" />
+          <path d="M10 8.5H19.5V16.5H16" />
+          <path d="M9.5 16.5L12 19.5L16 14.5" />
+        </symbol>
+        <symbol id="b3-small" viewBox="0 0 24 24">
+          <path d="M5 5H19V10M5 5V19H10" />
+          <path d="M10 9H19V16H16" />
+          <path d="M10 16L12 19L15 15" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">B10-7C2 · Local review artifact</p>
+          <h1>Vahoro Logo Variant Board</h1>
+          <p class="lede">低保真几何比较。符号服务紧凑场景，Vahoro 字标仍是主要品牌载体。本页面不属于正式产品。</p>
+        </div>
+        <p class="status">Monochrome · 24 × 24 grid · Review only</p>
+      </header>
+
+      <section>
+        <div class="section-head">
+          <h2>Editorial Frame</h2>
+          <p>八个方向均保持两层以内与单一主要开口。重点比较结构稳定性、编辑感和小尺寸识别。</p>
+        </div>
+        <div class="variant-grid">
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A1</span><span class="section-index">Front Register</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a1" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Good, simplified</dd><dt>Distinct</dt><dd>High</dd><dt>Generic risk</dt><dd>Medium-low</dd><dt>Best use</dt><dd>Primary compact mark</dd><dt>Weakness</dt><dd>Needs crop-icon check</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A2</span><span class="section-index">Open Edge</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a2" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Excellent</dd><dt>Distinct</dt><dd>Medium-high</dd><dt>Generic risk</dt><dd>Low</dd><dt>Best use</dt><dd>Favicon</dd><dt>Weakness</dt><dd>Inner plane feels light</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A3</span><span class="section-index">Layer Shift</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a3" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Fair</dd><dt>Distinct</dt><dd>High</dd><dt>Generic risk</dt><dd>Low</dd><dt>Best use</dt><dd>Large symbol</dd><dt>Weakness</dt><dd>One junction is busy</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A4</span><span class="section-index">Edit Field</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a4" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Good, simplified</dd><dt>Distinct</dt><dd>Medium</dd><dt>Generic risk</dt><dd>Medium</dd><dt>Best use</dt><dd>Workspace context</dd><dt>Weakness</dt><dd>Closest to layout icon</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A5</span><span class="section-index">Compact Register</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a5" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Excellent</dd><dt>Distinct</dt><dd>Medium</dd><dt>Generic risk</dt><dd>Medium-low</dd><dt>Best use</dt><dd>Sidebar collapsed</dd><dt>Weakness</dt><dd>Less editorial</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A6</span><span class="section-index">Soft Register</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol soft"><use href="#a6" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Good</dd><dt>Distinct</dt><dd>Medium-high</dd><dt>Generic risk</dt><dd>Low</dd><dt>Best use</dt><dd>Auth and mobile</dd><dt>Weakness</dt><dd>May feel too friendly</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A7</span><span class="section-index">Content Line</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a7" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Fair, simplify</dd><dt>Distinct</dt><dd>High</dd><dt>Generic risk</dt><dd>Low</dd><dt>Best use</dt><dd>Editorial lockup</dd><dt>Weakness</dt><dd>Extra line adds noise</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">A8</span><span class="section-index">Shared Structure</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#a8" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Good</dd><dt>Distinct</dt><dd>High</dd><dt>Generic risk</dt><dd>Low</dd><dt>Best use</dt><dd>Brand-led surfaces</dd><dt>Weakness</dt><dd>Balance needs refinement</dd></dl>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Frame + V</h2>
+          <p>V 只由结构交接产生。此组用于证明或否定方向，不作为默认入选。</p>
+        </div>
+        <div class="variant-grid">
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">B1</span><span class="section-index">Quiet Aperture</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#b1" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Weak V</dd><dt>Distinct</dt><dd>Medium</dd><dt>Generic risk</dt><dd>Medium-high</dd><dt>Best use</dt><dd>32px and above</dd><dt>Weakness</dt><dd>V reads as a tick</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">B2</span><span class="section-index">Offset Aperture</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#b2" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Poor</dd><dt>Distinct</dt><dd>High</dd><dt>Generic risk</dt><dd>Medium</dd><dt>Best use</dt><dd>Avatar</dd><dt>Weakness</dt><dd>Too much geometry</dd></dl>
+          </article>
+          <article class="variant">
+            <div class="variant-top"><span class="variant-id">B3</span><span class="section-index">Open V Field</span></div>
+            <div class="symbol-stage"><svg class="brand-symbol"><use href="#b3" /></svg></div>
+            <dl class="meta"><dt>16px</dt><dd>Fair</dd><dt>Distinct</dt><dd>Medium-high</dd><dt>Generic risk</dt><dd>High</dd><dt>Best use</dt><dd>Large avatar</dd><dt>Weakness</dt><dd>Startup-mark character</dd></dl>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Wordmark</h2>
+          <p>仅使用本机现有字体作为节奏参考，不构成最终字体授权或选型结论。</p>
+        </div>
+        <div class="wordmark-grid">
+          <article class="wordmark-option">
+            <div class="variant-top"><span class="variant-id">W1</span><span class="section-index">Neutral Grotesk</span></div>
+            <p class="wordmark-large wordmark-w1">Vahoro</p>
+            <p class="font-note">Arial / Helvetica system fallback · local comparison only · final font license TBD</p>
+          </article>
+          <article class="wordmark-option">
+            <div class="variant-top"><span class="variant-id">W2</span><span class="section-index">Light Humanist Sans</span></div>
+            <p class="wordmark-large wordmark-w2">Vahoro</p>
+            <p class="font-note">Segoe UI / PingFang SC system fallback · local comparison only · final font license TBD</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Lockup Comparison</h2>
+          <p>四个 Editorial Frame 候选分别与两种字标节奏组合。符号按 32px 展示。</p>
+        </div>
+        <div class="lockup-grid">
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol"><use href="#a1" /></svg><span class="lockup-name wordmark-w1">Vahoro</span></div><span class="lockup-label">A1 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol"><use href="#a1" /></svg><span class="lockup-name wordmark-w2">Vahoro</span></div><span class="lockup-label">A1 + W2</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol"><use href="#a2" /></svg><span class="lockup-name wordmark-w1">Vahoro</span></div><span class="lockup-label">A2 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol"><use href="#a2" /></svg><span class="lockup-name wordmark-w2">Vahoro</span></div><span class="lockup-label">A2 + W2</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol soft"><use href="#a6" /></svg><span class="lockup-name wordmark-w1">Vahoro</span></div><span class="lockup-label">A6 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol soft"><use href="#a6" /></svg><span class="lockup-name wordmark-w2">Vahoro</span></div><span class="lockup-label">A6 + W2</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol"><use href="#a8" /></svg><span class="lockup-name wordmark-w1">Vahoro</span></div><span class="lockup-label">A8 + W1</span></div>
+          <div class="lockup-cell"><div class="lockup"><svg class="brand-symbol"><use href="#a8" /></svg><span class="lockup-name wordmark-w2">Vahoro</span></div><span class="lockup-label">A8 + W2</span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>True-size Test</h2>
+          <p>16px 栏使用独立简化路径；其余尺寸使用完整路径。请在 100% 浏览器缩放下评审。</p>
+        </div>
+        <div class="size-board">
+          <div class="size-theme light">
+            <p class="size-title">Light surface</p>
+            <div class="size-row" data-size-row="a1"><span class="size-id">A1</span></div>
+            <div class="size-row" data-size-row="a2"><span class="size-id">A2</span></div>
+            <div class="size-row" data-size-row="a6"><span class="size-id">A6</span></div>
+            <div class="size-row" data-size-row="a8"><span class="size-id">A8</span></div>
+            <div class="size-row" data-size-row="b1"><span class="size-id">B1</span></div>
+          </div>
+          <div class="size-theme dark">
+            <p class="size-title">Dark surface</p>
+            <div class="size-row" data-size-row="a1"><span class="size-id">A1</span></div>
+            <div class="size-row" data-size-row="a2"><span class="size-id">A2</span></div>
+            <div class="size-row" data-size-row="a6"><span class="size-id">A6</span></div>
+            <div class="size-row" data-size-row="a8"><span class="size-id">A8</span></div>
+            <div class="size-row" data-size-row="b1"><span class="size-id">B1</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><h2>Working Recommendation</h2></div>
+        <div class="recommendation">
+          <div>
+            <p class="section-index">Shortlist</p>
+            <ol><li>A2 + W2</li><li>A1 + W2</li><li>A8 + W1</li></ol>
+          </div>
+          <div>
+            <p>A2 is the clearest small-size system. A1 carries the strongest editorial-frame story. A8 is the most distinctive, but needs optical balancing. B variants remain comparison controls because their hidden V introduces unnecessary startup-logo risk.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const sizes = [16, 20, 24, 32, 38];
+      document.querySelectorAll("[data-size-row]").forEach((row) => {
+        const id = row.dataset.sizeRow;
+        sizes.forEach((size) => {
+          const sample = document.createElement("div");
+          sample.className = "size-sample";
+          const symbolId = size === 16 ? `${id}-small` : id;
+          sample.innerHTML = `<svg class="brand-symbol${id === "a6" ? " soft" : ""}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-label="${id.toUpperCase()} at ${size}px"><use href="#${symbolId}" /></svg><span>${size}</span>`;
+          row.appendChild(sample);
+        });
+      });
+    </script>
+  </body>
+</html>

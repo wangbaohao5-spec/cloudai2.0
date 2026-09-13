@@ -92,14 +92,10 @@
 }
 
 .landing-logo-mark {
-  display: grid;
   width: 34px;
   height: 34px;
-  place-items: center;
-  border-radius: 8px;
-  color: var(--landing-text-inverse);
-  background: var(--landing-brand);
-  font-size: 0.92rem;
+  flex: 0 0 auto;
+  color: var(--landing-brand);
 }
 
 .landing-nav-links,

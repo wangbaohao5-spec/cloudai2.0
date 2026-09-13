@@ -6,6 +6,14 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#f5f8f6",
     description: BRAND.description,
     display: "standalone",
+    icons: [
+      {
+        purpose: "any",
+        sizes: "any",
+        src: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
     lang: "zh-CN",
     name: `${BRAND.name} — ${BRAND.descriptor}`,
     short_name: BRAND.name,
