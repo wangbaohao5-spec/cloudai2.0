@@ -17,7 +17,6 @@ export function RecentProductsList({ products }: RecentProductsListProps) {
     <section className="dashboard-home-section dashboard-recent-products cai-panel">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Recent Products</p>
           <h2>最近商品</h2>
         </div>
         <Link className="dashboard-section-link" href="/dashboard/products/all">

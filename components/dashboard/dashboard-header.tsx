@@ -1,4 +1,5 @@
 import { DashboardLogoutButton } from "@/components/dashboard/dashboard-logout-button";
+import { DashboardPageHeading } from "@/components/dashboard/dashboard-page-heading";
 import { DashboardUserMenu } from "@/components/dashboard/dashboard-user-menu";
 import { HeaderActionPopover } from "@/components/dashboard/header-action-popover";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
@@ -16,13 +17,14 @@ export function DashboardHeader({ userEmail, userName }: DashboardHeaderProps) {
   return (
     <header className="dashboard-header">
       <details className="dashboard-mobile-nav">
-        <summary>菜单</summary>
+        <summary aria-label="菜单" title="菜单">
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+          </svg>
+        </summary>
         <DashboardNav variant="mobile" />
       </details>
-      <div>
-        <p className="eyebrow">Dashboard</p>
-        <h1>Vahoro 工作台</h1>
-      </div>
+      <DashboardPageHeading />
       <div className="dashboard-header-actions">
         <HeaderActionPopover icon="plan" label="套餐">
           <div className="header-action-panel-header">

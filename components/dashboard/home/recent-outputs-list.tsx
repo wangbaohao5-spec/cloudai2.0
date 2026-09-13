@@ -21,7 +21,6 @@ export function RecentOutputsList({ outputs }: RecentOutputsListProps) {
     <section className="dashboard-home-section dashboard-recent-outputs cai-panel">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Recent Outputs</p>
           <h2>最近生成素材</h2>
         </div>
         <span>{outputs.length ? `${outputs.length} 项素材` : "暂无素材"}</span>

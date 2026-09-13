@@ -17,10 +17,6 @@ export function DashboardHomeShell({ data }: DashboardHomeShellProps) {
     return (
       <main className="dashboard-content">
         <section className="dashboard-home dashboard-home--first-product">
-          <div className="dashboard-home-hero">
-            <p className="eyebrow">First Product</p>
-            <p>从第一件商品开始，完成一次从分析到素材整理的完整流程。</p>
-          </div>
           <div className="dashboard-home-grid dashboard-home-grid--first-product">
             <ContinueProductCard onboarding={firstProductOnboarding} product={null} />
           </div>
@@ -32,11 +28,6 @@ export function DashboardHomeShell({ data }: DashboardHomeShellProps) {
   return (
     <main className="dashboard-content">
       <section className="dashboard-home">
-        <div className="dashboard-home-hero">
-          <p className="eyebrow">Workspace Overview</p>
-          <p>继续商品创作、查看最近素材和工作进度。</p>
-        </div>
-
         <div className="dashboard-home-grid">
           <ContinueProductCard product={data.continueProduct} />
           <TodayGeneratedSummary recentOutputCount={data.recentOutputs.length} recentProductCount={data.recentProducts.length} stats={data.todayGenerated} />

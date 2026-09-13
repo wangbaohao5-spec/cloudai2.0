@@ -57,7 +57,7 @@ export function ContinueProductCard({ onboarding = null, product }: ContinueProd
         )}
       </div>
       <div className="continue-product-body">
-        <p className="eyebrow">继续商品创作</p>
+        <p className="continue-product-kicker">当前商品</p>
         <h2>{product.title}</h2>
         <div className="continue-product-meta">
           <span>{product.category || "商品类别待补充"}</span>

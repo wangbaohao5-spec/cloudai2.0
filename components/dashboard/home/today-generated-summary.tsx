@@ -17,13 +17,12 @@ export function TodayGeneratedSummary({ recentOutputCount, recentProductCount, s
   return (
     <section className="today-generated-card cai-card cai-card--compact">
       <div className="today-generated-header">
-        <p className="eyebrow">Overview</p>
         <h2>创作概览</h2>
         <p>查看今天的生成量和当前素材状态。</p>
       </div>
       <div className="today-generated-list">
         {summaryItems.map((item) => (
-          <article className="cai-card cai-card--compact cai-card--muted" key={item.label}>
+          <article className="today-generated-metric" key={item.label}>
             <span>{item.label}</span>
             <strong>{item.value}</strong>
           </article>

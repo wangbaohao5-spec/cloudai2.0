@@ -77,7 +77,7 @@ export function DashboardUserMenu({ children, userEmail, userName }: DashboardUs
         {avatarInitial}
       </button>
       {open ? (
-        <div className="dashboard-user-menu-panel">
+        <div aria-label="账户快捷菜单" className="dashboard-user-menu-panel">
           <div className="dashboard-user-menu-profile">
             <span className="dashboard-user-menu-avatar">{avatarInitial}</span>
             <span>

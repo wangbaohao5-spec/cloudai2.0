@@ -14,7 +14,6 @@ export function DashboardQuickStart() {
     <section className="dashboard-quick-start cai-card cai-card--compact cai-card--muted">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Quick Tools</p>
           <h2>其他创作工具</h2>
         </div>
       </div>
