@@ -31,10 +31,9 @@ function getUsageStatus(record: UsageRecord) {
 
 export function RecentUsageList({ records }: RecentUsageListProps) {
   return (
-    <section className="dashboard-section glass-card">
+    <section className="dashboard-section usage-records cai-panel">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Recent Quota</p>
           <h2>最近额度记录</h2>
         </div>
         <span>最近 20 条</span>
@@ -46,13 +45,13 @@ export function RecentUsageList({ records }: RecentUsageListProps) {
             const status = getUsageStatus(record);
 
             return (
-              <article className="recent-task-item" key={record.id}>
+              <article className="recent-task-item usage-record-item" key={record.id}>
                 <div>
                   <strong>{USAGE_TYPE_LABELS[record.type] || record.type}</strong>
                   <p>{status.detail}</p>
                 </div>
                 <span>{formatDateTime(record.createdAt)}</span>
-                <em>{status.label}</em>
+                <em className={`usage-record-status ${record.status}`}>{status.label}</em>
               </article>
             );
           })}

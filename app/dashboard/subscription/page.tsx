@@ -4,14 +4,8 @@ export default function SubscriptionPage() {
   return (
     <main className="dashboard-content">
       <section className="dashboard-subscription-page">
-        <div className="dashboard-subscription-header">
-          <p className="eyebrow">Subscription</p>
-          <h1>订阅</h1>
-          <p>查看 Vahoro 未来套餐、创作额度和正式内测订阅能力的准备情况。</p>
-        </div>
-
-        <section className="dashboard-subscription-grid">
-          <article className="dashboard-subscription-card dashboard-subscription-card--primary cai-card cai-card--compact">
+        <section className="dashboard-subscription-grid cai-panel">
+          <article className="dashboard-subscription-card dashboard-subscription-card--primary">
             <div>
               <h2>当前套餐</h2>
               <p>Vahoro 当前处于内测准备阶段，暂未开放正式在线订阅。</p>
@@ -19,7 +13,7 @@ export default function SubscriptionPage() {
             <span className="cai-badge cai-badge--neutral">暂无正式订阅套餐</span>
           </article>
 
-          <article className="dashboard-subscription-card cai-card cai-card--compact">
+          <article className="dashboard-subscription-card">
             <div>
               <h2>未来套餐将关联</h2>
               <p>套餐会围绕商品内容创作所需的核心额度和高级能力逐步开放。</p>
@@ -33,7 +27,7 @@ export default function SubscriptionPage() {
             </ul>
           </article>
 
-          <article className="dashboard-subscription-card cai-card cai-card--compact">
+          <article className="dashboard-subscription-card">
             <div>
               <h2>套餐入口</h2>
               <p>Vahoro 正在准备正式内测套餐与支付体系，当前阶段暂不开放在线订阅。</p>

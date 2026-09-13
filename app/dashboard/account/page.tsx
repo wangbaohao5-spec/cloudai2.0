@@ -16,14 +16,8 @@ export default async function AccountPage() {
   return (
     <main className="dashboard-content">
       <section className="dashboard-account-page">
-        <div className="dashboard-account-header">
-          <p className="eyebrow">Account</p>
-          <h1>个人中心</h1>
-          <p>管理账号信息、外观主题和未来的个人偏好设置。</p>
-        </div>
-
-        <section className="dashboard-account-grid">
-          <article className="dashboard-account-card cai-card cai-card--compact">
+        <section className="dashboard-account-grid cai-panel">
+          <article className="dashboard-account-card">
             <div>
               <h2>账号信息</h2>
               <p>当前登录账号的基础信息。</p>
@@ -44,7 +38,7 @@ export default async function AccountPage() {
             </dl>
           </article>
 
-          <article className="dashboard-account-card cai-card cai-card--compact">
+          <article className="dashboard-account-card">
             <div>
               <h2>外观设置</h2>
               <p>选择 Vahoro 的界面主题。Header 中的深色 / 浅色快捷切换会继续保留。</p>
@@ -52,7 +46,7 @@ export default async function AccountPage() {
             <ThemeSelector />
           </article>
 
-          <article className="dashboard-account-card cai-card cai-card--compact">
+          <article className="dashboard-account-card">
             <div>
               <h2>偏好设置</h2>
               <p>用户级偏好将在账号体系完善后逐步开放。</p>
@@ -69,7 +63,7 @@ export default async function AccountPage() {
             </dl>
           </article>
 
-          <article className="dashboard-account-card cai-card cai-card--compact">
+          <article className="dashboard-account-card">
             <div>
               <h2>安全与账号</h2>
               <p>账号安全设置将在正式账号体系完善后开放。</p>

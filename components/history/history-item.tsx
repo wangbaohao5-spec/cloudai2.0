@@ -159,7 +159,7 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <article className="history-card">
+    <article className={`history-card ${isExpanded ? "is-expanded" : ""}`}>
       <div className="history-card-main">
         <span className="history-badge">{historyTypeLabels[record.type]}</span>
         <h3>{record.title}</h3>
@@ -169,10 +169,10 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
       <HistoryRecordDetail expanded={isExpanded} record={record} />
 
       <div className="history-actions">
-        <button type="button" onClick={() => setIsExpanded((current) => !current)}>
+        <button className="history-action-expand" type="button" onClick={() => setIsExpanded((current) => !current)}>
           {isExpanded ? "收起详情" : "展开详情"}
         </button>
-        <button type="button" onClick={() => onDelete(record.id)}>
+        <button className="history-action-delete" type="button" onClick={() => onDelete(record.id)}>
           删除记录
         </button>
       </div>

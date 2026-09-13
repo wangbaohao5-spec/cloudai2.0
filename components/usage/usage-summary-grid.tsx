@@ -19,10 +19,9 @@ function formatRule(windowSeconds: number, max: number) {
 
 export function UsageSummaryGrid({ summaries }: UsageSummaryGridProps) {
   return (
-    <section className="usage-stat-panel glass-card">
+    <section className="usage-stat-panel cai-panel">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Quota 24H</p>
           <h2>过去 24 小时额度</h2>
         </div>
         <span>按当前用户统计</span>

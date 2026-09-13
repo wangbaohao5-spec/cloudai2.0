@@ -108,24 +108,18 @@ export function HistoryList() {
   }
 
   return (
-    <section className="history-center glass-card">
-      <div className="history-center-hero">
-        <div>
-          <p className="eyebrow">History Center</p>
-          <h2>历史中心</h2>
-          <p>统一查看上架文案、创作助手、商品图、商品图精修、视频工坊和商品分析记录。媒体文件会通过云端资产生成临时访问链接。</p>
+    <section className="history-center cai-panel">
+      <div className="history-controls">
+        <div className="history-filter-tabs" aria-label="历史类型筛选">
+          {historyFilters.map((filter) => (
+            <button className={activeFilter === filter.value ? "active" : ""} key={filter.value} type="button" onClick={() => setActiveFilter(filter.value)}>
+              {filter.label}
+            </button>
+          ))}
         </div>
         <button className="history-clear-button" disabled={!records.length || isLoading} type="button" onClick={() => void handleClear()}>
           清空记录
         </button>
-      </div>
-
-      <div className="history-filter-tabs" aria-label="历史类型筛选">
-        {historyFilters.map((filter) => (
-          <button className={activeFilter === filter.value ? "active" : ""} key={filter.value} type="button" onClick={() => setActiveFilter(filter.value)}>
-            {filter.label}
-          </button>
-        ))}
       </div>
 
       {error ? (
@@ -150,7 +144,7 @@ export function HistoryList() {
             ))}
           </div>
           {hasMore ? (
-            <button className="button secondary" disabled={isLoadingMore || !nextCursor} type="button" onClick={() => void loadRecords(nextCursor)}>
+            <button className="cai-button cai-button--secondary" disabled={isLoadingMore || !nextCursor} type="button" onClick={() => void loadRecords(nextCursor)}>
               {isLoadingMore ? (
                 <>
                   <LoadingIndicator />

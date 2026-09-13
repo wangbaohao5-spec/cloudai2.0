@@ -59,7 +59,10 @@ describe("support route integration", () => {
 
     expect(dashboardLayout).toContain("getCurrentUser");
     expect(dashboardLayout).toContain('redirect("/login")');
-    expect(readWorkspaceFile("app/dashboard/support/page.tsx")).toContain("反馈与支持");
+    expect(readWorkspaceFile("app/dashboard/support/page.tsx")).toContain("dashboard-support-page");
+    expect(readWorkspaceFile("components/dashboard/dashboard-page-heading.tsx")).toContain(
+      '{ path: "/dashboard/support", title: "反馈与支持"',
+    );
   });
 
   it("is reachable from the account menu and existing contact panel", () => {

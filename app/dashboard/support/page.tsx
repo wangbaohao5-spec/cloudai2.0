@@ -7,12 +7,6 @@ export default function SupportPage() {
   return (
     <main className="dashboard-content">
       <section className="dashboard-support-page">
-        <div className="dashboard-support-header">
-          <p className="eyebrow">Beta Support</p>
-          <h1>反馈与支持</h1>
-          <p>如果你在使用 Vahoro 时遇到问题，或有功能建议，可以通过下面的方式联系我们。</p>
-        </div>
-
         <section className="dashboard-support-grid">
           <article className="dashboard-support-card dashboard-support-card--primary cai-card cai-card--compact">
             <div>

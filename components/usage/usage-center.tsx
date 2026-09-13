@@ -13,14 +13,11 @@ function getTotalLast24Hours(data: UsageCenterData) {
 export function UsageCenter({ data }: UsageCenterProps) {
   return (
     <section className="usage-center">
-      <div className="dashboard-overview-hero glass-card">
-        <p className="eyebrow">Quota Center</p>
-        <h2>额度中心</h2>
-        <p>查看图片、文案、视频和商品分析等能力的额度使用情况。</p>
-        <div className="usage-center-hero-meta">
-          <span>过去 24 小时已使用 {getTotalLast24Hours(data)} 次额度</span>
-          <span>更新于 {new Date(data.generatedAt).toLocaleString("zh-CN")}</span>
-        </div>
+      <div className="usage-center-overview">
+        <p>
+          过去 24 小时已使用 <strong>{getTotalLast24Hours(data)}</strong> 次额度
+        </p>
+        <span>更新于 {new Date(data.generatedAt).toLocaleString("zh-CN")}</span>
       </div>
 
       <UsageSummaryGrid summaries={data.summaries} />
