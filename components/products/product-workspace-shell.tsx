@@ -210,7 +210,7 @@ function ProductWorkspaceStartPanel({
   return (
     <section className="product-workspace-start" aria-label={isPendingAnalysis ? "待分析商品" : "开始商品创作"}>
       <div className="product-workspace-start-header">
-        <p className="eyebrow">PRODUCT WORKSPACE</p>
+        <p className="product-workspace-kicker">商品工作台</p>
         <h1>商品工作台</h1>
         <p>
           {isPendingAnalysis
@@ -351,7 +351,7 @@ function ProductProjectContextHeader({
             )}
           </div>
           <div className="product-project-context-copy">
-            <p className="eyebrow">当前商品</p>
+            <p className="product-workspace-context-label">当前商品</p>
             <h1>{productName}</h1>
             <div>
               {category ? <span>{category}</span> : null}

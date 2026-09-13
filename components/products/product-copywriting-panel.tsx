@@ -363,8 +363,7 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
 
   if (!analysisResult) {
     return (
-      <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
-        <p className="eyebrow">Next Step</p>
+      <section className="product-copywriting-panel product-workspace-tool-surface" id="product-copywriting-panel">
         <h2>上架文案</h2>
         <p className="image-generation-intro">先完成商品图片分析，Vahoro 会把识别到的类别、卖点和目标用户转成可发布的商品上架文案。</p>
       </section>
@@ -372,11 +371,11 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
   }
 
   return (
-    <section className="product-copywriting-panel glass-card" id="product-copywriting-panel">
+    <section className="product-copywriting-panel product-workspace-tool-surface" id="product-copywriting-panel">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Next Step</p>
+          <p className="product-workspace-kicker">内容生成</p>
           <h2>上架文案</h2>
           <p className="image-generation-intro">基于当前商品分析结果生成商品标题、卖点、描述和平台文案。</p>
         </div>
@@ -410,7 +409,7 @@ export function ProductCopywritingPanel({ analysisResult, outputSettings, onGene
             ))}
           </select>
         </label>
-        <button className="button primary" disabled={!analysisResult.historyId || isCopywritingLoading} type="submit">
+        <button className="cai-button cai-button--primary" disabled={!analysisResult.historyId || isCopywritingLoading} type="submit">
           {isCopywritingLoading ? (
             <>
               <AiThinkingLoading size="sm" />

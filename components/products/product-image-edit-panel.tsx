@@ -106,8 +106,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
 
   if (!analysisResult) {
     return (
-      <section className="product-scene-image-panel glass-card" id="product-image-edit-panel">
-        <p className="eyebrow">Image Workflow</p>
+      <section className="product-scene-image-panel product-workspace-tool-surface" id="product-image-edit-panel">
         <h2>商品图精修</h2>
         <p className="image-generation-intro">完成商品图片分析后，可以基于上传的原商品图生成主图、详情图、种草图或广告视觉图。</p>
       </section>
@@ -115,11 +114,11 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
   }
 
   return (
-    <section className="product-scene-image-panel glass-card" id="product-image-edit-panel">
+    <section className="product-scene-image-panel product-workspace-tool-surface" id="product-image-edit-panel">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Image Workflow</p>
+          <p className="product-workspace-kicker">图片生成</p>
           <h2>商品图精修</h2>
           <p className="image-generation-intro">基于当前上传的原商品图进行 AI 编辑优化，尽量保持商品主体、颜色和结构一致。</p>
         </div>
@@ -147,7 +146,7 @@ export function ProductImageEditPanel({ analysisResult, outputSettings, onGenera
           label="预计消耗 1 张图片额度"
           description="生成前请确认优化 Prompt 和商品保真要求；实际记录以额度中心为准。"
         />
-        <button className="button primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
+        <button className="cai-button cai-button--primary" disabled={!analysisResult.assetId || isGenerating} type="submit">
           {isGenerating ? (
             <>
               <LongGenerationLoading size="sm" />

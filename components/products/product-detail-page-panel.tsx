@@ -188,8 +188,8 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
   if (!analysisResult) {
     return (
-      <section className="product-detail-page-panel glass-card">
-        <p className="eyebrow">Detail Page</p>
+      <section className="product-detail-page-panel product-workspace-tool-surface">
+        <p className="product-workspace-kicker">详情页制作</p>
         <h2>详情页素材</h2>
         <p className="image-generation-intro">完成商品分析后，可以按需规划并生成详情页图片素材。</p>
       </section>
@@ -197,10 +197,10 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   }
 
   return (
-    <section className="product-detail-page-panel glass-card">
+    <section className="product-detail-page-panel product-workspace-tool-surface">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Detail Page</p>
+          <p className="product-workspace-kicker">详情页制作</p>
           <h2>详情页素材</h2>
           <p className="image-generation-intro">基于当前商品分析和生成要求，按需规划详情页图片素材。</p>
         </div>
@@ -256,7 +256,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
       <div className="product-generation-action-stack">
         <ProductGenerationCostHint compact type="detail-page" estimatedCost={0} label="规划不会消耗图片额度" />
-        <button className="button primary" disabled={isPlanning || generatingPageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
+        <button className="cai-button cai-button--primary" disabled={isPlanning || generatingPageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
           {isPlanning ? (
             <>
               <AiThinkingLoading size="sm" />

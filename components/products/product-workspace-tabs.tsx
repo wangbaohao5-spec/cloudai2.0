@@ -373,16 +373,16 @@ export function ProductWorkspaceTabs({
                 description="商品分析已完成。先确认生成要求和发布目标，再选择要制作的商品内容。"
                 actions={
                   <>
-                    <button className="button secondary" type="button" onClick={() => switchTabAndFocus("copywriting", "product-copywriting-panel")}>
+                    <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTabAndFocus("copywriting", "product-copywriting-panel")}>
                       生成上架文案
                     </button>
-                    <button className="button secondary" type="button" onClick={() => switchTabAndFocus("images", "product-image-edit-panel")}>
+                    <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTabAndFocus("images", "product-image-edit-panel")}>
                       优化商品原图
                     </button>
-                    <button className="button primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                    <button className="cai-button cai-button--primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
                       生成商品套图
                     </button>
-                    <Link className="button secondary" href={getDetailPageHref(result.historyId)}>
+                    <Link className="cai-button cai-button--secondary" href={getDetailPageHref(result.historyId)}>
                       制作详情页
                     </Link>
                   </>
@@ -418,25 +418,25 @@ export function ProductWorkspaceTabs({
                 actions={
                   generatedAssetCount ? (
                     <>
-                      <button className="button primary" type="button" onClick={() => switchTab("export")}>
+                      <button className="cai-button cai-button--primary" type="button" onClick={() => switchTab("export")}>
                         导出素材包
                       </button>
-                      <button className="button secondary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                      <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
                         继续生成套图
                       </button>
-                      <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
+                      <Link className="cai-button cai-button--secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
                         制作详情页
                       </Link>
                     </>
                   ) : (
                     <>
-                      <button className="button primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                      <button className="cai-button cai-button--primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
                         去生成套图
                       </button>
-                      <button className="button secondary" type="button" onClick={() => switchTabAndFocus("images", "product-image-edit-panel")}>
+                      <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTabAndFocus("images", "product-image-edit-panel")}>
                         去原图优化
                       </button>
-                      <button className="button secondary" type="button" onClick={() => switchTabAndFocus("copywriting", "product-copywriting-panel")}>
+                      <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTabAndFocus("copywriting", "product-copywriting-panel")}>
                         去上架文案
                       </button>
                     </>
@@ -569,22 +569,22 @@ export function ProductWorkspaceTabs({
                   actions={
                     hasCorePackage ? (
                       <>
-                        <button className="button secondary" type="button" onClick={() => switchTab("assets")}>
+                        <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTab("assets")}>
                           查看素材库
                         </button>
-                        <button className="button secondary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                        <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
                           继续生成套图
                         </button>
                       </>
                     ) : (
                       <>
-                        <button className="button primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
+                        <button className="cai-button cai-button--primary" type="button" onClick={() => switchTabAndFocus("imageSet", "product-workspace-panel-imageSet")}>
                           去生成套图
                         </button>
-                        <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
+                        <Link className="cai-button cai-button--secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
                           去详情页制作
                         </Link>
-                        <button className="button secondary" type="button" onClick={() => switchTab("assets")}>
+                        <button className="cai-button cai-button--secondary" type="button" onClick={() => switchTab("assets")}>
                           查看素材库
                         </button>
                       </>

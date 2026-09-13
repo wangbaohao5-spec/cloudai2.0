@@ -89,7 +89,7 @@ export function ProductOutputSettingsEditor({ analysisHistoryId, onSettingsChang
           <strong>{formatProductOutputSettingsSummary(settings)}</strong>
           <p>用于控制后续文案、图片、商品套图和详情页的输出方向。</p>
         </div>
-        <button className="button secondary" type="button" onClick={() => setIsEditing((current) => !current)}>
+        <button className="cai-button cai-button--secondary" type="button" onClick={() => setIsEditing((current) => !current)}>
           {isEditing ? "收起" : "修改"}
         </button>
       </div>

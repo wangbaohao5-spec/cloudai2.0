@@ -78,12 +78,12 @@ export function ProductRiskScanAlert({ onOpenRiskConfirmations, riskScan, showAc
         </div>
         <div className="product-risk-alert-actions">
           {categoryEntries.length ? (
-            <button className="button ghost product-risk-alert-action" type="button" onClick={() => setIsDetailOpen((current) => !current)}>
+            <button className="cai-button cai-button--ghost product-risk-alert-action" type="button" onClick={() => setIsDetailOpen((current) => !current)}>
               {isDetailOpen ? "收起详情" : "查看详情"}
             </button>
           ) : null}
           {showAction ? (
-            <button className="button secondary product-risk-alert-action" type="button" onClick={onOpenRiskConfirmations || scrollToRiskConfirmations}>
+            <button className="cai-button cai-button--secondary product-risk-alert-action" type="button" onClick={onOpenRiskConfirmations || scrollToRiskConfirmations}>
               补充风险确认
             </button>
           ) : null}

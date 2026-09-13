@@ -175,7 +175,7 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
     <section className="product-generation-brief cai-card cai-card--compact">
       <div className="product-generation-brief-header">
         <div>
-          <p className="eyebrow">Generation Brief</p>
+          <p className="product-workspace-kicker">生成要求</p>
           <h3>商品卖点 & 生成要求</h3>
           <p>Vahoro 会根据商品分析整理一份生成任务书。你可以按需编辑卖点、风格和必须保留的细节，后续生成图片和详情页时会优先参考这些内容。</p>
         </div>
@@ -219,10 +219,10 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
           </div>
 
           <div className="product-generation-brief-compact-actions">
-            <button className="button primary" type="button" onClick={() => setIsEditing(true)}>
+            <button className="cai-button cai-button--primary" type="button" onClick={() => setIsEditing(true)}>
               编辑生成要求
             </button>
-            <button className="button ghost product-generation-brief-reset" type="button" onClick={handleReset}>
+            <button className="cai-button cai-button--ghost product-generation-brief-reset" type="button" onClick={handleReset}>
               重置为 AI 分析结果
             </button>
             {status ? <span>{status}</span> : null}
@@ -356,13 +356,13 @@ export function ProductGenerationBriefEditor({ analysis, analysisHistoryId, onBr
       </div>
 
       <div className="product-generation-brief-actions">
-        <button className="button secondary" type="button" onClick={handleSave}>
+        <button className="cai-button cai-button--secondary" type="button" onClick={handleSave}>
           保存到本次商品
         </button>
-        <button className="button ghost" type="button" onClick={handleReset}>
+        <button className="cai-button cai-button--ghost" type="button" onClick={handleReset}>
           重置为 AI 分析结果
         </button>
-        <button className="button ghost" type="button" onClick={() => setIsEditing(false)}>
+        <button className="cai-button cai-button--ghost" type="button" onClick={() => setIsEditing(false)}>
           收起编辑
         </button>
         {status ? <span>{status}</span> : null}

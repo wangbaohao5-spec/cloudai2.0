@@ -549,7 +549,7 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
             <strong>暂未生成详情页素材</strong>
             <p>需要详情页图片时，可前往详情页制作；这里的复制和下载内容不会受影响。</p>
           </div>
-          <Link className="button secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
+          <Link className="cai-button cai-button--secondary" href={getDetailPageHref(data.product.analysisHistoryId)}>
             前往详情页制作
           </Link>
         </div>

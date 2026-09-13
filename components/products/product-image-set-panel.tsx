@@ -148,7 +148,7 @@ function ImageSetStructureValidationNotice({
           </span>
         </div>
         {structureValidation.items.length ? (
-          <button className="button secondary" type="button" onClick={() => setIsOpen((current) => !current)}>
+          <button className="cai-button cai-button--secondary" type="button" onClick={() => setIsOpen((current) => !current)}>
             {isOpen ? "收起结构详情" : "查看结构详情"}
           </button>
         ) : null}
@@ -481,8 +481,7 @@ export function ProductImageSetPanel({
 
   if (!analysisResult) {
     return (
-      <section className="product-image-set-panel glass-card cai-panel">
-        <p className="eyebrow">Image Set</p>
+      <section className="product-image-set-panel product-workspace-tool-surface cai-panel">
         <h2>商品套图规划</h2>
         <p className="image-generation-intro">完成商品分析后，Vahoro 可以根据商品卖点和目标用途规划一组商品图片结构。</p>
       </section>
@@ -490,10 +489,10 @@ export function ProductImageSetPanel({
   }
 
   return (
-    <section className="product-image-set-panel glass-card cai-panel">
+    <section className="product-image-set-panel product-workspace-tool-surface cai-panel">
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Image Set</p>
+          <p className="product-workspace-kicker">套图生成</p>
           <h2>商品套图规划</h2>
           <p className="image-generation-intro">根据商品分析、卖点要求和目标用途，规划一组适合上架、详情页或社媒使用的商品图片。</p>
         </div>
@@ -597,7 +596,7 @@ export function ProductImageSetPanel({
 
       <div className="product-image-set-plan-entry">
         <ProductGenerationCostHint compact type="image-set" estimatedCost={0} label="规划不会消耗图片额度" description="" />
-        <button className="button primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet || !isCustomStructureValid} type="button" onClick={() => void handleGeneratePlan()}>
+        <button className="cai-button cai-button--primary" disabled={isPlanning || generatingImageIndex !== null || isGeneratingSet || !isCustomStructureValid} type="button" onClick={() => void handleGeneratePlan()}>
           {isPlanning ? (
             <>
               <AiThinkingLoading size="sm" />
@@ -651,11 +650,11 @@ export function ProductImageSetPanel({
               </div>
               <div className="product-image-set-summary-actions">
                 {failedCount ? (
-                  <button className="button secondary" disabled={isGeneratingSet || isPlanning} type="button" onClick={() => void handleRetryFailedImages()}>
+                  <button className="cai-button cai-button--secondary" disabled={isGeneratingSet || isPlanning} type="button" onClick={() => void handleRetryFailedImages()}>
                     重试失败项
                   </button>
                 ) : null}
-                <button className="button primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>
+                <button className="cai-button cai-button--primary" disabled={isGeneratingSet || isPlanning || isFullSetGenerated} type="button" onClick={() => void handleGenerateFullSet()}>
                   {getFullSetButtonLabel()}
                 </button>
               </div>
@@ -669,12 +668,12 @@ export function ProductImageSetPanel({
               </div>
               <div>
                 {onViewAssets ? (
-                  <button className="button secondary" type="button" onClick={onViewAssets}>
+                  <button className="cai-button cai-button--secondary" type="button" onClick={onViewAssets}>
                     查看素材库
                   </button>
                 ) : null}
                 {onViewExport ? (
-                  <button className="button secondary" type="button" onClick={onViewExport}>
+                  <button className="cai-button cai-button--secondary" type="button" onClick={onViewExport}>
                     导出素材包
                   </button>
                 ) : null}

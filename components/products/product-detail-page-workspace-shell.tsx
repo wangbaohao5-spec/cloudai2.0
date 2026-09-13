@@ -351,7 +351,7 @@ export function ProductDetailPageWorkspaceShell() {
             <Link className="product-detail-page-project-link" href={workspaceHref}>
               ← 返回当前商品
             </Link>
-            <p className="eyebrow">Detail Page Tool</p>
+            <p className="product-workspace-kicker">详情页制作</p>
             <h1>详情页制作</h1>
             <p>正在为「{productName}」规划详情页结构，并生成详情页图片素材。</p>
           </div>

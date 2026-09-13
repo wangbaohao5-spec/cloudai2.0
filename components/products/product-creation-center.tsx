@@ -68,8 +68,8 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
 
   if (!analysisHistoryId) {
     return (
-      <section className="product-creation-center glass-card">
-        <p className="eyebrow">Creation Center</p>
+      <section className="product-creation-center product-workspace-tool-surface">
+        <p className="product-workspace-kicker">创作区域</p>
         <h2>商品创作中心</h2>
         <p className="image-generation-intro">完成商品图片分析后，这里会汇总这个商品的创作进度、继续创作入口和已生成素材。</p>
       </section>
@@ -78,8 +78,8 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
 
   if (isLoading) {
     return (
-      <section className="product-creation-center glass-card">
-        <p className="eyebrow">Creation Center</p>
+      <section className="product-creation-center product-workspace-tool-surface">
+        <p className="product-workspace-kicker">创作区域</p>
         <h2>商品创作中心</h2>
         <p className="image-generation-intro">正在整理这个商品的创作记录...</p>
       </section>
@@ -88,8 +88,8 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
 
   if (error) {
     return (
-      <section className="product-creation-center glass-card">
-        <p className="eyebrow">Creation Center</p>
+      <section className="product-creation-center product-workspace-tool-surface">
+        <p className="product-workspace-kicker">创作区域</p>
         <h2>商品创作中心</h2>
         <p className="image-generation-error">{error}</p>
       </section>
@@ -101,7 +101,7 @@ export function ProductCreationCenter({ analysisHistoryId, refreshKey = 0 }: Pro
   }
 
   return (
-    <section className="product-creation-center glass-card">
+    <section className="product-creation-center product-workspace-tool-surface">
       <ProductCreationSummary analysis={data.analysis} originalAsset={data.originalAsset} product={data.product} />
       <ProductCreationProgress
         analysisHistoryId={data.product.analysisHistoryId}

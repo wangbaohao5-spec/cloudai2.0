@@ -138,8 +138,8 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
 
   if (!analysisResult) {
     return (
-      <section className="product-scene-image-panel glass-card" id="product-scene-image-panel">
-        <p className="eyebrow">Visual Workflow</p>
+      <section className="product-scene-image-panel product-workspace-tool-surface" id="product-scene-image-panel">
+        <p className="product-workspace-kicker">图片生成</p>
         <h2>AI 商品营销场景图</h2>
         <p className="image-generation-intro">完成商品图片分析后，可以选择营销场景和视觉风格，生成适合投放或上架的场景图。</p>
       </section>
@@ -147,11 +147,11 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
   }
 
   return (
-    <section className="product-scene-image-panel glass-card" id="product-scene-image-panel">
+    <section className="product-scene-image-panel product-workspace-tool-surface" id="product-scene-image-panel">
       {feedback ? <WorkspaceToast message={feedback.message} tone={feedback.tone} /> : null}
       <div className="dashboard-section-header">
         <div>
-          <p className="eyebrow">Visual Workflow</p>
+          <p className="product-workspace-kicker">图片生成</p>
           <h2>AI 商品营销场景图</h2>
           <p className="image-generation-intro">基于当前商品分析结果生成营销场景图，不依赖原图复制。</p>
         </div>
@@ -220,7 +220,7 @@ export function ProductSceneImagePanel({ analysisResult, generationBrief, output
           label="预计消耗 1 张图片额度"
           description="生成前请确认场景、风格和保真模式；实际记录以额度中心为准。"
         />
-        <button className="button primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
+        <button className="cai-button cai-button--primary" disabled={!analysisResult.historyId || isGenerating} type="submit">
           {isGenerating ? (
             <>
               <LongGenerationLoading size="sm" />

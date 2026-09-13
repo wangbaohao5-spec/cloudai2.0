@@ -302,7 +302,7 @@ function AssetGroup({
         <div className="product-asset-empty">
           <p>{emptyText}</p>
           {actionHref && actionLabel ? (
-            <Link className="button secondary" href={actionHref}>
+            <Link className="cai-button cai-button--secondary" href={actionHref}>
               {actionLabel}
             </Link>
           ) : null}

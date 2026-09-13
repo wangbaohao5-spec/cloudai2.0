@@ -23,7 +23,7 @@ export function ProductCreationSummary({ analysis, originalAsset, product }: Pro
       </div>
 
       <div className="product-creation-main">
-        <p className="eyebrow">创作中心</p>
+        <p className="product-workspace-kicker">创作中心</p>
         <h2>{productName}</h2>
         <p>
           {analysis.category || "商品"} · {analysis.targetAudience || "目标用户待补充"}

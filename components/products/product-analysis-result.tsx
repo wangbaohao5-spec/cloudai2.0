@@ -191,9 +191,13 @@ export function ProductAnalysisResult({
   const summaryPoints = analysis?.sellingPoints.slice(0, 3) || [];
 
   return (
-    <div className="product-analysis-result glass-card">
-      <p className="eyebrow">分析结果</p>
-      <h2>{title || "商品图片分析结果"}</h2>
+    <section className="product-analysis-result product-workspace-result-surface">
+      <header className="product-workspace-section-heading">
+        <div>
+          <span>分析结果</span>
+          <h2>{title || "商品图片分析结果"}</h2>
+        </div>
+      </header>
 
       {!analysis ? (
         <div className="copywriting-result-empty">
@@ -278,6 +282,6 @@ export function ProductAnalysisResult({
           ) : null}
         </div>
       )}
-    </div>
+    </section>
   );
 }

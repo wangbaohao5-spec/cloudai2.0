@@ -245,8 +245,8 @@ export function ProductWorkflowShell() {
   return (
     <main className="dashboard-content">
       <section className="product-workflow-shell">
-        <div className="product-workflow-panel glass-card">
-          <p className="eyebrow">Product Workflow</p>
+        <div className="product-workflow-panel product-workspace-tool-surface">
+          <p className="product-workspace-kicker">商品流程</p>
           <h2>商品图 AI 分析</h2>
           <p className="image-generation-intro">
             上传商品图片，Vahoro 会识别商品类别、特点、卖点、目标用户和使用场景。分析完成后，右侧会继续引导你生成商品文案。
@@ -280,7 +280,7 @@ export function ProductWorkflowShell() {
             {uploadedAsset ? <span>{uploadedAsset.name}</span> : null}
           </div>
 
-          <button className="button primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={() => void handleAnalyze()}>
+          <button className="cai-button cai-button--primary" disabled={!uploadedAsset || isUploading || isAnalyzing || isRestoring} type="button" onClick={() => void handleAnalyze()}>
             {isUploading ? "上传中..." : isAnalyzing ? "分析中..." : "分析商品图片"}
           </button>
 

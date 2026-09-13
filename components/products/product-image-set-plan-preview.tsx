@@ -255,7 +255,7 @@ export function ProductImageSetPlanPreview({
                 description="实际记录以额度中心为准。"
               />
               <span>{image.suggestedGenerationMode === "creative" ? "推荐：营销创意" : "推荐：保真优化"}</span>
-              <button className="button secondary" type="button" disabled={isGenerating || isGenerationDisabled} onClick={() => onGenerateImage?.(image)}>
+              <button className="cai-button cai-button--secondary" type="button" disabled={isGenerating || isGenerationDisabled} onClick={() => onGenerateImage?.(image)}>
                 {isGenerating ? (
                   <>
                     <LongGenerationLoading size="sm" />

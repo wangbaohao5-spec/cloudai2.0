@@ -159,7 +159,7 @@ export function ProductWorkspaceRail({
     return (
       <aside className="product-workspace-rail product-workspace-rail--start">
         <div className="product-workspace-rail-section product-workspace-rail-heading">
-          <p className="eyebrow">商品工作台</p>
+          <p className="product-workspace-kicker">商品工作台</p>
           <h2>{mode === "pending" ? "等待商品策划" : "等待上传商品图"}</h2>
           <p className="image-generation-intro">{railStatus.description}</p>
         </div>
@@ -196,7 +196,7 @@ export function ProductWorkspaceRail({
   return (
     <aside className="product-workspace-rail">
       <div className="product-workspace-rail-section product-workspace-rail-heading">
-        <p className="eyebrow">当前进度</p>
+        <p className="product-workspace-kicker">当前进度</p>
         <h2>创作状态</h2>
         <p className="image-generation-intro">围绕当前商品继续生成、整理和导出素材。</p>
       </div>
@@ -244,13 +244,13 @@ export function ProductWorkspaceRail({
             <span>{generatedCount ? `已生成 ${generatedCount} 项素材，可继续补充或导出。` : "建议先生成商品套图，再查看素材库并导出。"}</span>
           </div>
           <div className="product-workspace-rail-next-actions">
-            <a className="button primary" href={getWorkspaceTabHref(analysisHistoryId, "image-set")}>
+            <a className="cai-button cai-button--primary" href={getWorkspaceTabHref(analysisHistoryId, "image-set")}>
               生成套图
             </a>
-            <a className="button secondary" href={getWorkspaceTabHref(analysisHistoryId, "assets")}>
+            <a className="cai-button cai-button--secondary" href={getWorkspaceTabHref(analysisHistoryId, "assets")}>
               查看素材库
             </a>
-            <a className="button secondary" href={getWorkspaceTabHref(analysisHistoryId, "export")}>
+            <a className="cai-button cai-button--secondary" href={getWorkspaceTabHref(analysisHistoryId, "export")}>
               导出
             </a>
           </div>
