@@ -15,7 +15,7 @@ const workflowHints = [
 export function ChatSidebar() {
   return (
     <aside className="chat-sidebar cai-card cai-card--compact">
-      <p className="eyebrow">Assistant Mode</p>
+      <p className="quick-tool-kicker">Assistant Mode</p>
       <h2>创作助手</h2>
       <p className="chat-sidebar-intro">围绕商品卖点、平台表达、素材方向和创作思路快速获得建议。</p>
       <div className="chat-sidebar-section">

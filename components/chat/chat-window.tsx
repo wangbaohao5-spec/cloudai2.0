@@ -110,7 +110,7 @@ export function ChatWindow() {
     <section className="chat-window cai-card cai-card--compact">
       <div className="chat-window-header">
         <div>
-          <p className="eyebrow">Commerce Assistant</p>
+          <p className="quick-tool-kicker">Commerce Assistant</p>
           <h2>创作助手</h2>
           <p>快速梳理商品卖点、平台表达、素材方向和内容创作思路。</p>
         </div>

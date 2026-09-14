@@ -8,7 +8,7 @@ export function CopywritingResult({ result }: CopywritingResultProps) {
   if (!result) {
     return (
       <article className="copywriting-result cai-result-card" aria-live="polite">
-        <p className="eyebrow">Result</p>
+        <p className="quick-tool-kicker">Result</p>
         <h2>等待上架内容</h2>
         <div className="copywriting-result-empty cai-empty">
           <span className="cai-empty__icon" aria-hidden="true">
@@ -23,7 +23,7 @@ export function CopywritingResult({ result }: CopywritingResultProps) {
 
   return (
     <article className="copywriting-result cai-result-card" aria-live="polite">
-      <p className="eyebrow">Result</p>
+      <p className="quick-tool-kicker">Result</p>
       <h2>上架内容</h2>
       <div className="copywriting-result-group">
         <strong>商品标题</strong>

@@ -83,6 +83,7 @@
 .landing-logo {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: 10px;
   flex: 0 0 auto;
   font-size: 1.08rem;
@@ -785,6 +786,9 @@
 }
 
 .landing-text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--landing-brand-strong);
   font-size: 0.86rem;
   font-weight: 720;
@@ -815,6 +819,12 @@
   align-content: start;
   gap: 12px;
   font-size: 0.86rem;
+}
+
+.landing-footer-grid a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .landing-footer-grid strong {

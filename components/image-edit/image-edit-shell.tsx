@@ -74,7 +74,7 @@ export function ImageEditShell() {
       <ImageModeTabs />
       <section className="image-edit-shell">
         <div className="image-edit-panel cai-card cai-card--compact">
-          <p className="eyebrow">Commerce Tool</p>
+          <p className="quick-tool-kicker">Commerce Tool</p>
           <h2>商品图精修</h2>
           <p className="image-generation-intro">上传任意商品图片并选择优化方向，也可以补充自由编辑要求，快速完成图片优化与编辑。</p>
           <ImageEditForm

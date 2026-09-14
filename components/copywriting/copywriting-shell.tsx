@@ -42,7 +42,7 @@ export function CopywritingShell() {
     <main className="dashboard-content">
       <section className="copywriting-shell">
         <div className="copywriting-panel cai-card cai-card--compact">
-          <p className="eyebrow">Commerce Tool</p>
+          <p className="quick-tool-kicker">Commerce Tool</p>
           <h2>上架文案</h2>
           <p className="image-generation-intro">输入商品基础信息和卖点，快速生成适合上架使用的标题、卖点、商品描述和平台文案。</p>
           <CopywritingForm error={error} isLoading={isLoading} onSubmit={handleSubmit} />
