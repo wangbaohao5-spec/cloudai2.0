@@ -705,35 +705,47 @@
   display: grid;
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   gap: 80px;
-  align-items: center;
+  align-items: start;
 }
 
-.landing-workspace-copy > ul {
+.landing-workspace-narrative {
   display: grid;
-  gap: 12px;
-  margin: 30px 0 0;
-  padding: 0;
-  list-style: none;
+  margin-top: 34px;
 }
 
-.landing-workspace-copy > ul li {
-  position: relative;
-  padding-left: 21px;
-  color: var(--landing-text);
-  font-weight: 680;
+.landing-workspace-step {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 16px;
+  border-top: 1px solid var(--landing-border);
+  padding: 24px 8px 24px 0;
 }
 
-.landing-workspace-copy > ul li::before {
-  position: absolute;
-  top: 0.65em;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--landing-brand);
-  content: "";
+.landing-workspace-step:last-child {
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.landing-workspace-step > span {
+  color: var(--landing-text-soft);
+  font-size: 0.74rem;
+  font-weight: 760;
+  line-height: 1.65;
+}
+
+.landing-workspace-step h3 {
+  margin: 0;
+  font-size: 1.06rem;
+}
+
+.landing-workspace-step p {
+  margin: 8px 0 0;
+  color: var(--landing-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.75;
 }
 
 .landing-quick-tools-note {
+  margin-top: 24px !important;
   border-top: 1px solid var(--landing-border-strong);
   padding-top: 16px;
   font-size: 0.86rem;
@@ -780,6 +792,75 @@
   font-size: 0.82rem;
   font-weight: 720;
   text-align: center;
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .landing-motion-enhanced .landing-workspace-step {
+    min-height: clamp(220px, 32vh, 300px);
+    align-content: center;
+    border-left: 2px solid transparent;
+    padding-right: 18px;
+    padding-left: 22px;
+    opacity: 0.54;
+    transition:
+      opacity 300ms var(--landing-motion-ease-out),
+      color 300ms var(--landing-motion-ease-out),
+      background-color 300ms var(--landing-motion-ease-out),
+      border-color 300ms var(--landing-motion-ease-out),
+      transform 300ms var(--landing-motion-ease-out);
+  }
+
+  .landing-motion-enhanced .landing-workspace-step[aria-current="step"] {
+    border-left-color: var(--landing-interaction);
+    background: var(--landing-surface-subtle);
+    opacity: 1;
+    transform: translateX(3px);
+  }
+
+  .landing-motion-enhanced .landing-workspace-step[aria-current="step"] > span,
+  .landing-motion-enhanced .landing-workspace-step[aria-current="step"] h3 {
+    color: var(--landing-brand-strong);
+  }
+
+  .landing-motion-enhanced .landing-workspace-structure {
+    position: sticky;
+    top: 104px;
+  }
+
+  .landing-motion-enhanced .landing-workspace-structure [data-workspace-region] {
+    opacity: 0.34;
+    transition:
+      opacity 300ms var(--landing-motion-ease-out),
+      color 300ms var(--landing-motion-ease-out),
+      background-color 300ms var(--landing-motion-ease-out),
+      border-color 300ms var(--landing-motion-ease-out),
+      transform 300ms var(--landing-motion-ease-out);
+  }
+
+  .landing-motion-enhanced
+    .landing-workspace-structure[data-landing-workspace-state="1"]
+    [data-workspace-region="1"],
+  .landing-motion-enhanced
+    .landing-workspace-structure[data-landing-workspace-state="2"]
+    [data-workspace-region="2"],
+  .landing-motion-enhanced
+    .landing-workspace-structure[data-landing-workspace-state="3"]
+    [data-workspace-region="3"] {
+    border-color: var(--landing-border-strong);
+    color: var(--landing-text);
+    background: var(--landing-brand-subtle);
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+
+  .landing-motion-enhanced
+    .landing-workspace-structure[data-landing-workspace-state="2"]
+    [data-workspace-region="1"],
+  .landing-motion-enhanced
+    .landing-workspace-structure[data-landing-workspace-state="3"]
+    [data-workspace-region="1"] {
+    opacity: 0.64;
+  }
 }
 
 .landing-assets {
@@ -1289,6 +1370,13 @@
   font-size: 0.76rem;
 }
 
+@media (max-width: 1023px) {
+  .landing-workspace-layout {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
+
 @media (max-width: 900px) {
   .landing-nav-links,
   .landing-nav-actions {
@@ -1313,12 +1401,10 @@
   }
 
   .landing-section-heading-split,
-  .landing-workspace-layout,
   .landing-assets-layout {
     grid-template-columns: 1fr;
   }
 
-  .landing-workspace-layout,
   .landing-assets-layout {
     gap: 48px;
   }
@@ -1564,7 +1650,6 @@
     font-size: 2.3rem;
   }
 
-  .landing-workspace-areas,
   .landing-footer-grid {
     grid-template-columns: 1fr;
   }

@@ -40,7 +40,32 @@ const capabilities = [
   },
 ];
 
-const workspaceAreas = ["商品策划", "素材库", "上架文案", "原图优化", "商品套图", "素材包"];
+const workspaceNarrative = [
+  {
+    marker: "01",
+    title: "建立商品上下文",
+    description: "商品图片、分析结果、发布目标和生成要求围绕当前商品保留，先确认事实，再继续创作。",
+  },
+  {
+    marker: "02",
+    title: "持续生产内容",
+    description: "上架文案、原图优化、商品套图与详情页共享同一上下文，不需要在孤立工具里重新说明。",
+  },
+  {
+    marker: "03",
+    title: "整理并继续使用",
+    description: "结果进入素材库、素材包和历史记录，之后回来时仍能沿着同一个商品继续补充。",
+  },
+];
+
+const workspaceAreas = [
+  { label: "商品策划", state: "1" },
+  { label: "素材库", state: "3" },
+  { label: "上架文案", state: "2" },
+  { label: "原图优化", state: "2" },
+  { label: "商品套图", state: "2" },
+  { label: "素材包", state: "3" },
+];
 
 interface FeatureSectionProps {
   isAuthenticated: boolean;
@@ -98,11 +123,22 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
           <div className="landing-workspace-copy" data-landing-reveal="section">
             <h2 id="workspace-title">同一个商品，回来还能接着做</h2>
             <p>当前商品会保留分析、生成要求和已完成素材。你可以先做文案，之后再补图片或详情页，不需要重新开始。</p>
-            <ul>
-              <li>当前商品保持明确</li>
-              <li>每类内容都有固定位置</li>
-              <li>生成结果可继续整理和导出</li>
-            </ul>
+            <div className="landing-workspace-narrative">
+              {workspaceNarrative.map((item, index) => (
+                <article
+                  className="landing-workspace-step"
+                  data-landing-workspace-step={index + 1}
+                  id={`workspace-state-${index + 1}`}
+                  key={item.title}
+                >
+                  <span aria-hidden="true">{item.marker}</span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
             <p className="landing-quick-tools-note">一次性任务也可以使用快速工具处理文案、图片精修或创作建议。</p>
           </div>
 
@@ -110,15 +146,19 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
             className="landing-workspace-structure"
             aria-labelledby="workspace-structure-caption"
             data-landing-reveal="section"
+            data-landing-workspace-state="1"
+            data-landing-workspace-visual
           >
             <figcaption id="workspace-structure-caption">工作区结构说明</figcaption>
-            <div className="landing-workspace-context">
+            <div className="landing-workspace-context" data-workspace-region="1">
               <span>当前商品</span>
               <strong>商品信息与生成要求</strong>
             </div>
             <div className="landing-workspace-areas">
               {workspaceAreas.map((area) => (
-                <span key={area}>{area}</span>
+                <span data-workspace-region={area.state} key={area.label}>
+                  {area.label}
+                </span>
               ))}
             </div>
             <small>结构示意，不是商品生成结果截图。</small>

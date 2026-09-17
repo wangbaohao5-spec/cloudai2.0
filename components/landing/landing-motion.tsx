@@ -7,6 +7,7 @@ const ENTERED_CLASS = "is-motion-entered";
 const HERO_PLAYING_CLASS = "is-hero-motion-playing";
 const HERO_COMPLETE_CLASS = "is-hero-motion-complete";
 const HERO_OFFSCREEN_CLASS = "is-hero-offscreen";
+const WORKSPACE_STEP_SELECTOR = "[data-landing-workspace-step]";
 
 export function LandingMotion() {
   useEffect(() => {
@@ -95,6 +96,59 @@ export function LandingMotion() {
       heroObserver.observe(hero);
     }
 
+    const workspaceVisual = page.querySelector<HTMLElement>("[data-landing-workspace-visual]");
+    const workspaceSteps = Array.from(page.querySelectorAll<HTMLElement>(WORKSPACE_STEP_SELECTOR));
+    const workspaceViewport = window.matchMedia("(min-width: 1024px)");
+    let workspaceObserver: IntersectionObserver | undefined;
+
+    const setWorkspaceState = (state: string) => {
+      if (!workspaceVisual || !workspaceViewport.matches) {
+        return;
+      }
+
+      workspaceVisual.dataset.landingWorkspaceState = state;
+      workspaceSteps.forEach((step) => {
+        if (step.dataset.landingWorkspaceStep === state) {
+          step.setAttribute("aria-current", "step");
+        } else {
+          step.removeAttribute("aria-current");
+        }
+      });
+    };
+
+    const handleWorkspaceViewportChange = () => {
+      if (workspaceViewport.matches) {
+        setWorkspaceState(workspaceVisual?.dataset.landingWorkspaceState ?? "1");
+        return;
+      }
+
+      workspaceSteps.forEach((step) => step.removeAttribute("aria-current"));
+    };
+
+    if (workspaceVisual && workspaceSteps.length > 0) {
+      setWorkspaceState("1");
+      workspaceViewport.addEventListener("change", handleWorkspaceViewportChange);
+      workspaceObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
+
+            const state = (entry.target as HTMLElement).dataset.landingWorkspaceStep;
+            if (state) {
+              setWorkspaceState(state);
+            }
+          });
+        },
+        {
+          rootMargin: "-30% 0px -48% 0px",
+          threshold: 0,
+        },
+      );
+      workspaceSteps.forEach((step) => workspaceObserver?.observe(step));
+    }
+
     const header = page.querySelector<HTMLElement>(".landing-header");
     let headerFrame: number | undefined;
 
@@ -123,8 +177,11 @@ export function LandingMotion() {
     return () => {
       revealObserver.disconnect();
       heroObserver?.disconnect();
+      workspaceObserver?.disconnect();
       hero?.removeEventListener("animationend", handleHeroAnimationEnd);
       heroMotionViewport.removeEventListener("change", startHeroMotion);
+      workspaceViewport.removeEventListener("change", handleWorkspaceViewportChange);
+      workspaceSteps.forEach((step) => step.removeAttribute("aria-current"));
       window.removeEventListener("scroll", handleScroll);
       if (headerFrame !== undefined) {
         window.cancelAnimationFrame(headerFrame);
