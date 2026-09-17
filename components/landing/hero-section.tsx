@@ -1,10 +1,9 @@
+import { EditorialFrameHero } from "@/components/landing/editorial-frame-hero";
 import Link from "next/link";
 
 type HeroSectionProps = {
   isAuthenticated: boolean;
 };
-
-const outputs = ["商品分析", "上架文案", "商品图片", "套图与详情页"];
 
 export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   return (
@@ -31,24 +30,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
             <span>产品结构说明</span>
             <strong>一个商品，一条持续的内容工作流</strong>
           </figcaption>
-          <div className="landing-context-flow">
-            <div className="landing-context-source">
-              <span>起点</span>
-              <strong>商品图</strong>
-            </div>
-            <div className="landing-context-connector" aria-hidden="true" />
-            <div className="landing-context-product">
-              <span>同一商品上下文</span>
-              <strong>分析与生成要求</strong>
-              <small>信息确认后，再继续创作</small>
-            </div>
-            <div className="landing-context-connector" aria-hidden="true" />
-            <div className="landing-context-outputs">
-              {outputs.map((output) => (
-                <span key={output}>{output}</span>
-              ))}
-            </div>
-          </div>
+          <EditorialFrameHero />
           <p>结构示意，不代表具体商品生成结果。</p>
         </figure>
       </div>

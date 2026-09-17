@@ -4,6 +4,9 @@ import { useEffect } from "react";
 
 const REVEAL_SELECTOR = "[data-landing-reveal]";
 const ENTERED_CLASS = "is-motion-entered";
+const HERO_PLAYING_CLASS = "is-hero-motion-playing";
+const HERO_COMPLETE_CLASS = "is-hero-motion-complete";
+const HERO_OFFSCREEN_CLASS = "is-hero-offscreen";
 
 export function LandingMotion() {
   useEffect(() => {
@@ -48,6 +51,50 @@ export function LandingMotion() {
       revealObserver.observe(element);
     });
 
+    const hero = page.querySelector<HTMLElement>("[data-landing-hero-motion]");
+    const heroMotionViewport = window.matchMedia("(min-width: 700px)");
+    let heroObserver: IntersectionObserver | undefined;
+    let heroIsVisible = false;
+    let heroHasPlayed = false;
+
+    const startHeroMotion = () => {
+      if (
+        !hero ||
+        heroHasPlayed ||
+        !heroIsVisible ||
+        !heroMotionViewport.matches ||
+        document.visibilityState === "hidden"
+      ) {
+        return;
+      }
+
+      heroHasPlayed = true;
+      hero.classList.add(HERO_PLAYING_CLASS);
+    };
+
+    const handleHeroAnimationEnd = (event: AnimationEvent) => {
+      if (event.animationName !== "landing-hero-frame-build") {
+        return;
+      }
+
+      hero?.classList.remove(HERO_PLAYING_CLASS);
+      hero?.classList.add(HERO_COMPLETE_CLASS);
+    };
+
+    if (hero) {
+      hero.addEventListener("animationend", handleHeroAnimationEnd);
+      heroMotionViewport.addEventListener("change", startHeroMotion);
+      heroObserver = new IntersectionObserver(
+        ([entry]) => {
+          heroIsVisible = entry.isIntersecting;
+          hero.classList.toggle(HERO_OFFSCREEN_CLASS, !heroIsVisible);
+          startHeroMotion();
+        },
+        { threshold: 0.2 },
+      );
+      heroObserver.observe(hero);
+    }
+
     const header = page.querySelector<HTMLElement>(".landing-header");
     let headerFrame: number | undefined;
 
@@ -67,6 +114,7 @@ export function LandingMotion() {
 
     const handleVisibilityChange = () => {
       page.classList.toggle("is-motion-paused", document.visibilityState === "hidden");
+      startHeroMotion();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -74,12 +122,16 @@ export function LandingMotion() {
 
     return () => {
       revealObserver.disconnect();
+      heroObserver?.disconnect();
+      hero?.removeEventListener("animationend", handleHeroAnimationEnd);
+      heroMotionViewport.removeEventListener("change", startHeroMotion);
       window.removeEventListener("scroll", handleScroll);
       if (headerFrame !== undefined) {
         window.cancelAnimationFrame(headerFrame);
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       page.classList.remove("landing-motion-enhanced", "is-motion-paused");
+      hero?.classList.remove(HERO_PLAYING_CLASS, HERO_COMPLETE_CLASS, HERO_OFFSCREEN_CLASS);
     };
   }, []);
 
