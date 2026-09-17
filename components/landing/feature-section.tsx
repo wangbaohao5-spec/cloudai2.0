@@ -51,11 +51,11 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
     <>
       <section id="workflow" className="landing-section landing-workflow" aria-labelledby="workflow-title">
         <div className="landing-shell">
-          <header className="landing-section-heading landing-section-heading-split">
+          <header className="landing-section-heading landing-section-heading-split" data-landing-reveal="section">
             <h2 id="workflow-title">一条清楚的商品内容流程</h2>
             <p>网站只讲四个用户动作。进入工作台后，再按当前商品逐步完成具体内容。</p>
           </header>
-          <ol className="landing-workflow-list">
+          <ol className="landing-workflow-list" data-landing-reveal="workflow">
             {workflowSteps.map((step, index) => (
               <li key={step.title}>
                 <span aria-hidden="true">{index + 1}</span>
@@ -71,12 +71,12 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
 
       <section id="product" className="landing-section landing-capabilities" aria-labelledby="capabilities-title">
         <div className="landing-shell">
-          <header className="landing-section-heading">
+          <header className="landing-section-heading" data-landing-reveal="section">
             <p className="landing-kicker">产品能力</p>
             <h2 id="capabilities-title">不是工具墙，是围绕商品持续创作</h2>
             <p>从确认商品事实到整理交付素材，每一步都留在同一条商品上下文里。</p>
           </header>
-          <div className="landing-capability-list">
+          <div className="landing-capability-list" data-landing-reveal="capabilities">
             {capabilities.map((capability, index) => (
               <article className={index === 0 ? "landing-capability-featured" : undefined} key={capability.title}>
                 <span>{capability.marker}</span>
@@ -95,7 +95,7 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
 
       <section className="landing-section landing-workspace" aria-labelledby="workspace-title">
         <div className="landing-shell landing-workspace-layout">
-          <div className="landing-workspace-copy">
+          <div className="landing-workspace-copy" data-landing-reveal="section">
             <h2 id="workspace-title">同一个商品，回来还能接着做</h2>
             <p>当前商品会保留分析、生成要求和已完成素材。你可以先做文案，之后再补图片或详情页，不需要重新开始。</p>
             <ul>
@@ -106,7 +106,11 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
             <p className="landing-quick-tools-note">一次性任务也可以使用快速工具处理文案、图片精修或创作建议。</p>
           </div>
 
-          <figure className="landing-workspace-structure" aria-labelledby="workspace-structure-caption">
+          <figure
+            className="landing-workspace-structure"
+            aria-labelledby="workspace-structure-caption"
+            data-landing-reveal="section"
+          >
             <figcaption id="workspace-structure-caption">工作区结构说明</figcaption>
             <div className="landing-workspace-context">
               <span>当前商品</span>
@@ -124,13 +128,13 @@ export function FeatureSection({ isAuthenticated }: FeatureSectionProps) {
 
       <section className="landing-section landing-assets" aria-labelledby="assets-title">
         <div className="landing-shell landing-assets-layout">
-          <div>
+          <div data-landing-reveal="section">
             <p className="landing-kicker">素材整理</p>
             <h2 id="assets-title">生成之后，内容仍然属于这个商品</h2>
           </div>
           <div className="landing-assets-copy">
-            <p>图片与文案不会散落在不同工具里。素材库负责集中查看，素材包帮助你把同一商品的内容整理到一起。</p>
-            <dl>
+            <p data-landing-reveal="section">图片与文案不会散落在不同工具里。素材库负责集中查看，素材包帮助你把同一商品的内容整理到一起。</p>
+            <dl data-landing-reveal="assets">
               <div>
                 <dt>素材库</dt>
                 <dd>查看原图、优化图、套图与详情页结果</dd>

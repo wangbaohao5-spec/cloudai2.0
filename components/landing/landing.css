@@ -1,5 +1,5 @@
 /* finesse · register=brand · A=light-substrate+ink+signal-green · B=weight-contrast · C=editorial-flow+structure-map
- * D=css-only-static · E=working-paper+product-grid · SOUL=7 SPECTACLE=3 DENSITY=5 */
+ * D=css+intersection-observer-motion · E=working-paper+product-grid · SOUL=7 SPECTACLE=3 DENSITY=5 */
 
 .landing-page {
   --landing-brand: #174f46;
@@ -11,6 +11,7 @@
   --landing-surface: #fbfdfc;
   --landing-surface-subtle: #edf3f0;
   --landing-surface-inverse: #17231f;
+  --landing-surface-inverse-hover: #1b2a25;
   --landing-text: #17231f;
   --landing-text-muted: #586862;
   --landing-text-soft: #788780;
@@ -26,6 +27,17 @@
   --landing-header-bg: rgba(245, 248, 246, 0.94);
   --landing-hero-overlay: rgba(245, 248, 246, 0.12);
   --landing-shadow: 0 18px 55px rgba(24, 61, 49, 0.1);
+  --landing-motion-fast: 140ms;
+  --landing-motion-standard: 240ms;
+  --landing-motion-slow: 520ms;
+  --landing-motion-ambient: 10s;
+  --landing-motion-stagger: 70ms;
+  --landing-motion-stagger-mobile: 45ms;
+  --landing-motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --landing-motion-ease-ambient: cubic-bezier(0.45, 0, 0.55, 1);
+  --landing-motion-reveal-distance: 16px;
+  --landing-motion-hover-distance: -2px;
+  --landing-motion-scale-start: 0.985;
   min-height: 100vh;
   overflow-x: clip;
   color: var(--landing-text);
@@ -68,9 +80,17 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid var(--landing-border);
-  background: var(--landing-header-bg);
+  border-bottom: 1px solid transparent;
+  background: rgba(245, 248, 246, 0.82);
   backdrop-filter: blur(16px);
+  transition:
+    background-color var(--landing-motion-standard) var(--landing-motion-ease-out),
+    border-color var(--landing-motion-standard) var(--landing-motion-ease-out);
+}
+
+.landing-header.is-scrolled {
+  border-bottom-color: var(--landing-border);
+  background: var(--landing-header-bg);
 }
 
 .landing-nav {
@@ -498,8 +518,18 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
   min-width: 0;
-  border-top: 1px solid var(--landing-border);
   padding: 24px 22px 0 0;
+}
+
+.landing-workflow-list li::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--landing-border);
+  content: "";
+  transform-origin: left center;
 }
 
 .landing-workflow-list li:not(:last-child)::after {
@@ -512,6 +542,7 @@
   border-right: 1px solid var(--landing-brand);
   content: "";
   transform: rotate(45deg);
+  transform-origin: left center;
 }
 
 .landing-workflow-list li > span {
@@ -556,6 +587,10 @@
   min-height: 260px;
   border-left: 1px solid var(--landing-border);
   padding: 34px;
+  transition:
+    transform var(--landing-motion-standard) var(--landing-motion-ease-out),
+    border-color var(--landing-motion-standard) var(--landing-motion-ease-out),
+    background-color var(--landing-motion-standard) var(--landing-motion-ease-out);
 }
 
 .landing-capability-list article:first-child {
@@ -763,6 +798,183 @@
   color: var(--landing-text-inverse-soft);
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .landing-capability-list article:hover {
+    border-color: var(--landing-border-strong);
+    transform: translateY(var(--landing-motion-hover-distance));
+  }
+
+  .landing-capability-list article:first-child:hover {
+    border-color: var(--landing-inverse-border);
+    background: var(--landing-surface-inverse-hover);
+  }
+}
+
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(var(--landing-motion-reveal-distance)) scale(var(--landing-motion-scale-start));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes landing-workflow-step {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--landing-motion-reveal-distance));
+  }
+
+  48% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes landing-workflow-number {
+  0%, 100% {
+    background: transparent;
+    transform: scale(1);
+  }
+
+  45% {
+    background: var(--landing-brand-subtle);
+    transform: scale(1.035);
+  }
+}
+
+@keyframes landing-workflow-connector {
+  from {
+    opacity: 0;
+    transform: rotate(45deg) scaleX(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(45deg) scaleX(1);
+  }
+}
+
+@keyframes landing-workflow-line {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes landing-asset-align {
+  from {
+    opacity: 0.92;
+    transform: translate(var(--landing-asset-x, 0), var(--landing-asset-y, 0));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.landing-motion-enhanced [data-landing-reveal].is-motion-entered {
+  animation: landing-reveal var(--landing-motion-slow) var(--landing-motion-ease-out) backwards;
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered,
+.landing-motion-enhanced [data-landing-reveal="capabilities"].is-motion-entered,
+.landing-motion-enhanced [data-landing-reveal="assets"].is-motion-entered {
+  animation: none;
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li {
+  animation: landing-workflow-step var(--landing-motion-slow) var(--landing-motion-ease-out) backwards;
+  animation-delay: calc(var(--landing-motion-index, 0) * var(--landing-motion-stagger));
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li:nth-child(1) {
+  --landing-motion-index: 0;
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li:nth-child(2) {
+  --landing-motion-index: 1;
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li:nth-child(3) {
+  --landing-motion-index: 2;
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li:nth-child(4) {
+  --landing-motion-index: 3;
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li > span {
+  animation: landing-workflow-number var(--landing-motion-slow) var(--landing-motion-ease-out) backwards;
+  animation-delay: calc(var(--landing-motion-index, 0) * var(--landing-motion-stagger));
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li::before {
+  animation: landing-workflow-line var(--landing-motion-standard) var(--landing-motion-ease-out) backwards;
+  animation-delay: calc(var(--landing-motion-index, 0) * var(--landing-motion-stagger));
+}
+
+.landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li:not(:last-child)::after {
+  animation: landing-workflow-connector var(--landing-motion-standard) var(--landing-motion-ease-out) backwards;
+  animation-delay: calc((var(--landing-motion-index, 0) + 1) * var(--landing-motion-stagger));
+}
+
+.landing-motion-enhanced [data-landing-reveal="capabilities"].is-motion-entered article {
+  animation: landing-reveal var(--landing-motion-slow) var(--landing-motion-ease-out) backwards;
+}
+
+.landing-motion-enhanced [data-landing-reveal="capabilities"].is-motion-entered article:nth-child(2) {
+  animation-delay: var(--landing-motion-stagger);
+}
+
+.landing-motion-enhanced [data-landing-reveal="capabilities"].is-motion-entered article:nth-child(3) {
+  animation-delay: calc(var(--landing-motion-stagger) * 2);
+}
+
+.landing-assets-copy dl > div:nth-child(1) {
+  --landing-asset-x: -6px;
+  --landing-asset-y: -4px;
+}
+
+.landing-assets-copy dl > div:nth-child(2) {
+  --landing-asset-x: 4px;
+  --landing-asset-y: -2px;
+}
+
+.landing-assets-copy dl > div:nth-child(3) {
+  --landing-asset-x: -2px;
+  --landing-asset-y: 4px;
+}
+
+.landing-motion-enhanced [data-landing-reveal="assets"].is-motion-entered > div {
+  animation: landing-asset-align var(--landing-motion-slow) var(--landing-motion-ease-out) backwards;
+}
+
+.landing-motion-enhanced [data-landing-reveal="assets"].is-motion-entered > div:nth-child(2) {
+  animation-delay: var(--landing-motion-stagger);
+}
+
+.landing-motion-enhanced [data-landing-reveal="assets"].is-motion-entered > div:nth-child(3) {
+  animation-delay: calc(var(--landing-motion-stagger) * 2);
+}
+
+.landing-page.is-motion-paused *,
+.landing-page.is-motion-paused *::before,
+.landing-page.is-motion-paused *::after {
+  animation-play-state: paused !important;
+}
+
 .landing-beta {
   background: var(--landing-brand-subtle);
 }
@@ -901,6 +1113,9 @@
 }
 
 @media (max-width: 640px) {
+  .landing-page {
+    --landing-motion-reveal-distance: 8px;
+  }
   .landing-shell {
     width: min(100% - 32px, 1180px);
   }
@@ -1000,8 +1215,16 @@
 
   .landing-workflow-list li {
     border-top: 0;
-    border-left: 1px solid var(--landing-border);
     padding: 0 0 32px 22px;
+  }
+
+  .landing-workflow-list li::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    height: auto;
+    transform-origin: center top;
   }
 
   .landing-workflow-list li:not(:last-child)::after {
@@ -1010,6 +1233,30 @@
     bottom: 13px;
     left: -4px;
     transform: rotate(135deg);
+    transform-origin: center top;
+  }
+
+  .landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li {
+    animation-delay: calc(var(--landing-motion-index, 0) * var(--landing-motion-stagger-mobile));
+  }
+
+  .landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li > span {
+    animation-delay: calc(var(--landing-motion-index, 0) * var(--landing-motion-stagger-mobile));
+  }
+
+  .landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li::before {
+    animation-name: landing-workflow-line-mobile;
+    animation-delay: calc(var(--landing-motion-index, 0) * var(--landing-motion-stagger-mobile));
+  }
+
+  .landing-motion-enhanced [data-landing-reveal="workflow"].is-motion-entered li:not(:last-child)::after {
+    animation-name: landing-workflow-connector-mobile;
+    animation-delay: calc((var(--landing-motion-index, 0) + 1) * var(--landing-motion-stagger-mobile));
+  }
+
+  .landing-assets-copy dl > div {
+    --landing-asset-x: 0;
+    --landing-asset-y: 8px;
   }
 
   .landing-workflow-list li > span {
@@ -1074,6 +1321,28 @@
   }
 }
 
+@keyframes landing-workflow-connector-mobile {
+  from {
+    opacity: 0;
+    transform: rotate(135deg) scaleY(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(135deg) scaleY(1);
+  }
+}
+
+@keyframes landing-workflow-line-mobile {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
 @media (max-width: 360px) {
   .landing-hero h1 {
     font-size: 2.3rem;
@@ -1087,10 +1356,27 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .landing-header {
+    transition: none;
+  }
+
+  .landing-capability-list article,
+  .landing-capability-list article:hover,
+  .landing-motion-enhanced [data-landing-reveal],
+  .landing-motion-enhanced [data-landing-reveal] *,
+  .landing-motion-enhanced [data-landing-reveal]::before,
+  .landing-motion-enhanced [data-landing-reveal]::after {
+    opacity: 1;
+    animation: none !important;
+    transform: none !important;
+  }
+
   .landing-page *,
   .landing-page *::before,
   .landing-page *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
