@@ -1,6 +1,7 @@
 "use client";
 
 import { HistoryItem } from "@/components/history/history-item";
+import { clearHistoryAndReload } from "@/components/history/history-actions";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
@@ -29,6 +30,9 @@ export function HistoryList() {
   const [activeFilter, setActiveFilter] = useState<HistoryFilter>("all");
   const [error, setError] = useState("");
   const [hasMore, setHasMore] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -92,19 +96,41 @@ export function HistoryList() {
   }, [activeFilter, records]);
 
   async function handleDelete(id: string) {
-    await fetchWithAuthHandling(`/api/history/${id}`, {
-      method: "DELETE",
-    });
-    await loadRecords();
+    setActionError("");
+
+    try {
+      const response = await fetchWithAuthHandling(`/api/history/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("历史记录删除失败，请稍后再试。");
+      }
+
+      await loadRecords();
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : "历史记录删除失败，请稍后再试。");
+    }
   }
 
   async function handleClear() {
-    await fetchWithAuthHandling("/api/history", {
-      method: "DELETE",
-    });
-    setRecords([]);
-    setNextCursor(null);
-    setHasMore(false);
+    setActionError("");
+    setIsClearing(true);
+
+    try {
+      await clearHistoryAndReload({
+        reload: () => loadRecords(),
+        request: () =>
+          fetchWithAuthHandling("/api/history", {
+            method: "DELETE",
+          }),
+      });
+      setIsClearDialogOpen(false);
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : "生成记录清理失败，请稍后再试。");
+    } finally {
+      setIsClearing(false);
+    }
   }
 
   return (
@@ -117,10 +143,16 @@ export function HistoryList() {
             </button>
           ))}
         </div>
-        <button className="history-clear-button" disabled={!records.length || isLoading} type="button" onClick={() => void handleClear()}>
-          清空记录
+        <button className="history-clear-button" disabled={!records.length || isLoading || isClearing} type="button" onClick={() => setIsClearDialogOpen(true)}>
+          清空生成记录
         </button>
       </div>
+
+      {actionError ? (
+        <p className="history-action-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
 
       {error ? (
         <EmptyState icon="!" title="历史记录暂时不可用" description={error} actionHref="/dashboard/products" actionLabel="前往商品工作台" />
@@ -165,6 +197,27 @@ export function HistoryList() {
           actionLabel="创建商品"
         />
       )}
+
+      {isClearDialogOpen ? (
+        <div className="history-confirmation-layer" onKeyDown={(event) => event.key === "Escape" && !isClearing && setIsClearDialogOpen(false)}>
+          <button className="history-confirmation-backdrop" aria-label="取消清空生成记录" disabled={isClearing} type="button" onClick={() => setIsClearDialogOpen(false)} />
+          <section className="history-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="history-clear-title" aria-describedby="history-clear-description">
+            <div>
+              <p className="eyebrow">不可撤销</p>
+              <h2 id="history-clear-title">清空生成记录？</h2>
+              <p id="history-clear-description">这会删除当前账号的生成历史。商品本身和商品工作区不会被删除，此操作不可撤销。</p>
+            </div>
+            <div className="history-confirmation-actions">
+              <button className="cai-button cai-button--secondary" disabled={isClearing} type="button" autoFocus onClick={() => setIsClearDialogOpen(false)}>
+                取消
+              </button>
+              <button className="cai-button cai-button--danger" disabled={isClearing} type="button" onClick={() => void handleClear()}>
+                {isClearing ? "正在清理..." : "清空生成记录"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -172,9 +172,11 @@ export function HistoryItem({ record, onDelete }: HistoryItemProps) {
         <button className="history-action-expand" type="button" onClick={() => setIsExpanded((current) => !current)}>
           {isExpanded ? "收起详情" : "展开详情"}
         </button>
-        <button className="history-action-delete" type="button" onClick={() => onDelete(record.id)}>
-          删除记录
-        </button>
+        {record.type !== "product-analysis" ? (
+          <button className="history-action-delete" type="button" onClick={() => onDelete(record.id)}>
+            删除记录
+          </button>
+        ) : null}
       </div>
     </article>
   );

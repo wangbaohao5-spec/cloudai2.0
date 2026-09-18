@@ -226,18 +226,29 @@ export async function getHistoryRecordForUser(userId: string, id: string): Promi
 }
 
 export async function deleteHistory(userId: string, id: string) {
-  await db.historyRecord.deleteMany({
+  const result = await db.historyRecord.deleteMany({
     where: {
       id,
       userId,
+      type: {
+        not: "product-analysis",
+      },
     },
   });
+
+  return result.count;
 }
 
 export async function clearHistory(userId: string) {
-  await db.historyRecord.deleteMany({
+  const result = await db.historyRecord.deleteMany({
     where: {
       userId,
+      // Product analysis records currently provide the stable product identity.
+      type: {
+        not: "product-analysis",
+      },
     },
   });
+
+  return result.count;
 }

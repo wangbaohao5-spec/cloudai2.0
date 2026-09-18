@@ -36,9 +36,9 @@ export async function DELETE() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await clearHistory(user.id);
+    const deletedCount = await clearHistory(user.id);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ deletedCount, ok: true });
   } catch (error) {
     return jsonError(error, "History records could not be cleared.");
   }
