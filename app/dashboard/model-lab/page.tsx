@@ -1,3 +1,5 @@
+import { requireInternalRouteAccess } from "@/lib/internal-route-access";
+
 type ModelStrategy = {
   description: string;
   name: string;
@@ -250,7 +252,9 @@ function ScorePill({ label, score }: { label: string; score: number }) {
   );
 }
 
-export default function ModelLabPage() {
+export default async function ModelLabPage() {
+  await requireInternalRouteAccess();
+
   return (
     <main className="dashboard-content">
       <section className="model-lab-page">

@@ -53,6 +53,10 @@ export async function POST(request: Request) {
               sourceUrl: result.url,
               name: `${productName}-${result.id}`,
             }),
+            {
+              logLabel: "video-asset-storage",
+              warning: "视频结果暂时无法保存到素材库。",
+            },
           )
         : { data: null, error: null };
     const storedAsset = storedAssetResult.data;
@@ -80,6 +84,10 @@ export async function POST(request: Request) {
           prompt,
         },
       }),
+      {
+        logLabel: "video-history",
+        warning: "视频历史记录暂时无法保存。",
+      },
     );
     const warnings = [storedAssetResult.error, historyResult.error].filter(Boolean);
 

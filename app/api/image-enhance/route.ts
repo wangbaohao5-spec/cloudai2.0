@@ -1,17 +1,17 @@
 import { enhanceImage, type ImageEnhanceInput } from "@/lib/ai/image-enhance-provider";
-import { getCurrentUser } from "@/lib/current-user";
 import { jsonError, settleTask } from "@/lib/api-errors";
 import { saveHistory } from "@/lib/history";
+import { getCurrentInternalUser } from "@/lib/internal-route-access";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentInternalUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
     }
 
     const body = (await request.json()) as ImageEnhanceInput;
@@ -37,6 +37,10 @@ export async function POST(request: Request) {
           provider: result.provider,
         },
       }),
+      {
+        logLabel: "image-enhance-history",
+        warning: "历史记录暂时无法保存。",
+      },
     );
     const warnings = [historyResult.error].filter(Boolean);
 

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { ApiError, jsonError } from "@/lib/api-errors";
+import { describe, expect, it, vi } from "vitest";
+import { ApiError, jsonError, settleTask } from "@/lib/api-errors";
 import { ProviderTimeoutError } from "@/lib/ai/provider-http";
 
 describe("API error responses", () => {
@@ -19,5 +19,22 @@ describe("API error responses", () => {
     const response = jsonError(new ProviderTimeoutError(new Error("UND_ERR_CONNECT_TIMEOUT")), "fallback");
     expect(response.status).toBe(504);
     await expect(response.json()).resolves.toEqual({ error: "生成服务响应超时，请稍后重试。" });
+  });
+
+  it("keeps optional task failures out of client warnings", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const result = await settleTask(Promise.reject(new Error("database host and credential detail")), {
+      logLabel: "history-save",
+      warning: "历史记录暂时无法保存。",
+    });
+
+    expect(result).toEqual({ data: null, error: "历史记录暂时无法保存。" });
+    expect(JSON.stringify(result)).not.toContain("database host and credential detail");
+    expect(consoleWarn).toHaveBeenCalledWith("[api] optional task failed", {
+      errorName: "Error",
+      operation: "history-save",
+    });
+    expect(JSON.stringify(consoleWarn.mock.calls)).not.toContain("database host and credential detail");
+    consoleWarn.mockRestore();
   });
 });

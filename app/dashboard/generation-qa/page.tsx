@@ -1,3 +1,5 @@
+import { requireInternalRouteAccess } from "@/lib/internal-route-access";
+
 type QaOverviewItem = {
   description: string;
   title: string;
@@ -141,7 +143,9 @@ const acceptanceGroups: AcceptanceGroup[] = [
 
 const scenarioHeaders = ["场景", "输入样例", "预期行为", "检查位置", "状态"];
 
-export default function GenerationQaPage() {
+export default async function GenerationQaPage() {
+  await requireInternalRouteAccess();
+
   return (
     <main className="dashboard-content">
       <section className="generation-qa-page">

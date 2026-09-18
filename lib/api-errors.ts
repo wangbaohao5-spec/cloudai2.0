@@ -59,16 +59,26 @@ function getTextProviderMessage(error: TextProviderError, fallback: string) {
   return fallback || "生成服务暂时不可用，请稍后重试。";
 }
 
-export async function settleTask<T>(task: Promise<T>) {
+type SettleTaskOptions = {
+  logLabel?: string;
+  warning?: string;
+};
+
+export async function settleTask<T>(task: Promise<T>, options: SettleTaskOptions = {}) {
   try {
     return {
       data: await task,
       error: null,
     };
   } catch (error) {
+    console.warn("[api] optional task failed", {
+      errorName: error instanceof Error ? error.name : typeof error,
+      operation: options.logLabel || "optional-task",
+    });
+
     return {
       data: null,
-      error: getErrorMessage(error, "Operation failed."),
+      error: options.warning || "部分附加操作未完成。",
     };
   }
 }
