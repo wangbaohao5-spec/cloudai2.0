@@ -7,6 +7,7 @@ import { ApiError, jsonError } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
+import { cleanupGeneratedAssetAfterFailure } from "@/lib/generated-asset-cleanup";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { isProductImageAnalysis } from "@/lib/product-copywriting";
@@ -210,56 +211,71 @@ export async function POST(request: Request) {
       userId: user.id,
       logLabel: "detail page image",
       task: async ({ addRefundMetadata, setFailureCode }) => {
-        setFailureCode("STORAGE_ERROR");
-        const sourceImageUrl = await getFileUrl(sourceAsset.url);
-        setFailureCode("PROVIDER_ERROR");
-        const editedImage = await editImage({ imageUrl: sourceImageUrl, fileName: sourceAsset.name, prompt, task: "product-detail-page", model: imageEditRoute.model, outputSettings });
-        setFailureCode("INVALID_PROVIDER_OUTPUT");
-        const imageBuffer = await decodeBase64Image(editedImage.b64Json);
-        const fileName = `${sanitizeAssetName(sourceAsset.name)}-detail-page-${page.pageIndex}-${Date.now()}.png`;
-        setFailureCode("STORAGE_ERROR");
-        const uploadedFile = await uploadFile({ userId: user.id, type: "image", name: fileName, content: imageBuffer, contentType: "image/png" });
-        addRefundMetadata({ storagePath: uploadedFile.path });
-        setFailureCode("ASSET_PERSIST_ERROR");
-        const asset = await createAsset({ userId: user.id, type: "image", name: fileName, url: uploadedFile.path });
-        addRefundMetadata({ assetId: asset.id });
-        const output = {
-          assetId: asset.id,
-          storagePath: asset.url,
-          prompt,
-          page,
-          provider: editedImage.provider,
-          model: editedImage.model,
-          modelId: editedImage.modelId || imageEditRoute.modelId,
-          limitation: "AI 生成图中文字可能需要人工检查",
-        };
-        setFailureCode("HISTORY_PERSIST_ERROR");
-        const history = await saveHistory({
-          userId: user.id,
-        assetId: asset.id,
-        type: "image",
-        title: getProductTitle(analysis, page),
-        input: {
-          source: "product-detail-page",
-          analysisHistoryId: analysisRecord.id,
-          sourceAssetId: analysisRecord.assetId,
-          pageIndex: page.pageIndex,
-          style,
-          imageEditTask: "product-detail-page",
-          imageProvider: imageEditRoute.provider,
-          imageModel: imageEditRoute.model,
-          imageModelId: imageEditRoute.modelId,
-          generationMode,
-          ...(generationBrief ? { generationBrief } : {}),
-          ...(outputSettings ? { outputSettings } : {}),
-          mustKeepDetails: analysis.mustKeepDetails || [],
-          avoidChanges: analysis.avoidChanges || [],
-          page,
-        },
-          output,
-        });
+        let generatedAssetId: string | undefined;
+        let generatedStoragePath: string | undefined;
 
-        return { asset, history, uploadedFile };
+        try {
+          setFailureCode("STORAGE_ERROR");
+          const sourceImageUrl = await getFileUrl(sourceAsset.url);
+          setFailureCode("PROVIDER_ERROR");
+          const editedImage = await editImage({ imageUrl: sourceImageUrl, fileName: sourceAsset.name, prompt, task: "product-detail-page", model: imageEditRoute.model, outputSettings });
+          setFailureCode("INVALID_PROVIDER_OUTPUT");
+          const imageBuffer = await decodeBase64Image(editedImage.b64Json);
+          const fileName = `${sanitizeAssetName(sourceAsset.name)}-detail-page-${page.pageIndex}-${Date.now()}.png`;
+          setFailureCode("STORAGE_ERROR");
+          const uploadedFile = await uploadFile({ userId: user.id, type: "image", name: fileName, content: imageBuffer, contentType: "image/png" });
+          generatedStoragePath = uploadedFile.path;
+          addRefundMetadata({ storagePath: uploadedFile.path });
+          setFailureCode("ASSET_PERSIST_ERROR");
+          const asset = await createAsset({ userId: user.id, type: "image", name: fileName, url: uploadedFile.path });
+          generatedAssetId = asset.id;
+          addRefundMetadata({ assetId: asset.id });
+          const output = {
+            assetId: asset.id,
+            storagePath: asset.url,
+            prompt,
+            page,
+            provider: editedImage.provider,
+            model: editedImage.model,
+            modelId: editedImage.modelId || imageEditRoute.modelId,
+            limitation: "AI 生成图中文字可能需要人工检查",
+          };
+          setFailureCode("HISTORY_PERSIST_ERROR");
+          const history = await saveHistory({
+            userId: user.id,
+            assetId: asset.id,
+            type: "image",
+            title: getProductTitle(analysis, page),
+            input: {
+              source: "product-detail-page",
+              analysisHistoryId: analysisRecord.id,
+              sourceAssetId: analysisRecord.assetId,
+              pageIndex: page.pageIndex,
+              style,
+              imageEditTask: "product-detail-page",
+              imageProvider: imageEditRoute.provider,
+              imageModel: imageEditRoute.model,
+              imageModelId: imageEditRoute.modelId,
+              generationMode,
+              ...(generationBrief ? { generationBrief } : {}),
+              ...(outputSettings ? { outputSettings } : {}),
+              mustKeepDetails: analysis.mustKeepDetails || [],
+              avoidChanges: analysis.avoidChanges || [],
+              page,
+            },
+            output,
+          });
+
+          return { asset, history, uploadedFile };
+        } catch (error) {
+          await cleanupGeneratedAssetAfterFailure({
+            assetId: generatedAssetId,
+            logLabel: "detail-page",
+            storagePath: generatedStoragePath,
+            userId: user.id,
+          });
+          throw error;
+        }
       },
     });
 

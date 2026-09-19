@@ -4,6 +4,7 @@ const VALID_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoA
 
 const mocks = vi.hoisted(() => ({
   classifyUsageFailure: vi.fn((_error: unknown, fallback: string) => fallback),
+  cleanupGeneratedAssetAfterFailure: vi.fn(),
   createAsset: vi.fn(),
   editImage: vi.fn(),
   finalizeUsage: vi.fn(),
@@ -62,6 +63,7 @@ vi.mock("@/lib/history", () => ({
   getProductRelatedHistory: mocks.getProductRelatedHistory,
   saveHistory: mocks.saveHistory,
 }));
+vi.mock("@/lib/generated-asset-cleanup", () => ({ cleanupGeneratedAssetAfterFailure: mocks.cleanupGeneratedAssetAfterFailure }));
 vi.mock("@/lib/product-copywriting", () => ({ isProductImageAnalysis: () => true }));
 vi.mock("@/lib/product-generation-brief", () => ({ sanitizeProductGenerationBrief: () => null }));
 vi.mock("@/lib/product-output-settings", () => ({ sanitizeProductOutputSettings: () => null }));
@@ -103,6 +105,7 @@ describe("remaining usage route coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentUser.mockResolvedValue({ id: "user-1" });
+    mocks.cleanupGeneratedAssetAfterFailure.mockResolvedValue(undefined);
     mocks.getUsageRequestId.mockReturnValue("request-coverage-1");
     mocks.reserveUsage.mockResolvedValue({ created: true, record: { id: "usage-1" } });
     mocks.finalizeUsage.mockResolvedValue({ status: "succeeded" });
@@ -202,10 +205,16 @@ describe("remaining usage route coverage", () => {
     expect(successData.imageUrl).toBe("https://example.test/result.png");
     expect(mocks.finalizeUsage).toHaveBeenCalledTimes(1);
     expect(mocks.saveHistory.mock.calls.at(-1)?.[0].output).not.toHaveProperty("imageUrl");
+    expect(mocks.cleanupGeneratedAssetAfterFailure).not.toHaveBeenCalled();
 
-    mocks.editImage.mockRejectedValueOnce(new Error("provider failed"));
+    mocks.saveHistory.mockRejectedValueOnce(new Error("history failed"));
     expect((await imageSetPost(post({ ...body, image: { imageIndex: 2, imageType: "selling-point" } }))).status).toBe(500);
-    expect(mocks.refundUsage).toHaveBeenCalledTimes(1);
+    expect(mocks.cleanupGeneratedAssetAfterFailure).toHaveBeenCalledWith(expect.objectContaining({ assetId: "asset-1", storagePath: "generated/result.png" }));
+
+    mocks.saveHistory.mockResolvedValue({ id: "history-1" });
+    mocks.editImage.mockRejectedValueOnce(new Error("provider failed"));
+    expect((await imageSetPost(post({ ...body, image: { imageIndex: 3, imageType: "cta" } }))).status).toBe(500);
+    expect(mocks.refundUsage).toHaveBeenCalledTimes(2);
   });
 
   it("settles each detail-page image independently", async () => {
@@ -216,10 +225,16 @@ describe("remaining usage route coverage", () => {
     expect(successData.imageUrl).toBe("https://example.test/result.png");
     expect(mocks.finalizeUsage).toHaveBeenCalledTimes(1);
     expect(mocks.saveHistory.mock.calls.at(-1)?.[0].output).not.toHaveProperty("imageUrl");
+    expect(mocks.cleanupGeneratedAssetAfterFailure).not.toHaveBeenCalled();
 
+    mocks.saveHistory.mockRejectedValueOnce(new Error("history failed"));
+    expect((await detailPagePost(post({ ...body, page: { pageIndex: 2, sectionType: "selling-point" } }))).status).toBe(500);
+    expect(mocks.cleanupGeneratedAssetAfterFailure).toHaveBeenCalledWith(expect.objectContaining({ assetId: "asset-1", storagePath: "generated/result.png" }));
+
+    mocks.saveHistory.mockResolvedValue({ id: "history-1" });
     mocks.editImage.mockRejectedValueOnce(new Error("provider failed"));
     expect((await detailPagePost(post({ ...body, page: { pageIndex: 2, sectionType: "selling-point" } }))).status).toBe(500);
-    expect(mocks.refundUsage).toHaveBeenCalledTimes(1);
+    expect(mocks.refundUsage).toHaveBeenCalledTimes(2);
   });
 
   it("charges planning only after a valid plan and refunds parse failure", async () => {

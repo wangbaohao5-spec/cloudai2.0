@@ -18,6 +18,15 @@ export type HistoryPageResult = {
   hasMore: boolean;
 };
 
+export async function hasHistoryForAsset(userId: string, assetId: string) {
+  const record = await db.historyRecord.findFirst({
+    where: { assetId, userId },
+    select: { id: true },
+  });
+
+  return Boolean(record);
+}
+
 type RelatedProductHistoryInput = {
   userId: string;
   analysisHistoryId: string;

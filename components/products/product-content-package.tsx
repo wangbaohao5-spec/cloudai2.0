@@ -4,6 +4,7 @@ import { WorkspaceToast } from "@/components/ui/workspace-toast";
 import { getRiskCategoryLabel } from "@/lib/ai/product-risk-labels";
 import type { ProductContentRiskScanResult } from "@/lib/ai/product-content-risk-scanner";
 import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
+import { copyProductPackageText } from "@/lib/product-package-clipboard";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { buildProductCreationCenterImageEditMarkdown } from "@/lib/product-creation-center-image-edits";
 import {
@@ -498,8 +499,8 @@ export function ProductContentPackage({ data }: ProductContentPackageProps) {
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(markdown);
-    showFeedback("复制成功");
+    const result = await copyProductPackageText(markdown);
+    showFeedback(result.message, result.tone);
   }
 
   function handleDownload() {

@@ -4,6 +4,7 @@ import { ApiError, jsonError } from "@/lib/api-errors";
 import { createAsset, getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getHistoryRecordForUser, saveHistory } from "@/lib/history";
+import { cleanupGeneratedAssetAfterFailure } from "@/lib/generated-asset-cleanup";
 import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import { getFileUrl, uploadFile } from "@/lib/storage";
@@ -114,6 +115,8 @@ export async function POST(request: Request) {
 
     const persistedResult = await (async () => {
       let failureCode: UsageFailureCode = "STORAGE_ERROR";
+      let generatedAssetId: string | undefined;
+      let generatedStoragePath: string | undefined;
 
       try {
         const finalPrompt = [prompt, buildProductOutputSettingsPrompt(outputSettings)].filter(Boolean).join("\n\n");
@@ -139,6 +142,7 @@ export async function POST(request: Request) {
           content: imageBuffer,
           contentType: "image/png",
         });
+        generatedStoragePath = uploadedFile.path;
         failureCode = "ASSET_PERSIST_ERROR";
         const asset = await createAsset({
           userId: user.id,
@@ -146,6 +150,7 @@ export async function POST(request: Request) {
           name: fileName,
           url: uploadedFile.path,
         });
+        generatedAssetId = asset.id;
         const historyInput = {
           source: analysisHistoryId ? "product-image-edit" : "run-image-edit",
           sourceAssetId,
@@ -174,6 +179,13 @@ export async function POST(request: Request) {
 
         return { asset, history, uploadedFile };
       } catch (error) {
+        await cleanupGeneratedAssetAfterFailure({
+          assetId: generatedAssetId,
+          logLabel: "image-edit",
+          storagePath: generatedStoragePath,
+          userId: user.id,
+        });
+
         try {
           await refundUsage({
             usageRecordId: usageReservation.record.id,

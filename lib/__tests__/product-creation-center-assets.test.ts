@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   getProductRelatedHistory: vi.fn(),
   hydrateHistoryAssetUrls: vi.fn(),
   isProductImageAnalysis: vi.fn(),
+  getFileUrl: vi.fn(),
+  getImagePreviewUrlOrOriginal: vi.fn(),
 }));
 
 vi.mock("@/lib/assets", () => ({ getAssetForUser: mocks.getAssetForUser }));
@@ -16,6 +18,10 @@ vi.mock("@/lib/history", () => ({
 }));
 vi.mock("@/lib/history-assets", () => ({ hydrateHistoryAssetUrls: mocks.hydrateHistoryAssetUrls }));
 vi.mock("@/lib/product-copywriting", () => ({ isProductImageAnalysis: mocks.isProductImageAnalysis }));
+vi.mock("@/lib/storage", () => ({
+  getFileUrl: mocks.getFileUrl,
+  getImagePreviewUrlOrOriginal: mocks.getImagePreviewUrlOrOriginal,
+}));
 
 import { getProductCreationCenterData } from "@/lib/product-creation-center";
 
@@ -40,6 +46,8 @@ describe("Product Creation Center asset hydration", () => {
     vi.clearAllMocks();
     mocks.isProductImageAnalysis.mockReturnValue(true);
     mocks.getAssetForUser.mockResolvedValue(null);
+    mocks.getFileUrl.mockResolvedValue("https://storage.test/original.png");
+    mocks.getImagePreviewUrlOrOriginal.mockResolvedValue("https://storage.test/original-preview.png");
     mocks.getHistoryRecordForUser.mockResolvedValue({
       id: "analysis-1",
       assetId: "source-1",
@@ -117,5 +125,21 @@ describe("Product Creation Center asset hydration", () => {
 
     expect(data.imageEdits[0].imageUrl).toBeNull();
     expect(data.imageEdits[0].output).not.toHaveProperty("imageUrl");
+  });
+
+  it("keeps generated assets available when original image signing fails", async () => {
+    const generatedRecord = imageRecord("product-image-set", "set-1");
+    mocks.getAssetForUser.mockResolvedValue({ id: "source-1", type: "upload", name: "source.png", url: "user-1/upload/source.png" });
+    mocks.getFileUrl.mockRejectedValue(new Error("storage unavailable"));
+    mocks.getProductRelatedHistory.mockResolvedValue([generatedRecord]);
+    mocks.hydrateHistoryAssetUrls.mockResolvedValue([generatedRecord]);
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const data = await getProductCreationCenterData("user-1", "analysis-1");
+
+    expect(data.originalAsset).toBeNull();
+    expect(data.imageSetImages).toHaveLength(1);
+    expect(warning).toHaveBeenCalledWith("[creation-center] original asset hydration failed", expect.objectContaining({ assetId: "source-1" }));
+    warning.mockRestore();
   });
 });

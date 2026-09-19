@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   editImage: vi.fn(),
   finalizeUsage: vi.fn(),
   generateCopywriting: vi.fn(),
+  cleanupGeneratedAssetAfterFailure: vi.fn(),
   getAssetForUser: vi.fn(),
   getCurrentUser: vi.fn(),
   getFileUrl: vi.fn(),
@@ -46,6 +47,7 @@ vi.mock("@/lib/ai/product-output-settings-prompt-builder", () => ({ buildProduct
 vi.mock("@/lib/assets", () => ({ createAsset: mocks.createAsset, getAssetForUser: mocks.getAssetForUser }));
 vi.mock("@/lib/current-user", () => ({ getCurrentUser: mocks.getCurrentUser }));
 vi.mock("@/lib/history", () => ({ getHistoryRecordForUser: mocks.getHistoryRecordForUser, saveHistory: mocks.saveHistory }));
+vi.mock("@/lib/generated-asset-cleanup", () => ({ cleanupGeneratedAssetAfterFailure: mocks.cleanupGeneratedAssetAfterFailure }));
 vi.mock("@/lib/product-copywriting", () => ({
   buildCopywritingDataFromAnalysis: mocks.buildCopywritingDataFromAnalysis,
   isProductImageAnalysis: mocks.isProductImageAnalysis,
@@ -105,6 +107,7 @@ describe("usage-aware generation routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentUser.mockResolvedValue(user);
+    mocks.cleanupGeneratedAssetAfterFailure.mockResolvedValue(undefined);
     mocks.getUsageRequestId.mockReturnValue("request-123");
     mocks.reserveUsage.mockResolvedValue(reservation);
     mocks.finalizeUsage.mockResolvedValue({ ...reservation.record, status: "succeeded" });
@@ -312,6 +315,11 @@ describe("usage-aware generation routes", () => {
 
     expect(mocks.refundUsage).toHaveBeenCalledWith(expect.objectContaining({ failureCode: "HISTORY_PERSIST_ERROR" }));
     expect(mocks.createAsset).toHaveBeenCalled();
+    expect(mocks.cleanupGeneratedAssetAfterFailure).toHaveBeenCalledWith(expect.objectContaining({
+      assetId: "asset-result",
+      storagePath: "stored/path.png",
+      userId: "user-1",
+    }));
   });
 
   it("finalizes image edit only after storage, asset, and history succeed", async () => {
@@ -322,6 +330,7 @@ describe("usage-aware generation routes", () => {
       metadata: expect.objectContaining({ assetId: "asset-result", historyId: "history-1" }),
     }));
     expect(mocks.refundUsage).not.toHaveBeenCalled();
+    expect(mocks.cleanupGeneratedAssetAfterFailure).not.toHaveBeenCalled();
   });
 
   it("keeps workspace-bound image edits associated with the current analysis", async () => {

@@ -13,17 +13,14 @@ import {
   getFirstProductStartAction,
 } from "@/lib/first-product-onboarding";
 import { createGenerationAttempt } from "@/lib/generation-request";
+import { uploadProductImage, type UploadedProductAsset } from "@/lib/product-image-upload";
 import type { ProductCreationCenterData } from "@/lib/product-creation-center";
 import { formatProductOutputSettingsSummary, sanitizeProductOutputSettings } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse } from "@/lib/product-types";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-type UploadedAsset = {
-  assetId: string;
-  name: string;
-  url: string;
-};
+type UploadedAsset = UploadedProductAsset;
 
 type ProductWorkspaceShellProps = {
   fallbackAnalysisHistoryId?: string | null;
@@ -40,7 +37,7 @@ type ProductWorkspaceStartPanelProps = {
   isRestoring: boolean;
   isUploading: boolean;
   onAnalyze: () => void;
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File, input?: HTMLInputElement | null) => void;
   onProductHintChange: (value: string) => void;
   productHint: string;
   uploadedAsset: UploadedAsset | null;
@@ -179,12 +176,16 @@ function ProductWorkspaceStartPanel({
     const file = event.target.files?.[0];
 
     if (file) {
-      onFileSelect(file);
+      onFileSelect(file, event.currentTarget);
     }
   }
 
   function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
     event.preventDefault();
+
+    if (isBusy) {
+      return;
+    }
 
     const file = event.dataTransfer.files?.[0];
 
@@ -234,7 +235,7 @@ function ProductWorkspaceStartPanel({
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDrop}
           >
-            <input accept="image/png,image/jpeg,image/webp" type="file" onChange={handleFileInputChange} />
+            <input accept="image/png,image/jpeg,image/webp" disabled={isBusy} type="file" onChange={handleFileInputChange} />
             {uploadedAsset?.url ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -399,6 +400,7 @@ export function ProductWorkspaceShell({
   const [isFirstProductOnboardingActive, setIsFirstProductOnboardingActive] = useState(isFirstProductUser);
   const loadedCreationCenterRef = useRef<{ analysisHistoryId: string; refreshKey: number } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uploadInFlightRef = useRef(false);
 
   function showToast(message: string, tone: "error" | "success" = "success") {
     setFeedback({ message, tone });
@@ -616,56 +618,56 @@ export function ProductWorkspaceShell({
     };
   }, [result?.historyId, creationCenterRefreshKey]);
 
-  async function uploadProductFile(file: File) {
+  async function uploadProductFile(file: File, fileInput?: HTMLInputElement | null) {
     if (!file) {
+      return;
+    }
+
+    if (uploadInFlightRef.current) {
+      if (fileInput) {
+        fileInput.value = "";
+      }
       return;
     }
 
     setError("");
     setCreationCenterError("");
-    setCreationCenterData(null);
-    loadedCreationCenterRef.current = null;
-    setResult(null);
-    updateAnalysisUrl();
-
-    if (mode !== "create") {
-      clearStoredAnalysisHistoryId();
-    }
-
+    uploadInFlightRef.current = true;
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "upload");
+      await uploadProductImage({
+        file,
+        fileInput,
+        onCommit(data) {
+          setCreationCenterData(null);
+          loadedCreationCenterRef.current = null;
+          setResult(null);
+          updateAnalysisUrl();
 
-      const response = await fetchWithAuthHandling("/api/assets/upload", {
-        method: "POST",
-        body: formData,
+          if (mode !== "create") {
+            clearStoredAnalysisHistoryId();
+          }
+
+          setUploadedAsset(data);
+        },
       });
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorData?.error || "Product image upload failed. Please try again later.");
-      }
-
-      const data = (await response.json()) as UploadedAsset;
-      setUploadedAsset(data);
       showToast("商品图片已上传");
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Product image upload failed. Please try again later.";
       setError(message);
       showToast(message, "error");
     } finally {
+      uploadInFlightRef.current = false;
       setIsUploading(false);
     }
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const file = event.currentTarget.files?.[0];
 
     if (file) {
-      void uploadProductFile(file);
+      void uploadProductFile(file, event.currentTarget);
     }
   }
 
@@ -745,7 +747,7 @@ export function ProductWorkspaceShell({
           productHint={productHint}
           uploadedAsset={uploadedAsset}
           onAnalyze={() => void handleAnalyze()}
-          onFileSelect={(file) => void uploadProductFile(file)}
+          onFileSelect={(file, input) => void uploadProductFile(file, input)}
           onProductHintChange={setProductHint}
         />
       </main>

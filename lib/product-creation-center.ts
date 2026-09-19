@@ -168,15 +168,23 @@ export async function getProductCreationCenterData(userId: string, analysisHisto
   const historyRecords = await hydrateHistoryAssetUrls(userId, relatedHistoryRecords);
   const originalAsset = originalAssetRecord
     ? await (async () => {
-        const originalUrl = await getFileUrl(originalAssetRecord.url);
+        try {
+          const originalUrl = await getFileUrl(originalAssetRecord.url);
 
-        return {
-          id: originalAssetRecord.id,
-          type: originalAssetRecord.type,
-          name: originalAssetRecord.name,
-          previewUrl: await getImagePreviewUrlOrOriginal(originalAssetRecord.url, originalUrl),
-          url: originalUrl,
-        };
+          return {
+            id: originalAssetRecord.id,
+            type: originalAssetRecord.type,
+            name: originalAssetRecord.name,
+            previewUrl: await getImagePreviewUrlOrOriginal(originalAssetRecord.url, originalUrl),
+            url: originalUrl,
+          };
+        } catch (error) {
+          console.warn("[creation-center] original asset hydration failed", {
+            assetId: originalAssetRecord.id,
+            errorName: error instanceof Error ? error.name : typeof error,
+          });
+          return null;
+        }
       })()
     : null;
 
