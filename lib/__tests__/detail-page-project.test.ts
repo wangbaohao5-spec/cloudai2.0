@@ -1,10 +1,12 @@
 import {
   applyDetailPageProjectOperation,
+  canBindExistingAssetToModule,
   createDetailPageProject,
   createFallbackDetailPageProject,
   DetailPageProjectError,
   DETAIL_PAGE_MODULE_TYPES,
   evaluateDetailPageReadiness,
+  getDetailPageSectionEffectiveState,
   parseDetailPageProject,
 } from "@/lib/detail-page-project";
 import { describe, expect, it } from "vitest";
@@ -166,5 +168,67 @@ describe("Detail Page V2 project contract", () => {
 
     expect(parseDetailPageProject(malformed)).toBeNull();
     expect(parseDetailPageProject({ version: 2, revision: 1 })).toBeNull();
+  });
+
+  it("binds and replaces an existing visual asset without persisting a signed URL", () => {
+    const project = createProject();
+    const hero = project.sections.find((section) => section.moduleType === "HERO")!;
+    const bound = applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: hero.id, assetId: "asset-a" });
+    const replaced = applyDetailPageProjectOperation(bound, { type: "bind-asset", sectionId: hero.id, assetId: "asset-b" });
+    const nextHero = replaced.sections.find((section) => section.id === hero.id)!;
+
+    expect(nextHero).toMatchObject({
+      assetSource: "existing-asset",
+      lifecycle: "COMPLETE",
+      readiness: "EXISTING_ASSET",
+      selectedAssetId: "asset-b",
+    });
+    expect(parseDetailPageProject(replaced)?.sections.find((section) => section.id === hero.id)?.selectedAssetId).toBe("asset-b");
+    expect(JSON.stringify(replaced)).not.toContain("signedUrl");
+    expect(JSON.stringify(replaced)).not.toContain("previewUrl");
+  });
+
+  it("unbinds an asset without deleting evidence or the section", () => {
+    const project = createProject();
+    const hero = project.sections.find((section) => section.moduleType === "HERO")!;
+    const bound = applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: hero.id, assetId: "asset-a" });
+    const unbound = applyDetailPageProjectOperation(bound, { type: "unbind-asset", sectionId: hero.id });
+    const nextHero = unbound.sections.find((section) => section.id === hero.id)!;
+
+    expect(nextHero.id).toBe(hero.id);
+    expect(nextHero.selectedAssetId).toBeNull();
+    expect(nextHero.assetSource).toBeNull();
+    expect(nextHero.readiness).toBe("READY");
+    expect(nextHero.lifecycle).toBe("PLANNED");
+  });
+
+  it("keeps BENEFITS blocked without verified evidence after asset binding", () => {
+    const project = createProject();
+    const benefits = project.sections.find((section) => section.moduleType === "BENEFITS")!;
+    const bound = applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: benefits.id, assetId: "asset-a" });
+    const nextBenefits = bound.sections.find((section) => section.id === benefits.id)!;
+
+    expect(nextBenefits.selectedAssetId).toBe("asset-a");
+    expect(nextBenefits.readiness).toBe("NEEDS_INPUT");
+    expect(nextBenefits.lifecycle).toBe("PLANNED");
+  });
+
+  it("does not let an image satisfy SPECS and rejects unsupported binding modules", () => {
+    const project = createProject();
+    const specs = project.sections.find((section) => section.moduleType === "SPECS")!;
+
+    expect(canBindExistingAssetToModule("SPECS")).toBe(false);
+    expect(evaluateDetailPageReadiness("SPECS", specs.evidence, "asset-a")).toBe("NEEDS_INPUT");
+    expect(() => applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: specs.id, assetId: "asset-a" })).toThrow(DetailPageProjectError);
+  });
+
+  it("softly recomputes state when a selected asset becomes unavailable", () => {
+    const project = createProject();
+    const hero = project.sections.find((section) => section.moduleType === "HERO")!;
+    const bound = applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: hero.id, assetId: "asset-a" });
+    const boundHero = bound.sections.find((section) => section.id === hero.id)!;
+
+    expect(getDetailPageSectionEffectiveState(boundHero, false)).toEqual({ readiness: "READY", lifecycle: "PLANNED" });
+    expect(boundHero.selectedAssetId).toBe("asset-a");
   });
 });

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   findFirst: vi.fn(),
+  getDetailPageAssetCandidateForBinding: vi.fn(),
   updateMany: vi.fn(),
 }));
 
@@ -14,6 +15,10 @@ vi.mock("@/lib/db", () => ({
       updateMany: mocks.updateMany,
     },
   },
+}));
+
+vi.mock("@/lib/detail-page-assets", () => ({
+  getDetailPageAssetCandidateForBinding: mocks.getDetailPageAssetCandidateForBinding,
 }));
 
 import { createDetailPageProject } from "@/lib/detail-page-project";
@@ -41,6 +46,7 @@ describe("detail page project persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.create.mockResolvedValue({ id: "detail-page-project-analysis-1" });
+    mocks.getDetailPageAssetCandidateForBinding.mockResolvedValue({ assetId: "asset-a" });
     mocks.updateMany.mockResolvedValue({ count: 1 });
   });
 
@@ -165,5 +171,37 @@ describe("detail page project persistence", () => {
         userId: "user-1",
       }),
     ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("binds only an asset validated for the same user and product", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+
+    const next = await updateDetailPageProject({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 1,
+      operation: { type: "bind-asset", sectionId: "section-1", assetId: "asset-a" },
+      userId: "user-1",
+    });
+
+    expect(mocks.getDetailPageAssetCandidateForBinding).toHaveBeenCalledWith("user-1", "analysis-1", "asset-a");
+    expect(next.sections[0]).toMatchObject({ selectedAssetId: "asset-a", readiness: "EXISTING_ASSET", lifecycle: "COMPLETE" });
+    expect(next.revision).toBe(2);
+  });
+
+  it("denies an asset that is cross-product, cross-user, or missing without revealing which", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+    mocks.getDetailPageAssetCandidateForBinding.mockResolvedValueOnce(null);
+
+    await expect(
+      updateDetailPageProject({
+        analysisHistoryId: "analysis-1",
+        expectedRevision: 1,
+        operation: { type: "bind-asset", sectionId: "section-1", assetId: "asset-outside-scope" },
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({ status: 404, message: "该素材不可用于当前商品，请重新选择。" });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
   });
 });

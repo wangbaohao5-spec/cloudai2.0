@@ -1,7 +1,9 @@
 import { ApiError } from "@/lib/api-errors";
 import { db } from "@/lib/db";
+import { getDetailPageAssetCandidateForBinding } from "@/lib/detail-page-assets";
 import {
   applyDetailPageProjectOperation,
+  canBindExistingAssetToModule,
   DETAIL_PAGE_PROJECT_HISTORY_TYPE,
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
@@ -121,6 +123,24 @@ export async function updateDetailPageProject({
 
   if (currentProject.revision !== expectedRevision) {
     throw new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409);
+  }
+
+  if (operation.type === "bind-asset") {
+    const section = currentProject.sections.find((item) => item.id === operation.sectionId);
+
+    if (!section) {
+      throw new ApiError("详情页模块不存在。", 404);
+    }
+
+    if (!canBindExistingAssetToModule(section.moduleType)) {
+      throw new ApiError("当前模块不支持绑定图片素材。", 400);
+    }
+
+    const candidate = await getDetailPageAssetCandidateForBinding(userId, analysisHistoryId, operation.assetId);
+
+    if (!candidate) {
+      throw new ApiError("该素材不可用于当前商品，请重新选择。", 404);
+    }
   }
 
   const nextProject = {

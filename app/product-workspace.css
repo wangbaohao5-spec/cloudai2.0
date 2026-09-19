@@ -4768,6 +4768,147 @@
   background: var(--status-warning-bg);
 }
 
+.product-detail-existing-assets {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card-muted);
+}
+
+.product-detail-existing-assets-header,
+.product-detail-existing-assets-header > div,
+.product-detail-bound-asset {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.product-detail-existing-assets-header {
+  justify-content: space-between;
+}
+
+.product-detail-existing-assets-header > div:first-child {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.product-detail-existing-assets-header span,
+.product-detail-bound-asset span,
+.product-detail-asset-picker small {
+  color: var(--text-muted);
+  font-size: .78rem;
+}
+
+.product-detail-bound-asset {
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--selected-border);
+  border-radius: var(--radius-sm);
+  background: var(--interaction-selected);
+}
+
+.product-detail-bound-asset.is-unavailable {
+  border-color: var(--status-warning-border);
+  background: var(--status-warning-bg);
+}
+
+.product-detail-bound-asset img,
+.product-detail-bound-asset > .product-detail-asset-placeholder {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.product-detail-bound-asset > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.product-detail-bound-asset strong,
+.product-detail-asset-picker strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-detail-asset-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2);
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.product-detail-asset-picker > button {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 80px;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-default);
+  background: var(--surface-card);
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-detail-asset-picker > button:hover {
+  border-color: var(--interaction-border);
+  background: var(--interaction-hover);
+}
+
+.product-detail-asset-picker > button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.product-detail-asset-picker > button.is-selected {
+  border-color: var(--selected-border);
+  background: var(--interaction-selected);
+}
+
+.product-detail-asset-picker img,
+.product-detail-asset-picker .product-detail-asset-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.product-detail-asset-picker > button > span:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.product-detail-asset-picker em {
+  width: max-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--status-success-text);
+  background: var(--status-success-bg);
+  font-size: .68rem;
+  font-style: normal;
+}
+
+.product-detail-asset-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  color: var(--text-soft);
+  background: var(--surface-raised);
+  font-size: .68rem;
+  text-align: center;
+}
+
 @media (max-width: 860px) {
   .product-detail-v2-summary,
   .product-detail-v2-style-summary,
@@ -4781,6 +4922,11 @@
   .product-detail-v2-add-module select,
   .product-detail-v2-add-module .cai-button {
     width: 100%;
+  }
+
+  .product-detail-existing-assets-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
@@ -4813,5 +4959,18 @@
   .product-detail-v2-move-actions .cai-button,
   .product-detail-evidence-input .cai-button {
     width: 100%;
+  }
+
+  .product-detail-existing-assets-header > div:last-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .product-detail-existing-assets-header .cai-button {
+    width: 100%;
+  }
+
+  .product-detail-asset-picker {
+    grid-template-columns: 1fr;
   }
 }

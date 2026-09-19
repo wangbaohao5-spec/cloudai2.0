@@ -19,6 +19,21 @@ export type DetailPageReadiness = "READY" | "NEEDS_INPUT" | "EXISTING_ASSET" | "
 export type DetailPageLifecycle = "PLANNED" | "GENERATING" | "COMPLETE" | "FAILED";
 export type DetailPageStylePreset = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
 export type DetailPageEvidenceSourceType = "existing-asset" | "product-brief" | "product-image" | "user-confirmed";
+export type DetailPageAssetSourceType = "detail-page" | "image-edit" | "image-set" | "original" | "product-image" | "scene-image";
+export type DetailPageAssetRelationEvidence = "analysis-source-asset" | "history-analysis-id" | "history-source-asset";
+
+export type DetailPageAssetCandidate = {
+  assetId: string;
+  assetType: string;
+  createdAt: string;
+  historyId: string | null;
+  imageType: string | null;
+  name: string;
+  previewUrl: string | null;
+  productRelationEvidence: DetailPageAssetRelationEvidence;
+  sourceType: DetailPageAssetSourceType;
+  suggestedModuleTypes: DetailPageModuleType[];
+};
 
 export type DetailPageEvidence = {
   field: string;
@@ -86,9 +101,19 @@ export type DetailPagePlanCandidate = {
 export type DetailPageProjectOperation =
   | { direction: "down" | "up"; sectionId: string; type: "move-section" }
   | { moduleType: DetailPageModuleType; type: "add-section" }
+  | { assetId: string; sectionId: string; type: "bind-asset" }
   | { moduleType: DetailPageModuleType; sectionId: string; type: "replace-module" }
   | { sectionId: string; type: "delete-section" }
-  | { sectionId: string; type: "set-evidence"; value: string };
+  | { sectionId: string; type: "set-evidence"; value: string }
+  | { sectionId: string; type: "unbind-asset" };
+
+export const DETAIL_PAGE_ASSET_MODULE_TYPES: DetailPageModuleType[] = [
+  "HERO",
+  "BENEFITS",
+  "USAGE_SCENE",
+  "PRODUCT_DETAIL",
+  "BRAND_CONTENT",
+];
 
 export const DETAIL_PAGE_MODULE_DEFINITIONS: Record<
   DetailPageModuleType,
@@ -292,20 +317,54 @@ function hasVerifiedEvidence(evidence: DetailPageEvidence[], field?: string) {
   return evidence.some((item) => item.verifiedByUser && item.value && (!field || item.field === field));
 }
 
-export function evaluateDetailPageReadiness(moduleType: DetailPageModuleType, evidence: DetailPageEvidence[]): DetailPageReadiness {
-  if (evidence.some((item) => item.sourceType === "existing-asset")) {
-    return "EXISTING_ASSET";
-  }
+export function canBindExistingAssetToModule(moduleType: DetailPageModuleType) {
+  return DETAIL_PAGE_ASSET_MODULE_TYPES.includes(moduleType);
+}
+
+export function evaluateDetailPageReadiness(
+  moduleType: DetailPageModuleType,
+  evidence: DetailPageEvidence[],
+  selectedAssetId: string | null = null,
+): DetailPageReadiness {
+  const hasExistingAsset = Boolean(selectedAssetId) || evidence.some((item) => item.sourceType === "existing-asset");
 
   if (moduleType === "HERO" || moduleType === "USAGE_SCENE" || moduleType === "BRAND_CONTENT") {
+    if (hasExistingAsset) return "EXISTING_ASSET";
     return hasProductImage(evidence) ? "READY" : "NEEDS_INPUT";
   }
 
   if (moduleType === "PRODUCT_DETAIL") {
+    if (hasExistingAsset) return "EXISTING_ASSET";
     return hasVerifiedEvidence(evidence, DETAIL_PAGE_MODULE_DEFINITIONS.PRODUCT_DETAIL.evidenceField) ? "READY" : "NEEDS_INPUT";
   }
 
-  return hasVerifiedEvidence(evidence, DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].evidenceField) ? "READY" : "NEEDS_INPUT";
+  const hasRequiredEvidence = hasVerifiedEvidence(evidence, DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].evidenceField);
+
+  if (!hasRequiredEvidence) return "NEEDS_INPUT";
+  if (moduleType === "BENEFITS" && hasExistingAsset) return "EXISTING_ASSET";
+  return "READY";
+}
+
+export function evaluateDetailPageLifecycle(
+  moduleType: DetailPageModuleType,
+  readiness: DetailPageReadiness,
+  selectedAssetId: string | null,
+): DetailPageLifecycle {
+  if (!selectedAssetId || readiness === "NEEDS_INPUT") {
+    return "PLANNED";
+  }
+
+  return canBindExistingAssetToModule(moduleType) ? "COMPLETE" : "PLANNED";
+}
+
+export function getDetailPageSectionEffectiveState(section: DetailPageSectionV2, selectedAssetAvailable: boolean) {
+  const selectedAssetId = section.selectedAssetId && selectedAssetAvailable ? section.selectedAssetId : null;
+  const readiness = evaluateDetailPageReadiness(section.moduleType, section.evidence, selectedAssetId);
+
+  return {
+    lifecycle: evaluateDetailPageLifecycle(section.moduleType, readiness, selectedAssetId),
+    readiness,
+  };
 }
 
 function getInitialEvidence(moduleType: DetailPageModuleType, sourceAssetId?: string | null): DetailPageEvidence[] {
@@ -584,6 +643,15 @@ export function parseDetailPageProjectOperation(value: unknown): DetailPageProje
     return { type: "replace-module", sectionId, moduleType: value.moduleType };
   }
 
+  if (value.type === "bind-asset" && sectionId) {
+    const assetId = cleanText(value.assetId, 200);
+    return assetId ? { type: "bind-asset", sectionId, assetId } : null;
+  }
+
+  if (value.type === "unbind-asset" && sectionId) {
+    return { type: "unbind-asset", sectionId };
+  }
+
   if (value.type === "set-evidence" && sectionId && typeof value.value === "string") {
     return { type: "set-evidence", sectionId, value: cleanText(value.value, 1200) };
   }
@@ -634,6 +702,33 @@ export function applyDetailPageProjectOperation(
       sourceAssetId: sections[sectionIndex].evidence.find((item) => item.sourceType === "product-image")?.value,
     });
     sections[sectionIndex] = replacement;
+  } else if (operation.type === "bind-asset") {
+    const section = sections[sectionIndex];
+
+    if (!canBindExistingAssetToModule(section.moduleType)) {
+      throw new DetailPageProjectError("当前模块不支持绑定图片素材。", 400);
+    }
+
+    const readiness = evaluateDetailPageReadiness(section.moduleType, section.evidence, operation.assetId);
+    sections[sectionIndex] = {
+      ...section,
+      selectedAssetId: operation.assetId,
+      assetSource: "existing-asset",
+      readiness,
+      lifecycle: evaluateDetailPageLifecycle(section.moduleType, readiness, operation.assetId),
+      lastError: null,
+    };
+  } else if (operation.type === "unbind-asset") {
+    const section = sections[sectionIndex];
+    const readiness = evaluateDetailPageReadiness(section.moduleType, section.evidence, null);
+    sections[sectionIndex] = {
+      ...section,
+      selectedAssetId: null,
+      assetSource: null,
+      readiness,
+      lifecycle: "PLANNED",
+      lastError: null,
+    };
   } else if (operation.type === "set-evidence") {
     const section = sections[sectionIndex];
     const evidenceField = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].evidenceField;
@@ -648,10 +743,12 @@ export function applyDetailPageProjectOperation(
       });
     }
 
+    const readiness = evaluateDetailPageReadiness(section.moduleType, evidence, section.selectedAssetId);
     sections[sectionIndex] = {
       ...section,
       evidence,
-      readiness: evaluateDetailPageReadiness(section.moduleType, evidence),
+      readiness,
+      lifecycle: evaluateDetailPageLifecycle(section.moduleType, readiness, section.selectedAssetId),
       lastError: null,
     };
   }

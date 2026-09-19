@@ -7,6 +7,8 @@ import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
 import {
   DETAIL_PAGE_MODULE_DEFINITIONS,
   DETAIL_PAGE_MODULE_TYPES,
+  getDetailPageSectionEffectiveState,
+  type DetailPageAssetCandidate,
   type DetailPageModuleType,
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
@@ -29,6 +31,10 @@ type ProjectResponse = {
   source?: "ai" | "fallback" | "recovered";
 };
 
+type AssetCandidatesResponse = {
+  candidates: DetailPageAssetCandidate[];
+};
+
 const styleOptions: Array<{ label: string; value: DetailPageStylePreset }> = [
   { value: "ecommerce", label: "电商清晰" },
   { value: "brand-site", label: "品牌克制" },
@@ -46,45 +52,70 @@ async function readProjectResponse(response: Response) {
   return data;
 }
 
+async function readAssetCandidatesResponse(response: Response) {
+  const data = (await response.json().catch(() => null)) as (AssetCandidatesResponse & { error?: string }) | null;
+
+  if (!response.ok) {
+    throw new Error(data?.error || "已有素材暂时无法读取，请稍后重试。");
+  }
+
+  return data?.candidates || [];
+}
+
 export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings }: ProductDetailPagePanelProps) {
   const analysisHistoryId = analysisResult?.historyId || "";
   const [addModuleType, setAddModuleType] = useState<DetailPageModuleType>("PRODUCT_DETAIL");
+  const [assetError, setAssetError] = useState("");
+  const [candidates, setCandidates] = useState<DetailPageAssetCandidate[]>([]);
   const [error, setError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [project, setProject] = useState<DetailPageProjectV2 | null>(null);
   const [sectionCount, setSectionCount] = useState(7);
   const [source, setSource] = useState<ProjectResponse["source"]>();
   const [style, setStyle] = useState<DetailPageStylePreset>("ecommerce");
 
-  async function loadProject() {
+  async function loadWorkspaceState() {
     if (!analysisHistoryId) {
       setProject(null);
+      setCandidates([]);
       return;
     }
 
     setIsLoading(true);
+    setIsLoadingAssets(true);
     setError("");
+    setAssetError("");
 
-    try {
-      const response = await fetchWithAuthHandling(
-        `/api/products/detail-page/plan?analysisHistoryId=${encodeURIComponent(analysisHistoryId)}`,
-        { cache: "no-store" },
-      );
-      const data = await readProjectResponse(response);
-      setProject(data?.project || null);
-      setSource(data?.source);
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "详情页策划读取失败，请稍后重试。");
-    } finally {
-      setIsLoading(false);
+    const query = encodeURIComponent(analysisHistoryId);
+    const [projectResult, assetsResult] = await Promise.allSettled([
+      fetchWithAuthHandling(`/api/products/detail-page/plan?analysisHistoryId=${query}`, { cache: "no-store" }).then(readProjectResponse),
+      fetchWithAuthHandling(`/api/products/detail-page/assets?analysisHistoryId=${query}`, { cache: "no-store" }).then(readAssetCandidatesResponse),
+    ]);
+
+    if (projectResult.status === "fulfilled") {
+      setProject(projectResult.value?.project || null);
+      setSource(projectResult.value?.source);
+    } else {
+      setError(projectResult.reason instanceof Error ? projectResult.reason.message : "详情页策划读取失败，请稍后重试。");
     }
+
+    if (assetsResult.status === "fulfilled") {
+      setCandidates(assetsResult.value);
+    } else {
+      setCandidates([]);
+      setAssetError(assetsResult.reason instanceof Error ? assetsResult.reason.message : "已有素材暂时无法读取，请稍后重试。");
+    }
+
+    setIsLoading(false);
+    setIsLoadingAssets(false);
   }
 
   useEffect(() => {
-    void loadProject();
-    // loadProject intentionally follows the selected product context only.
+    void loadWorkspaceState();
+    // The loader intentionally follows the selected product context only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisHistoryId]);
 
@@ -96,12 +127,19 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
       OPTIONAL: 0,
     };
 
+    const candidateMap = new Map(candidates.map((candidate) => [candidate.assetId, candidate]));
+    let boundAssets = 0;
+
     project?.sections.forEach((section) => {
-      counts[section.readiness] += 1;
+      const selectedCandidate = section.selectedAssetId ? candidateMap.get(section.selectedAssetId) : null;
+      const selectedAssetAvailable = Boolean(selectedCandidate?.previewUrl);
+      const effectiveState = getDetailPageSectionEffectiveState(section, selectedAssetAvailable);
+      counts[effectiveState.readiness] += 1;
+      if (selectedCandidate) boundAssets += 1;
     });
 
-    return counts;
-  }, [project]);
+    return { ...counts, boundAssets };
+  }, [candidates, project]);
 
   async function handleCreatePlan() {
     if (!analysisHistoryId) {
@@ -155,7 +193,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
       });
 
       if (response.status === 409) {
-        await loadProject();
+        await loadWorkspaceState();
         throw new Error("策划已在另一个页面更新，已重新读取最新版本。");
       }
 
@@ -188,7 +226,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
       <div className="dashboard-section-header">
         <div>
-          <p className="product-workspace-kicker">Detail Page V2 · Phase 1</p>
+          <p className="product-workspace-kicker">Detail Page V2 · Phase 2A</p>
           <h2>详情页策划</h2>
           <p className="image-generation-intro">先确定页面结构和事实依据，再进入素材制作。AI 分析不会自动成为已验证事实。</p>
         </div>
@@ -209,7 +247,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
             </div>
             <div>
               <span>可继续 {summary.READY}</span>
-              {summary.EXISTING_ASSET ? <span>已有素材 {summary.EXISTING_ASSET}</span> : null}
+              {summary.boundAssets ? <span>{summary.boundAssets} 个模块使用已有素材</span> : null}
               <span>需要补充 {summary.NEEDS_INPUT}</span>
               {summary.OPTIONAL ? <span>可选 {summary.OPTIONAL}</span> : null}
             </div>
@@ -226,7 +264,13 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
           {source === "fallback" ? <p className="product-detail-v2-notice">AI 策划暂时不可用，当前使用可编辑的基础详情页结构。</p> : null}
 
-          <ProductDetailPagePlanPreview project={project} isUpdating={isUpdating} onOperation={(operation) => void handleOperation(operation)} />
+          <ProductDetailPagePlanPreview
+            candidates={candidates}
+            isLoadingAssets={isLoadingAssets}
+            project={project}
+            isUpdating={isUpdating}
+            onOperation={(operation) => void handleOperation(operation)}
+          />
 
           <div className="product-detail-v2-add-module">
             <label>
@@ -248,7 +292,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
               添加到末尾
             </button>
           </div>
-          <p className="product-detail-plan-note">Phase 1 只保存结构与证据。本阶段不会生成新图片，也不会自动匹配已有素材。</p>
+          <p className="product-detail-plan-note">复用已有素材不会生成新图片、上传文件或消耗图片额度。素材建议只来自当前商品的正式关联记录。</p>
         </>
       ) : (
         <>
@@ -295,6 +339,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
       )}
 
       {error ? <p className="image-generation-error" role="alert">{error}</p> : null}
+      {assetError ? <p className="image-generation-error" role="alert">{assetError} 已保存的策划仍可继续编辑。</p> : null}
     </section>
   );
 }

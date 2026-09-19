@@ -275,4 +275,33 @@ describe("remaining usage route coverage", () => {
     expect(mocks.generateText).not.toHaveBeenCalled();
     expect(mocks.persistDetailPageProject).not.toHaveBeenCalled();
   });
+
+  it("binds an existing detail-page asset with zero generation side effects", async () => {
+    mocks.updateDetailPageProject.mockResolvedValueOnce({
+      revision: 2,
+      sections: [{ id: "section-1", selectedAssetId: "asset-existing" }],
+    });
+
+    const response = await detailPagePlanPatch(
+      post({
+        analysisHistoryId: "analysis-1",
+        expectedRevision: 1,
+        operation: { type: "bind-asset", sectionId: "section-1", assetId: "asset-existing" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateDetailPageProject).toHaveBeenCalledWith({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 1,
+      operation: { type: "bind-asset", sectionId: "section-1", assetId: "asset-existing" },
+      userId: "user-1",
+    });
+    expect(mocks.reserveUsage).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
+    expect(mocks.generateImage).not.toHaveBeenCalled();
+    expect(mocks.editImage).not.toHaveBeenCalled();
+    expect(mocks.uploadFile).not.toHaveBeenCalled();
+    expect(mocks.saveHistory).not.toHaveBeenCalled();
+  });
 });

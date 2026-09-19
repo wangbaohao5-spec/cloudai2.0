@@ -3,6 +3,9 @@
 import {
   DETAIL_PAGE_MODULE_DEFINITIONS,
   DETAIL_PAGE_MODULE_TYPES,
+  canBindExistingAssetToModule,
+  getDetailPageSectionEffectiveState,
+  type DetailPageAssetCandidate,
   type DetailPageModuleType,
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
@@ -11,9 +14,20 @@ import {
 import { useEffect, useState } from "react";
 
 type ProductDetailPagePlanPreviewProps = {
+  candidates: DetailPageAssetCandidate[];
+  isLoadingAssets?: boolean;
   isUpdating?: boolean;
   onOperation: (operation: DetailPageProjectOperation) => void;
   project: DetailPageProjectV2;
+};
+
+const ASSET_SOURCE_LABELS: Record<DetailPageAssetCandidate["sourceType"], string> = {
+  original: "商品原图",
+  "image-edit": "原图优化",
+  "image-set": "商品套图",
+  "detail-page": "历史详情页",
+  "scene-image": "场景图",
+  "product-image": "商品图片",
 };
 
 const READINESS_LABELS = {
@@ -63,21 +77,136 @@ function EvidenceInput({ disabled, onSave, section }: { disabled: boolean; onSav
   );
 }
 
+function ExistingAssetPicker({
+  candidates,
+  disabled,
+  isLoading,
+  onOperation,
+  section,
+}: {
+  candidates: DetailPageAssetCandidate[];
+  disabled: boolean;
+  isLoading: boolean;
+  onOperation: (operation: DetailPageProjectOperation) => void;
+  section: DetailPageSectionV2;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedCandidate = section.selectedAssetId ? candidates.find((candidate) => candidate.assetId === section.selectedAssetId) : null;
+  const isMissing = Boolean(section.selectedAssetId && !selectedCandidate && !isLoading);
+  const isPreviewUnavailable = Boolean(section.selectedAssetId && selectedCandidate && !selectedCandidate.previewUrl && !isLoading);
+  const suggestedCount = candidates.filter((candidate) => candidate.suggestedModuleTypes.includes(section.moduleType)).length;
+
+  if (!canBindExistingAssetToModule(section.moduleType)) {
+    return null;
+  }
+
+  return (
+    <div className="product-detail-existing-assets">
+      <div className="product-detail-existing-assets-header">
+        <div>
+          <strong>{section.selectedAssetId ? "当前使用素材" : "已有素材"}</strong>
+          <span>
+            {isLoading
+              ? "正在读取当前商品素材..."
+              : section.selectedAssetId
+                ? isMissing
+                  ? "素材暂不可用，请重新选择"
+                  : isPreviewUnavailable
+                    ? "预览暂不可用，素材绑定已保留"
+                  : "已绑定到当前模块，刷新后仍会保留"
+                : candidates.length
+                  ? `当前商品有 ${candidates.length} 个可用素材${suggestedCount ? `，其中 ${suggestedCount} 个与本模块匹配` : ""}`
+                  : "当前商品暂无可复用图片"}
+          </span>
+        </div>
+        <div>
+          {candidates.length ? (
+            <button className="cai-button cai-button--secondary cai-button--sm" disabled={disabled || isLoading} type="button" onClick={() => setIsOpen((value) => !value)}>
+              {section.selectedAssetId ? "替换" : "选择已有素材"}
+            </button>
+          ) : null}
+          {section.selectedAssetId ? (
+            <button className="cai-button cai-button--ghost cai-button--sm" disabled={disabled} type="button" onClick={() => onOperation({ type: "unbind-asset", sectionId: section.id })}>
+              移除
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {section.selectedAssetId ? (
+        <div className={`product-detail-bound-asset${isMissing || isPreviewUnavailable ? " is-unavailable" : ""}`}>
+          {selectedCandidate?.previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt={selectedCandidate.name} decoding="async" loading="lazy" src={selectedCandidate.previewUrl} />
+          ) : (
+            <span className="product-detail-asset-placeholder">预览暂不可用</span>
+          )}
+          <div>
+            <strong>{selectedCandidate?.name || "原绑定素材不可用"}</strong>
+            <span>{selectedCandidate ? ASSET_SOURCE_LABELS[selectedCandidate.sourceType] : "可重新选择当前商品的其它素材"}</span>
+          </div>
+        </div>
+      ) : null}
+
+      {isOpen ? (
+        <div className="product-detail-asset-picker" aria-label={`${DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].label}可用素材`}>
+          {candidates.map((candidate) => {
+            const isSuggested = candidate.suggestedModuleTypes.includes(section.moduleType);
+            return (
+              <button
+                className={candidate.assetId === section.selectedAssetId ? "is-selected" : ""}
+                disabled={disabled}
+                key={candidate.assetId}
+                type="button"
+                onClick={() => {
+                  onOperation({ type: "bind-asset", sectionId: section.id, assetId: candidate.assetId });
+                  setIsOpen(false);
+                }}
+              >
+                {candidate.previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt="" decoding="async" loading="lazy" src={candidate.previewUrl} />
+                ) : (
+                  <span className="product-detail-asset-placeholder">预览暂不可用</span>
+                )}
+                <span>
+                  <strong>{candidate.name}</strong>
+                  <small>{ASSET_SOURCE_LABELS[candidate.sourceType]} · {new Date(candidate.createdAt).toLocaleDateString("zh-CN")}</small>
+                  {isSuggested ? <em>推荐</em> : null}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function DetailPageSectionCard({
   disabled,
+  candidates,
   index,
+  isLoadingAssets,
   onOperation,
   section,
   total,
 }: {
   disabled: boolean;
+  candidates: DetailPageAssetCandidate[];
   index: number;
+  isLoadingAssets: boolean;
   onOperation: (operation: DetailPageProjectOperation) => void;
   section: DetailPageSectionV2;
   total: number;
 }) {
   const [replacement, setReplacement] = useState<DetailPageModuleType>(section.moduleType);
   const definition = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType];
+  const selectedCandidate = section.selectedAssetId ? candidates.find((candidate) => candidate.assetId === section.selectedAssetId) : null;
+  const selectedAssetAvailable = Boolean(
+    section.selectedAssetId && (isLoadingAssets || selectedCandidate?.previewUrl),
+  );
+  const effectiveState = getDetailPageSectionEffectiveState(section, selectedAssetAvailable);
 
   useEffect(() => {
     setReplacement(section.moduleType);
@@ -93,8 +222,8 @@ function DetailPageSectionCard({
             <h3>{definition.label}</h3>
           </div>
         </div>
-        <span className={`product-detail-readiness product-detail-readiness--${section.readiness.toLowerCase().replace("_", "-")}`}>
-          {READINESS_LABELS[section.readiness]}
+        <span className={`product-detail-readiness product-detail-readiness--${effectiveState.readiness.toLowerCase().replace("_", "-")}`}>
+          {READINESS_LABELS[effectiveState.readiness]}
         </span>
       </header>
 
@@ -113,6 +242,8 @@ function DetailPageSectionCard({
       ) : null}
 
       <EvidenceInput disabled={disabled} section={section} onSave={(value) => onOperation({ type: "set-evidence", sectionId: section.id, value })} />
+
+      <ExistingAssetPicker candidates={candidates} disabled={disabled} isLoading={isLoadingAssets} section={section} onOperation={onOperation} />
 
       <footer>
         <div className="product-detail-v2-move-actions" aria-label={`${definition.label}排序操作`}>
@@ -166,14 +297,16 @@ function DetailPageSectionCard({
   );
 }
 
-export function ProductDetailPagePlanPreview({ isUpdating = false, onOperation, project }: ProductDetailPagePlanPreviewProps) {
+export function ProductDetailPagePlanPreview({ candidates, isLoadingAssets = false, isUpdating = false, onOperation, project }: ProductDetailPagePlanPreviewProps) {
   return (
     <div className="product-detail-v2-plan" aria-label="详情页策划结构">
       {project.sections.map((section, index) => (
         <DetailPageSectionCard
           key={section.id}
+          candidates={candidates}
           disabled={isUpdating}
           index={index}
+          isLoadingAssets={isLoadingAssets}
           section={section}
           total={project.sections.length}
           onOperation={onOperation}
