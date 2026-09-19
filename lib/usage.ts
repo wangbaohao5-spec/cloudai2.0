@@ -26,13 +26,6 @@ export type UsageRecord = {
   settledAt: string | null;
 };
 
-export type UsageStats = {
-  today: number;
-  month: number;
-  total: number;
-  byType: Record<UsageRecord["type"], number>;
-};
-
 export type UsageCenterSummary = {
   type: UsageType;
   label: string;
@@ -46,28 +39,6 @@ export type UsageCenterData = {
   summaries: UsageCenterSummary[];
   recentRecords: UsageRecord[];
 };
-
-export async function recordUsage(record: UsageRecordInput) {
-  return db.usageRecord.create({
-    data: {
-      userId: record.userId,
-      type: record.type,
-      model: record.model,
-      status: "succeeded",
-      units: 1,
-      settledAt: new Date(),
-    },
-  });
-}
-
-export async function enforceUsageLimit(record: UsageRecordInput) {
-  const now = new Date();
-
-  return db.$transaction(async (tx) => {
-    await lockUsageType(tx, record.userId, record.type);
-    await assertUsageAvailable(tx, record, 1, now);
-  });
-}
 
 export async function enforceUsageLimitAndRecord(record: UsageRecordInput) {
   const now = new Date();
@@ -87,64 +58,6 @@ export async function enforceUsageLimitAndRecord(record: UsageRecordInput) {
       },
     });
   });
-}
-
-export async function getUsageStats(userId: string): Promise<UsageStats> {
-  const now = new Date();
-  const startOfRollingWindow = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const activeWhere = {
-    userId,
-    status: {
-      in: [...ACTIVE_USAGE_STATUSES],
-    },
-  };
-  const [today, month, total, byTypeRows] = await Promise.all([
-    db.usageRecord.aggregate({
-      where: {
-        ...activeWhere,
-        createdAt: {
-          gte: startOfRollingWindow,
-        },
-      },
-      _sum: {
-        units: true,
-      },
-    }),
-    db.usageRecord.aggregate({
-      where: {
-        ...activeWhere,
-        createdAt: {
-          gte: startOfMonth,
-        },
-      },
-      _sum: {
-        units: true,
-      },
-    }),
-    db.usageRecord.aggregate({
-      where: activeWhere,
-      _sum: {
-        units: true,
-      },
-    }),
-    db.usageRecord.groupBy({
-      by: ["type"],
-      where: activeWhere,
-      _sum: {
-        units: true,
-      },
-    }),
-  ]);
-
-  return {
-    today: today._sum.units || 0,
-    month: month._sum.units || 0,
-    total: total._sum.units || 0,
-    byType: Object.fromEntries(
-      USAGE_TYPES.map((type) => [type, byTypeRows.find((row) => row.type === type)?._sum.units || 0]),
-    ) as UsageStats["byType"],
-  };
 }
 
 export async function getUsageCenterData(userId: string): Promise<UsageCenterData> {

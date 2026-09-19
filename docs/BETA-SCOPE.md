@@ -200,7 +200,6 @@ Initial cohort: 5-10 invited testers
 - Planning draft 的服务端持久化与跨设备恢复。
 - History pagination、异常记录提示和筛选体验抛光。
 - Provider 健康状态、排队和更丰富错误状态 UX。
-- README 仍描述旧静态官网，后续应整体重写，不能作为当前应用运行说明。
 
 ## 11. Pre-release Checklist
 

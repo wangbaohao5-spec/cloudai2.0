@@ -41,7 +41,6 @@ vi.mock("@/lib/ai/text-router", () => ({
 }));
 vi.mock("@/lib/ai/image-prompt-builder", () => ({ buildImagePrompt: () => "image prompt" }));
 vi.mock("@/lib/ai/product-generation-brief-prompt-builder", () => ({ buildProductGenerationBriefPrompt: () => "brief" }));
-vi.mock("@/lib/ai/product-scene-prompt-builder", () => ({ buildProductSceneEditPrompt: () => "scene prompt" }));
 vi.mock("@/lib/ai/product-visual-fidelity-prompt-builder", () => ({ buildProductVisualFidelityPrompt: () => "fidelity" }));
 vi.mock("@/lib/ai/product-image-set-image-prompt-builder", () => ({ buildProductImageSetImagePrompt: () => "image set prompt" }));
 vi.mock("@/lib/ai/product-detail-page-image-prompt-builder", () => ({ buildProductDetailPageImagePrompt: () => "detail prompt" }));
@@ -79,7 +78,6 @@ vi.mock("@/lib/usage", () => ({
 import { POST as chatPost } from "@/app/api/chat/route";
 import { POST as copywritingPost } from "@/app/api/copywriting/route";
 import { POST as imagePost } from "@/app/api/image/generate/route";
-import { POST as scenePost } from "@/app/api/products/scene-image/route";
 import { POST as imageSetPost } from "@/app/api/products/image-set/generate/route";
 import { POST as detailPagePost } from "@/app/api/products/detail-page/generate/route";
 import { POST as imageSetPlanPost } from "@/app/api/products/image-set/plan/route";
@@ -173,28 +171,6 @@ describe("remaining usage route coverage", () => {
     expect(data.imageUrl).toBe("https://example.test/result.png");
     expect(historyInput.output).not.toHaveProperty("imageUrl");
     expect(historyInput.output).toEqual(expect.objectContaining({ assetId: "asset-1", storagePath: "generated/result.png" }));
-  });
-
-  it("refunds scene image Asset and History persistence failures", async () => {
-    const body = { analysisHistoryId: "analysis-1", scene: "客厅" };
-    mocks.createAsset.mockRejectedValueOnce(new Error("asset failed"));
-    expect((await scenePost(post(body))).status).toBe(500);
-    expect(mocks.refundUsage).toHaveBeenLastCalledWith(expect.objectContaining({ failureCode: "ASSET_PERSIST_ERROR" }));
-
-    mocks.createAsset.mockResolvedValueOnce({ id: "asset-2", url: "generated/result-2.png" });
-    mocks.saveHistory.mockRejectedValueOnce(new Error("history failed"));
-    expect((await scenePost(post(body))).status).toBe(500);
-    expect(mocks.refundUsage).toHaveBeenLastCalledWith(expect.objectContaining({ failureCode: "HISTORY_PERSIST_ERROR" }));
-  });
-
-  it("returns a fresh scene URL without persisting it in history", async () => {
-    const response = await scenePost(post({ analysisHistoryId: "analysis-1", scene: "客厅" }));
-    const data = await response.json();
-    const historyInput = mocks.saveHistory.mock.calls.at(-1)?.[0];
-
-    expect(response.status).toBe(200);
-    expect(data.imageUrl).toBe("https://example.test/result.png");
-    expect(historyInput.output).not.toHaveProperty("imageUrl");
   });
 
   it("settles each image-set image independently", async () => {

@@ -7,7 +7,6 @@ import { buildProductDetailPagePlanPrompt, type ProductDetailPagePlanPage } from
 import { buildProductImageEditPrompt } from "../product-image-edit-prompt-builder";
 import { buildProductImageSetImagePrompt } from "../product-image-set-image-prompt-builder";
 import { buildProductImageSetPlanPrompt, type ProductImageSetPlanImage } from "../product-image-set-plan-prompt-builder";
-import { buildProductSceneEditPrompt } from "../product-scene-prompt-builder";
 import { PRODUCT_GENERATION_RULES_BLOCK } from "../product-generation-rules";
 import { buildProductVisualFidelityPrompt } from "../product-visual-fidelity-prompt-builder";
 import { buildCopywritingPrompt } from "../../prompts";
@@ -168,19 +167,6 @@ describe("product generation rules coverage", () => {
       image: mockImageSetImage,
       productTitle: "粉蓝机械键盘",
       purpose: "detail-page",
-    });
-
-    expectVisualRules(prompt);
-    expect(prompt).toContain("官方授权");
-    expect(prompt).toContain("绝对化");
-  });
-
-  it("includes visual fidelity rules in scene image prompt", () => {
-    const prompt = buildProductSceneEditPrompt({
-      analysis: mockAnalysis,
-      platform: "taobao",
-      scene: "桌搭场景",
-      style: "lifestyle",
     });
 
     expectVisualRules(prompt);

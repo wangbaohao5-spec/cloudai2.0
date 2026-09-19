@@ -1,36 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const usageRecord = vi.hoisted(() => ({
-  aggregate: vi.fn(),
   findMany: vi.fn(),
   groupBy: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({ db: { usageRecord } }));
 
-import { getUsageCenterData, getUsageStats } from "@/lib/usage";
+import { getUsageCenterData } from "@/lib/usage";
 
 describe("usage statistics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("sums pending and succeeded units while including legacy requestId-null records", async () => {
-    usageRecord.aggregate
-      .mockResolvedValueOnce({ _sum: { units: 3 } })
-      .mockResolvedValueOnce({ _sum: { units: 5 } })
-      .mockResolvedValueOnce({ _sum: { units: 7 } });
-    usageRecord.groupBy.mockResolvedValue([{ type: "copywriting", _sum: { units: 2 } }]);
-
-    const stats = await getUsageStats("user-1");
-
-    expect(stats).toMatchObject({ today: 3, month: 5, total: 7 });
-    expect(stats.byType.copywriting).toBe(2);
-    for (const call of usageRecord.aggregate.mock.calls) {
-      expect(call[0]._sum).toEqual({ units: true });
-      expect(call[0].where.status.in).toEqual(["pending", "succeeded"]);
-      expect(call[0].where).not.toHaveProperty("requestId");
-    }
   });
 
   it("uses unit sums for usage-center totals and excludes refunded records", async () => {

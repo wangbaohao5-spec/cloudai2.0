@@ -101,13 +101,11 @@
   object-position: center;
   box-shadow: var(--shadow)
 }
-.product-workspace-rail .product-upload-box:hover,
 .product-workspace-rail .product-workspace-rail-product:hover,
 .product-workspace-rail .product-workspace-pending-summary:hover,
 .product-workspace-rail .product-workspace-status:hover,
 .product-workspace-rail .product-workflow-mini-steps:hover,
-.product-workspace-rail .product-workspace-rail-next:hover,
-.product-workspace-rail .product-creation-summary:hover {
+.product-workspace-rail .product-workspace-rail-next:hover {
   border-color: var(--selected-border);
   background:
     linear-gradient(145deg, var(--workspace-panel-strong), var(--workspace-surface-hover)) padding-box,
@@ -117,13 +115,11 @@
     inset 0 1px 0 var(--surface-hover);
   transform: translateY(-1px)
 }
-.product-workspace-rail .product-upload-box,
 .product-workspace-rail .product-workspace-rail-product,
 .product-workspace-rail .product-workspace-pending-summary,
 .product-workspace-rail .product-workspace-status,
 .product-workspace-rail .product-workflow-mini-steps,
-.product-workspace-rail .product-workspace-rail-next,
-.product-workspace-rail .product-creation-summary {
+.product-workspace-rail .product-workspace-rail-next {
   border: 1px solid var(--card-border);
   background:
     linear-gradient(145deg, var(--workspace-panel), var(--workspace-surface)) padding-box,
@@ -138,13 +134,6 @@
     box-shadow 220ms ease;
   border-radius: 22px;
   padding: 16px
-}
-.product-workspace-rail .product-creation-original {
-  border: 1px solid var(--card-border);
-  background:
-    linear-gradient(145deg, var(--preview-bg), var(--workspace-panel)) padding-box,
-    linear-gradient(145deg, var(--surface-hover), var(--workspace-border)) border-box;
-  box-shadow: inset 0 1px 0 var(--surface-hover)
 }
 .product-workspace-rail .product-upload-preview {
   border: 1px solid var(--card-border);
@@ -245,11 +234,6 @@
 }
 .product-workspace-rail-detail-link:hover {
   color: var(--text)
-}
-.product-workflow-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 24px
 }
 .product-project-context-back:hover,
 .product-detail-page-project-link:hover {
@@ -1920,69 +1904,10 @@
   gap: 8px;
   border-style: dashed
 }
-.product-workflow-results {
-  display: grid;
-  gap: 24px;
-  align-content: start
-}
-.product-workflow-panel,
 .product-copywriting-panel,
 .product-scene-image-panel {
   border-radius: 28px;
   padding: 28px
-}
-.product-creation-center {
-  border-radius: 28px;
-  padding: 28px;
-  display: grid;
-  gap: 22px
-}
-.product-creation-summary {
-  display: grid;
-  grid-template-columns: 108px minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-  border: 1px solid var(--workspace-border);
-  border-radius: 22px;
-  padding: 14px;
-  background: var(--workspace-surface)
-}
-.product-creation-center .product-creation-summary {
-  grid-template-columns: 132px minmax(0, 1fr);
-  padding: 0;
-  border: 0;
-  background: transparent
-}
-.product-creation-original {
-  display: grid;
-  overflow: hidden;
-  aspect-ratio: 1;
-  place-items: center;
-  border: 1px solid var(--card-border);
-  border-radius: 20px;
-  color: var(--muted);
-  background: var(--preview-bg)
-}
-.product-creation-original img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover
-}
-.product-creation-main {
-  min-width: 0
-}
-.product-creation-main h2 {
-  margin-bottom: 7px;
-  font-size: 1.2rem;
-  line-height: 1.2;
-  letter-spacing: 0;
-  word-break: break-word
-}
-.product-creation-main p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.7
 }
 .product-creation-section-header {
   display: flex;
@@ -1999,145 +1924,6 @@
   margin-top: 3px;
   color: var(--muted);
   font-size: 0.88rem
-}
-.product-creation-progress-summary {
-  border: 1px solid var(--workspace-border);
-  border-radius: 999px;
-  padding: 7px 11px;
-  color: var(--text);
-  background: var(--surface);
-  font-size: 0.78rem;
-  font-style: normal;
-  font-weight: 900;
-  white-space: nowrap
-}
-.product-creation-progress,
-.product-creation-action-panel {
-  display: grid;
-  gap: 14px;
-  border-top: 1px solid var(--card-border);
-  padding-top: 20px
-}
-.product-creation-progress-list {
-  display: grid;
-  gap: 10px
-}
-.product-creation-progress-list article {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  border: 1px solid var(--workspace-border);
-  border-radius: 16px;
-  padding: 12px;
-  background: var(--workspace-surface)
-}
-.product-creation-progress-list article > span {
-  position: relative;
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border: 1px solid var(--workspace-border);
-  border-radius: 999px;
-  color: var(--muted);
-  background: var(--surface);
-  font-size: 0.78rem;
-  font-weight: 900
-}
-.product-creation-progress-list article.done > span {
-  border-color: var(--status-success-border);
-  color: var(--status-success-text);
-  background: var(--status-success-bg)
-}
-.product-creation-progress-list article.pending > span {
-  border-style: dashed
-}
-.product-creation-progress-list article:not(:last-child) > span::after {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
-  width: 1px;
-  height: 20px;
-  background: var(--workspace-border);
-  content: ""
-}
-.product-creation-progress-list strong {
-  display: block;
-  color: var(--text);
-  font-size: 0.93rem
-}
-.product-creation-progress-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px
-}
-.product-creation-progress-row > span {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px
-}
-.product-creation-progress-row em {
-  flex: 0 0 auto;
-  border: 1px solid var(--workspace-border);
-  border-radius: 999px;
-  padding: 4px 8px;
-  color: var(--muted);
-  background: var(--surface);
-  font-size: 0.74rem;
-  font-style: normal;
-  font-weight: 900
-}
-.product-creation-progress-link {
-  flex: 0 0 auto;
-  border: 1px solid var(--workspace-border);
-  border-radius: 999px;
-  padding: 4px 8px;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  font-size: 0.74rem;
-  font-weight: 900;
-  text-decoration: none
-}
-.product-creation-progress-link:hover,
-.product-creation-progress-list article.done .product-creation-progress-row em {
-  border-color: var(--selected-border);
-  color: var(--text);
-  background: var(--surface-hover)
-}
-.product-creation-progress-list p {
-  margin: 2px 0 0;
-  color: var(--muted);
-  font-size: 0.84rem
-}
-.product-creation-action-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px
-}
-.product-creation-action-grid a {
-  display: grid;
-  gap: 7px;
-  min-width: 0;
-  border: 1px solid var(--selected-border);
-  border-radius: 18px;
-  padding: 14px;
-  color: var(--text);
-  background: var(--action-gradient);
-  text-decoration: none
-}
-.product-creation-action-grid a:hover {
-  border-color: var(--accent);
-  background: var(--action-hover)
-}
-.product-creation-action-grid strong {
-  color: var(--text)
-}
-.product-creation-action-grid span {
-  color: var(--muted);
-  font-size: 0.86rem
 }
 .product-content-package .product-creation-section-header > div:first-child {
   display: grid;
@@ -2178,23 +1964,6 @@
 .product-content-preview button span {
   margin-right: 6px;
   color: var(--accent)
-}
-.product-creation-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px
-}
-.product-creation-actions a {
-  border: 1px solid var(--card-border);
-  border-radius: 999px;
-  padding: 8px 12px;
-  color: var(--text);
-  background: var(--action-gradient);
-  font-size: 0.84rem;
-  font-weight: 800;
-  text-decoration: none;
-  border-color: var(--selected-border)
 }
 .product-asset-gallery-helper {
   color: var(--muted);
@@ -2301,27 +2070,6 @@
   background: var(--card);
   box-shadow: var(--shadow)
 }
-.product-upload-box {
-  display: grid;
-  gap: 16px;
-  margin-top: 22px
-}
-.product-upload-box label {
-  display: grid;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.92rem;
-  font-weight: 700
-}
-.product-upload-box input {
-  width: 100%;
-  border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px 16px;
-  color: var(--text);
-  background: var(--input);
-  outline: none
-}
 .product-upload-preview {
   display: grid;
   min-height: 240px;
@@ -2338,39 +2086,6 @@
   max-height: 420px;
   border-radius: 16px;
   object-fit: contain
-}
-.product-upload-box > span {
-  color: var(--muted);
-  font-size: 0.9rem;
-  word-break: break-word
-}
-.product-workflow-steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px
-}
-.product-workflow-steps span {
-  border: 1px solid var(--card-border);
-  border-radius: 999px;
-  padding: 8px 12px;
-  color: var(--muted);
-  background: var(--surface);
-  font-size: 0.84rem;
-  font-weight: 800
-}
-.product-workflow-steps span.done {
-  border-color: var(--status-success-border);
-  color: var(--status-success-text);
-  background: var(--status-success-bg)
-}
-.product-workflow-steps span.current {
-  border-color: var(--selected-border);
-  color: var(--text);
-  background: var(--selected-gradient)
-}
-.product-workflow-steps span.locked {
-  opacity: 0.58
 }
 .product-inherited-output-target strong {
   color: var(--text);
@@ -2452,92 +2167,6 @@
 .product-workspace-panel .copywriting-copy-button:focus-visible {
   outline: 2px solid var(--primary-light);
   outline-offset: 3px
-}
-.product-scene-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px
-}
-.product-scene-options label {
-  position: relative;
-  display: grid;
-  gap: 8px;
-  min-height: 132px;
-  border: 1px solid var(--card-border);
-  border-radius: 20px;
-  padding: 16px;
-  color: var(--muted);
-  background: var(--workspace-surface);
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease
-}
-.product-scene-options label:hover,
-.product-scene-options label.active {
-  border-color: var(--selected-border);
-  background: var(--selected-gradient);
-  transform: translateY(-1px)
-}
-.product-scene-options input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none
-}
-.product-scene-options strong {
-  color: var(--text);
-  font-size: 1rem
-}
-.product-scene-options span {
-  font-size: 0.88rem;
-  line-height: 1.6
-}
-.product-scene-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px
-}
-.product-scene-controls label {
-  display: grid;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.92rem;
-  font-weight: 700
-}
-.product-scene-controls select {
-  width: 100%;
-  border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 14px 16px;
-  color: var(--text);
-  background: var(--input);
-  outline: none
-}
-.product-scene-controls option {
-  color: var(--option-text)
-}
-.product-scene-image-result dl {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0
-}
-.product-scene-image-result dl div {
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  padding: 12px;
-  background: var(--card)
-}
-.product-scene-image-result dt {
-  margin-bottom: 4px;
-  color: var(--muted);
-  font-size: 0.78rem
-}
-.product-scene-image-result dd {
-  margin: 0;
-  color: var(--text);
-  font-weight: 700
 }
 .product-analysis-summary {
   display: grid;
@@ -3056,17 +2685,10 @@
   background: var(--chip-bg);
   box-shadow: none
 }
-[data-theme="business-light"] .product-workflow-steps span.done,
-[data-theme="business-light"] .product-creation-progress-list article.done > span {
-  border-color: var(--status-success-border);
-  color: var(--status-success-text);
-  background: var(--status-success-bg)
-}
 [data-theme="business-light"] .product-workspace-start-upload,
 [data-theme="business-light"] .product-workspace-start-upload.has-preview,
 [data-theme="business-light"] .product-workspace-start-upload img,
 [data-theme="business-light"] .product-upload-preview,
-[data-theme="business-light"] .product-creation-original,
 [data-theme="business-light"] .product-asset-media,
 [data-theme="business-light"] .product-image-set-card-media,
 [data-theme="business-light"] .product-detail-generated-preview {
@@ -3838,17 +3460,6 @@
   padding: var(--space-4);
   background: var(--surface-card-muted)
 }
-.product-scene-image-form {
-  display: grid;
-  gap: var(--space-3);
-  margin-top: 0;
-  border-top: 1px solid var(--card-border);
-  padding-top: 24px;
-  border: 0;
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  background: var(--surface-card-muted)
-}
 .product-copywriting-form label {
   display: grid;
   gap: 8px;
@@ -3856,8 +3467,7 @@
   font-size: var(--type-metadata);
   font-weight: 700
 }
-.product-workspace-panel .image-edit-form label,
-.product-scene-image-form label {
+.product-workspace-panel .image-edit-form label {
   color: var(--text-default);
   font-size: var(--type-metadata);
   font-weight: 700
@@ -3871,14 +3481,11 @@
   background: var(--input);
   outline: none
 }
-.product-workspace-panel .image-edit-form textarea,
-.product-scene-image-form select,
-.product-scene-image-form textarea {
+.product-workspace-panel .image-edit-form textarea {
   border-radius: var(--radius-md)
 }
 .product-copywriting-form > .cai-button,
-.product-workspace-panel .image-edit-form > .cai-button,
-.product-scene-image-form > .cai-button {
+.product-workspace-panel .image-edit-form > .cai-button {
   justify-self: start;
   min-width: 180px
 }
@@ -4619,19 +4226,13 @@
     min-width: 44px;
     width: 44px
   }
-  .product-workflow-shell,
-.product-detail-page-context-grid,
-.product-creation-summary,
-.product-creation-action-grid,
+  .product-detail-page-context-grid,
 .product-analysis-extra-grid,
 .product-analysis-summary-grid,
 .product-analysis-grid,
 .product-generation-brief-grid,
 .product-detail-count-grid,
-.product-scene-options,
-.product-scene-controls,
-.product-visual-mode-selector > div,
-.product-scene-image-result dl {
+.product-visual-mode-selector > div {
     grid-template-columns: 1fr
   }
   .product-project-context-summary {
@@ -4787,9 +4388,6 @@
   .product-image-set-summary-actions .button {
     flex: 1 1 100%
   }
-  .product-workspace-summary .product-creation-summary {
-    grid-template-columns: 88px minmax(0, 1fr)
-  }
   .product-creation-section-header {
     align-items: flex-start;
     flex-direction: column
@@ -4926,8 +4524,7 @@
 .product-workspace-action-strip-actions .cai-button,
 .product-content-package-actions button,
 .product-copywriting-form > .cai-button,
-.product-workspace-panel .image-edit-form > .cai-button,
-.product-scene-image-form > .cai-button {
+.product-workspace-panel .image-edit-form > .cai-button {
     width: 100%;
     min-width: 0
   }
@@ -4950,7 +4547,6 @@
   }
   .product-copywriting-form,
 .product-workspace-panel .image-edit-form,
-.product-scene-image-form,
 .product-image-set-settings {
     padding: var(--space-3)
   }
