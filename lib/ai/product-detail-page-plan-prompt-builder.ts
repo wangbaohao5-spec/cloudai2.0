@@ -3,6 +3,7 @@ import { PRODUCT_GENERATION_RULES_BLOCK } from "@/lib/ai/product-generation-rule
 import { buildProductOutputSettingsPrompt } from "@/lib/ai/product-output-settings-prompt-builder";
 import type { ProductGenerationBrief, ProductImageAnalysis, ProductOutputSettings } from "@/lib/product-types";
 import type { CopywritingResult, HistoryRecord } from "@/lib/types";
+import { DETAIL_PAGE_MODULE_DEFINITIONS, DETAIL_PAGE_MODULE_TYPES } from "@/lib/detail-page-project";
 
 export type ProductDetailPageStyle = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
 export type ProductDetailPageCount = 3 | 5 | 8;
@@ -208,6 +209,70 @@ export function buildProductDetailPagePlanPrompt({ analysis, copywritingRecords,
     `风险提示：${joinList(analysis.risks)}`,
     "",
     "已有文案：",
+    formatCopywritingRecords(copywritingRecords),
+  ].join("\n");
+}
+
+export type ProductDetailPageV2PlanPromptInput = Omit<ProductDetailPagePlanInput, "count"> & {
+  sectionCount: number;
+};
+
+export function buildProductDetailPageV2PlanPrompt({
+  analysis,
+  copywritingRecords,
+  generationBrief,
+  outputSettings,
+  productTitle,
+  sectionCount,
+  style,
+}: ProductDetailPageV2PlanPromptInput) {
+  const productName = analysis.productNameSuggestions[0] || productTitle || analysis.category || "商品";
+  const moduleList = DETAIL_PAGE_MODULE_TYPES.map((moduleType) => {
+    const definition = DETAIL_PAGE_MODULE_DEFINITIONS[moduleType];
+    return `${moduleType}（${definition.label} / ${definition.kind}）`;
+  }).join("、");
+
+  return [
+    `你是 Vahoro 的电商详情页策划助手，请为当前商品推荐 ${sectionCount} 个连续页面模块。`,
+    "只输出严格 JSON，不要输出 Markdown、解释或额外字段。",
+    "输出结构：",
+    `{
+  "pageStyle": {
+    "preset": "${style}",
+    "mood": "...",
+    "palette": "...",
+    "lighting": "...",
+    "typography": "...",
+    "spacing": "..."
+  },
+  "sections": [
+    {
+      "moduleType": "HERO",
+      "purpose": "该模块在页面中的职责",
+      "reason": "为什么当前商品需要该模块",
+      "headline": "可选的短标题草稿",
+      "body": "可选的短文案草稿"
+    }
+  ]
+}`,
+    `sections 必须为 ${sectionCount} 项。`,
+    `moduleType 只能使用：${moduleList}。`,
+    "推荐优先覆盖 HERO、BENEFITS、USAGE_SCENE、PRODUCT_DETAIL、USAGE_GUIDE、BRAND_CONTENT、SPECS。",
+    "不要输出多角度、SKU、成分、效果对比、工艺、配件、售后或其它未列出的 moduleType。",
+    "purpose 和 reason 可以用于解释页面结构；headline/body 只能是保守草稿，不能被视为已验证事实。",
+    "AI 商品分析、已有 AI 文案和图片外观都不能自动证明商品功效、规格、容量、成分或使用方法。",
+    "若缺乏可靠事实，不要补写敏感肌、氨基酸、温和不刺激、保湿、清洁力、容量、成分、认证或使用方法。",
+    "不要编造品牌故事、官方关系、认证、检测结果、价格、销量或绝对化承诺。",
+    `页面风格方向：${STYLE_GUIDES[style]}`,
+    buildProductGenerationBriefPrompt(generationBrief),
+    buildProductOutputSettingsPrompt(outputSettings),
+    PRODUCT_GENERATION_RULES_BLOCK,
+    "商品上下文（仅用于结构策划，不等于已验证事实）：",
+    `商品名称：${productName}`,
+    `商品类别：${analysis.category || "暂无"}`,
+    `视觉风格：${analysis.visualStyle || "暂无"}`,
+    `风险提示：${joinList(analysis.risks)}`,
+    "已有内容参考：",
     formatCopywritingRecords(copywritingRecords),
   ].join("\n");
 }

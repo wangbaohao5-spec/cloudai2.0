@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   generateCopywriting: vi.fn(),
   generateImage: vi.fn(),
   generateText: vi.fn(),
+  getDetailPageProjectForUser: vi.fn(),
   getAssetForUser: vi.fn(),
   getCurrentUser: vi.fn(),
   getFileUrl: vi.fn(),
@@ -22,9 +23,11 @@ const mocks = vi.hoisted(() => ({
   getUsageRequestId: vi.fn(),
   refundUsage: vi.fn(),
   reserveUsage: vi.fn(),
+  persistDetailPageProject: vi.fn(),
   saveHistory: vi.fn(),
   saveRemoteAsset: vi.fn(),
   uploadFile: vi.fn(),
+  updateDetailPageProject: vi.fn(),
 }));
 
 vi.mock("@/lib/ai/chat", () => ({ generateChatReply: mocks.generateChatReply }));
@@ -50,13 +53,23 @@ vi.mock("@/lib/ai/product-image-set-plan-prompt-builder", async (importOriginal)
 });
 vi.mock("@/lib/ai/product-detail-page-plan-prompt-builder", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/ai/product-detail-page-plan-prompt-builder")>();
-  return { ...original, buildProductDetailPagePlanPrompt: () => "detail plan" };
+  return {
+    ...original,
+    buildProductDetailPagePlanPrompt: () => "detail plan",
+    buildProductDetailPageV2PlanPrompt: () => "detail V2 plan",
+  };
 });
 vi.mock("@/lib/ai/product-content-risk-scanner", () => ({ scanProductContentRisk: () => ({ level: "none", matches: [] }) }));
 vi.mock("@/lib/ai/product-image-set-structure-validation", () => ({ validateImageSetStructure: () => ({ valid: true }) }));
 vi.mock("@/lib/asset-ingest", () => ({ saveRemoteAsset: mocks.saveRemoteAsset }));
 vi.mock("@/lib/assets", () => ({ createAsset: mocks.createAsset, getAssetForUser: mocks.getAssetForUser }));
 vi.mock("@/lib/current-user", () => ({ getCurrentUser: mocks.getCurrentUser }));
+vi.mock("@/lib/detail-page-projects", () => ({
+  getDetailPageProjectForUser: mocks.getDetailPageProjectForUser,
+  getDetailPageProjectRecordId: (analysisHistoryId: string) => `detail-page-project-${analysisHistoryId}`,
+  persistDetailPageProject: mocks.persistDetailPageProject,
+  updateDetailPageProject: mocks.updateDetailPageProject,
+}));
 vi.mock("@/lib/history", () => ({
   getHistoryRecordForUser: mocks.getHistoryRecordForUser,
   getProductRelatedHistory: mocks.getProductRelatedHistory,
@@ -82,6 +95,8 @@ import { POST as imageSetPost } from "@/app/api/products/image-set/generate/rout
 import { POST as detailPagePost } from "@/app/api/products/detail-page/generate/route";
 import { POST as imageSetPlanPost } from "@/app/api/products/image-set/plan/route";
 import { POST as detailPagePlanPost } from "@/app/api/products/detail-page/plan/route";
+import { PATCH as detailPagePlanPatch } from "@/app/api/products/detail-page/plan/route";
+import { ApiError } from "@/lib/api-errors";
 
 function post(body: object) {
   return new Request("http://localhost", {
@@ -103,6 +118,7 @@ describe("remaining usage route coverage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentUser.mockResolvedValue({ id: "user-1" });
+    mocks.getDetailPageProjectForUser.mockResolvedValue(null);
     mocks.cleanupGeneratedAssetAfterFailure.mockResolvedValue(undefined);
     mocks.getUsageRequestId.mockReturnValue("request-coverage-1");
     mocks.reserveUsage.mockResolvedValue({ created: true, record: { id: "usage-1" } });
@@ -124,6 +140,8 @@ describe("remaining usage route coverage", () => {
     mocks.uploadFile.mockResolvedValue({ path: "generated/result.png", signedUrl: "https://example.test/result.png" });
     mocks.createAsset.mockResolvedValue({ id: "asset-1", url: "generated/result.png" });
     mocks.saveHistory.mockResolvedValue({ id: "history-1" });
+    mocks.persistDetailPageProject.mockImplementation(async (project) => project);
+    mocks.updateDetailPageProject.mockResolvedValue(null);
     mocks.generateChatReply.mockResolvedValue("有效回复");
     mocks.generateCopywriting.mockResolvedValue({ title: "标题", points: [], description: "描述", shortVideoScript: "脚本" });
     mocks.generateImage.mockResolvedValue({ imageUrl: "https://provider.test/result.png", provider: "mock", model: "image-model" });
@@ -213,7 +231,7 @@ describe("remaining usage route coverage", () => {
     expect(mocks.refundUsage).toHaveBeenCalledTimes(2);
   });
 
-  it("charges planning only after a valid plan and refunds parse failure", async () => {
+  it("charges valid planning and persists a deterministic fallback after parse failure", async () => {
     mocks.generateText.mockResolvedValueOnce(JSON.stringify({
       images: [1, 2, 3].map((imageIndex) => ({ imageIndex, imageType: imageIndex === 1 ? "hero" : imageIndex === 3 ? "cta" : "selling-point" })),
     }));
@@ -222,7 +240,39 @@ describe("remaining usage route coverage", () => {
     expect(mocks.finalizeUsage).toHaveBeenCalled();
 
     mocks.generateText.mockResolvedValueOnce("not-json");
-    expect((await detailPagePlanPost(post({ analysisHistoryId: "analysis-1", count: 3, style: "ecommerce" }))).status).toBe(500);
+    const response = await detailPagePlanPost(post({ analysisHistoryId: "analysis-1", sectionCount: 5, style: "ecommerce" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.source).toBe("fallback");
+    expect(data.project.sections).toHaveLength(5);
     expect(mocks.refundUsage).toHaveBeenCalledWith(expect.objectContaining({ failureCode: "PARSE_ERROR" }));
+    expect(mocks.persistDetailPageProject).toHaveBeenCalled();
+  });
+
+  it("returns a safe 409 when a detail-page project revision is stale", async () => {
+    mocks.updateDetailPageProject.mockRejectedValueOnce(new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409));
+
+    const response = await detailPagePlanPatch(
+      post({
+        analysisHistoryId: "analysis-1",
+        expectedRevision: 1,
+        operation: { direction: "down", sectionId: "section-1", type: "move-section" },
+      }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("详情页策划已在其他页面更新，请刷新后重试。");
+  });
+
+  it("does not bypass planning usage limits with the fallback plan", async () => {
+    mocks.reserveUsage.mockRejectedValueOnce(new ApiError("已达到当前额度上限。", 429));
+
+    const response = await detailPagePlanPost(post({ analysisHistoryId: "analysis-1", sectionCount: 5, style: "ecommerce" }));
+
+    expect(response.status).toBe(429);
+    expect(mocks.generateText).not.toHaveBeenCalled();
+    expect(mocks.persistDetailPageProject).not.toHaveBeenCalled();
   });
 });

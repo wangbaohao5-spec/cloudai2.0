@@ -1,18 +1,20 @@
 "use client";
 
-import { ProductDetailPagePlanPreview, type DetailPageImageResult } from "@/components/products/product-detail-page-plan-preview";
+import { ProductDetailPagePlanPreview } from "@/components/products/product-detail-page-plan-preview";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
-import { ProductRiskScanAlert } from "@/components/products/product-risk-scan-alert";
 import { AiThinkingLoading } from "@/components/ui/loading";
-import type {
-  ProductDetailPageCount,
-  ProductDetailPagePlan,
-  ProductDetailPagePlanPage,
-  ProductDetailPageStyle,
-} from "@/lib/ai/product-detail-page-plan-prompt-builder";
+import { fetchWithAuthHandling } from "@/lib/authenticated-fetch";
+import {
+  DETAIL_PAGE_MODULE_DEFINITIONS,
+  DETAIL_PAGE_MODULE_TYPES,
+  type DetailPageModuleType,
+  type DetailPageProjectOperation,
+  type DetailPageProjectV2,
+  type DetailPageStylePreset,
+} from "@/lib/detail-page-project";
 import { createGenerationAttempt } from "@/lib/generation-request";
-import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings, ProductVisualGenerationMode } from "@/lib/product-types";
-import { useState } from "react";
+import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
+import { useEffect, useMemo, useState } from "react";
 
 type ProductDetailPagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
@@ -22,167 +24,147 @@ type ProductDetailPagePanelProps = {
   onOpenRiskConfirmations?: () => void;
 };
 
-type ProductRiskScan = {
-  level: "none" | "low" | "medium" | "high";
-  matches?: Array<{
-    category: string;
-    keyword: string;
-    level: string;
-  }>;
-  summary?: string;
+type ProjectResponse = {
+  project: DetailPageProjectV2 | null;
+  source?: "ai" | "fallback" | "recovered";
 };
 
-type ProductDetailPagePlanResponse = ProductDetailPagePlan & {
-  riskScan?: ProductRiskScan;
-};
-
-const styleOptions: Array<{ description: string; label: string; value: ProductDetailPageStyle }> = [
-  { value: "ecommerce", label: "电商详情页", description: "转化清晰、卖点明确，适合通用电商详情页。" },
-  { value: "xiaohongshu", label: "小红书种草", description: "语气自然、有使用感，适合内容种草。" },
-  { value: "brand-site", label: "品牌官网", description: "强调品牌感、质感和可信表达。" },
-  { value: "minimal", label: "极简高级", description: "文案克制、留白感强，适合高级视觉。" },
+const styleOptions: Array<{ label: string; value: DetailPageStylePreset }> = [
+  { value: "ecommerce", label: "电商清晰" },
+  { value: "brand-site", label: "品牌克制" },
+  { value: "minimal", label: "极简留白" },
+  { value: "xiaohongshu", label: "自然内容感" },
 ];
 
-const countOptions: Array<{ description: string; label: string; value: ProductDetailPageCount }> = [
-  { value: 3, label: "3 张", description: "适合快速生成首图、卖点图、CTA。" },
-  { value: 5, label: "5 张", description: "适合补充场景图和细节图。" },
-  { value: 8, label: "8 张", description: "适合完整商品详情页结构。" },
-];
+async function readProjectResponse(response: Response) {
+  const data = (await response.json().catch(() => null)) as (ProjectResponse & { error?: string }) | null;
 
-const generationModeOptions: Array<{ description: string; label: string; value: ProductVisualGenerationMode }> = [
-  {
-    value: "faithful",
-    label: "保真优化",
-    description: "更适合键盘、衣服、鞋、包、手机壳等带固定外观和图案的商品。",
-  },
-  {
-    value: "creative",
-    label: "营销创意",
-    description: "允许更强详情页氛围和视觉包装，但仍尽量保持商品主体一致。",
-  },
-];
-
-export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings, onGenerated, onOpenRiskConfirmations }: ProductDetailPagePanelProps) {
-  const [count, setCount] = useState<ProductDetailPageCount>(3);
-  const [error, setError] = useState("");
-  const [generationMode, setGenerationMode] = useState<ProductVisualGenerationMode>("faithful");
-  const [generatingPageIndex, setGeneratingPageIndex] = useState<number | null>(null);
-  const [isPlanning, setIsPlanning] = useState(false);
-  const [pageErrors, setPageErrors] = useState<Record<number, string>>({});
-  const [pageResults, setPageResults] = useState<Record<number, DetailPageImageResult>>({});
-  const [plan, setPlan] = useState<ProductDetailPagePlan | null>(null);
-  const [riskScan, setRiskScan] = useState<ProductRiskScan | null>(null);
-  const [style, setStyle] = useState<ProductDetailPageStyle>("ecommerce");
-
-  function handleCountChange(nextCount: ProductDetailPageCount) {
-    setCount(nextCount);
-    setPlan(null);
-    setRiskScan(null);
-    setPageErrors({});
-    setPageResults({});
+  if (!response.ok) {
+    throw new Error(data?.error || "详情页策划暂时不可用，请稍后重试。");
   }
 
-  async function handleGeneratePlan() {
-    if (!analysisResult?.historyId) {
-      setError("请先完成商品分析，再生成详情页规划。");
+  return data;
+}
+
+export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings }: ProductDetailPagePanelProps) {
+  const analysisHistoryId = analysisResult?.historyId || "";
+  const [addModuleType, setAddModuleType] = useState<DetailPageModuleType>("PRODUCT_DETAIL");
+  const [error, setError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [project, setProject] = useState<DetailPageProjectV2 | null>(null);
+  const [sectionCount, setSectionCount] = useState(7);
+  const [source, setSource] = useState<ProjectResponse["source"]>();
+  const [style, setStyle] = useState<DetailPageStylePreset>("ecommerce");
+
+  async function loadProject() {
+    if (!analysisHistoryId) {
+      setProject(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetchWithAuthHandling(
+        `/api/products/detail-page/plan?analysisHistoryId=${encodeURIComponent(analysisHistoryId)}`,
+        { cache: "no-store" },
+      );
+      const data = await readProjectResponse(response);
+      setProject(data?.project || null);
+      setSource(data?.source);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "详情页策划读取失败，请稍后重试。");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadProject();
+    // loadProject intentionally follows the selected product context only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisHistoryId]);
+
+  const summary = useMemo(() => {
+    const counts = {
+      READY: 0,
+      NEEDS_INPUT: 0,
+      EXISTING_ASSET: 0,
+      OPTIONAL: 0,
+    };
+
+    project?.sections.forEach((section) => {
+      counts[section.readiness] += 1;
+    });
+
+    return counts;
+  }, [project]);
+
+  async function handleCreatePlan() {
+    if (!analysisHistoryId) {
+      setError("请先完成商品分析，再创建详情页策划。");
       return;
     }
 
     setError("");
-    setRiskScan(null);
-    setIsPlanning(true);
+    setIsCreating(true);
 
     try {
       const generationAttempt = createGenerationAttempt();
       const response = await generationAttempt.fetch("/api/products/detail-page/plan", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          analysisHistoryId: analysisResult.historyId,
-          count,
+          analysisHistoryId,
           generationBrief: generationBrief || undefined,
           outputSettings: outputSettings || undefined,
+          sectionCount,
           style,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("生成详情页规划失败，请稍后重试。");
-      }
-
-      const data = (await response.json()) as ProductDetailPagePlanResponse;
-
-      setPlan({ pages: Array.isArray(data.pages) ? data.pages : [] });
-      setRiskScan(data.riskScan || null);
-      setPageErrors({});
-      setPageResults({});
-    } catch {
-      setError("生成详情页规划失败，请稍后重试。");
+      const data = await readProjectResponse(response);
+      setProject(data?.project || null);
+      setSource(data?.source);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "详情页策划创建失败，请稍后重试。");
     } finally {
-      setIsPlanning(false);
+      setIsCreating(false);
     }
   }
 
-  async function handleGeneratePage(page: ProductDetailPagePlanPage) {
-    if (!analysisResult?.historyId) {
-      setPageErrors((current) => ({
-        ...current,
-        [page.pageIndex]: "请先完成商品分析，再生成详情页图片。",
-      }));
+  async function handleOperation(operation: DetailPageProjectOperation) {
+    if (!project || isUpdating) {
       return;
     }
 
-    const isRegeneration = Boolean(pageResults[page.pageIndex]);
-
-    setGeneratingPageIndex(page.pageIndex);
-    setPageErrors((current) => {
-      const next = { ...current };
-      delete next[page.pageIndex];
-      return next;
-    });
+    setError("");
+    setIsUpdating(true);
 
     try {
-      const generationAttempt = createGenerationAttempt();
-      const response = await generationAttempt.fetch("/api/products/detail-page/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetchWithAuthHandling("/api/products/detail-page/plan", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          analysisHistoryId: analysisResult.historyId,
-          generationMode,
-          generationBrief: generationBrief || undefined,
-          outputSettings: outputSettings || undefined,
-          page,
-          style,
+          analysisHistoryId,
+          expectedRevision: project.revision,
+          operation,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as { error?: string } | null;
-        const isUnavailable = errorData?.error?.toLowerCase().includes("unavailable") || response.status === 503;
-
-        throw new Error(isUnavailable ? "图片生成模型当前繁忙，请稍后重试。" : "生成详情页图片失败，请稍后重试。");
+      if (response.status === 409) {
+        await loadProject();
+        throw new Error("策划已在另一个页面更新，已重新读取最新版本。");
       }
 
-      const data = (await response.json()) as DetailPageImageResult;
-
-      setPageResults((current) => ({
-        ...current,
-        [page.pageIndex]: data,
-      }));
-      onGenerated?.();
+      const data = await readProjectResponse(response);
+      setProject(data?.project || null);
     } catch (caughtError) {
-      const fallbackMessage = isRegeneration ? "重新生成失败，请稍后重试。" : "生成详情页图片失败，请稍后重试。";
-
-      setPageErrors((current) => ({
-        ...current,
-        [page.pageIndex]: caughtError instanceof Error && !isRegeneration ? caughtError.message : fallbackMessage,
-      }));
+      setError(caughtError instanceof Error ? caughtError.message : "详情页策划更新失败，请稍后重试。");
     } finally {
-      setGeneratingPageIndex(null);
+      setIsUpdating(false);
     }
   }
 
@@ -190,104 +172,129 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
     return (
       <section className="product-detail-page-panel product-workspace-tool-surface">
         <p className="product-workspace-kicker">详情页制作</p>
-        <h2>详情页素材</h2>
-        <p className="image-generation-intro">完成商品分析后，可以按需规划并生成详情页图片素材。</p>
+        <h2>Page Plan</h2>
+        <p className="image-generation-intro">完成商品分析后，可以创建并保存详情页结构。</p>
       </section>
     );
   }
 
   return (
     <section className="product-detail-page-panel product-workspace-tool-surface">
+      <div className="product-detail-v2-steps" aria-label="详情页制作阶段">
+        <strong>策划</strong>
+        <span>制作</span>
+        <span>预览与导出</span>
+      </div>
+
       <div className="dashboard-section-header">
         <div>
-          <p className="product-workspace-kicker">详情页制作</p>
-          <h2>详情页素材</h2>
-          <p className="image-generation-intro">基于当前商品分析和生成要求，按需规划详情页图片素材。</p>
+          <p className="product-workspace-kicker">Detail Page V2 · Phase 1</p>
+          <h2>详情页策划</h2>
+          <p className="image-generation-intro">先确定页面结构和事实依据，再进入素材制作。AI 分析不会自动成为已验证事实。</p>
         </div>
-        <span>规划预览</span>
+        {project ? <span>Revision {project.revision}</span> : <span>策划准备</span>}
       </div>
 
-      <div className="product-detail-page-settings">
-        <fieldset>
-          <legend>详情页数量</legend>
-          <div className="product-detail-count-grid">
-            {countOptions.map((option) => (
-              <label className={count === option.value ? "active" : ""} key={option.value}>
-                <input checked={count === option.value} name="detailPageCount" type="radio" value={option.value} onChange={() => handleCountChange(option.value)} />
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>风格</legend>
-          <div className="product-detail-style-grid">
-            {styleOptions.map((option) => (
-              <label className={style === option.value ? "active" : ""} key={option.value}>
-                <input checked={style === option.value} name="detailPageStyle" type="radio" value={option.value} onChange={() => setStyle(option.value)} />
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset className="product-visual-mode-selector">
-          <legend>生成模式</legend>
-          <div>
-            {generationModeOptions.map((option) => (
-              <label className={generationMode === option.value ? "active" : ""} key={option.value}>
-                <input
-                  checked={generationMode === option.value}
-                  name="detailPageGenerationMode"
-                  type="radio"
-                  value={option.value}
-                  onChange={() => setGenerationMode(option.value)}
-                />
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      </div>
-
-      <div className="product-generation-action-stack">
-        <ProductGenerationCostHint compact type="detail-page" estimatedCost={0} label="规划不会消耗图片额度" />
-        <button className="cai-button cai-button--primary" disabled={isPlanning || generatingPageIndex !== null} type="button" onClick={() => void handleGeneratePlan()}>
-          {isPlanning ? (
-            <>
-              <AiThinkingLoading size="sm" />
-              正在规划详情页...
-            </>
-          ) : (
-            "生成详情页规划"
-          )}
-        </button>
-      </div>
-
-      {error ? <p className="image-generation-error">{error}</p> : null}
-
-      {plan ? (
+      {isLoading ? (
+        <div className="product-detail-plan-placeholder">
+          <AiThinkingLoading size="sm" />
+          <strong>正在恢复详情页策划...</strong>
+        </div>
+      ) : project ? (
         <>
-          <ProductRiskScanAlert riskScan={riskScan} onOpenRiskConfirmations={onOpenRiskConfirmations} />
-          <ProductDetailPagePlanPreview
-            generatingPageIndex={generatingPageIndex}
-            pageErrors={pageErrors}
-            pageResults={pageResults}
-            pages={plan.pages}
-            onGeneratePage={(page) => void handleGeneratePage(page)}
-          />
-          <p className="product-detail-plan-note">当前为规划预览，已支持单张生成详情页图片；AI 生成图中文字可能需要人工检查。</p>
+          <div className="product-detail-v2-summary">
+            <div>
+              <strong>{project.sections.length} 个模块</strong>
+              <span>刷新后会从服务器恢复当前策划</span>
+            </div>
+            <div>
+              <span>可继续 {summary.READY}</span>
+              {summary.EXISTING_ASSET ? <span>已有素材 {summary.EXISTING_ASSET}</span> : null}
+              <span>需要补充 {summary.NEEDS_INPUT}</span>
+              {summary.OPTIONAL ? <span>可选 {summary.OPTIONAL}</span> : null}
+            </div>
+          </div>
+
+          <div className="product-detail-v2-style-summary">
+            <strong>整页视觉方向</strong>
+            <span>{project.pageStyle.mood}</span>
+            <span>{project.pageStyle.palette}</span>
+            <span>{project.pageStyle.lighting}</span>
+            <span>{project.pageStyle.typography}</span>
+            <span>{project.pageStyle.spacing}</span>
+          </div>
+
+          {source === "fallback" ? <p className="product-detail-v2-notice">AI 策划暂时不可用，当前使用可编辑的基础详情页结构。</p> : null}
+
+          <ProductDetailPagePlanPreview project={project} isUpdating={isUpdating} onOperation={(operation) => void handleOperation(operation)} />
+
+          <div className="product-detail-v2-add-module">
+            <label>
+              <span>添加模块</span>
+              <select disabled={isUpdating || project.sections.length >= 8} value={addModuleType} onChange={(event) => setAddModuleType(event.target.value as DetailPageModuleType)}>
+                {DETAIL_PAGE_MODULE_TYPES.map((moduleType) => (
+                  <option key={moduleType} value={moduleType}>
+                    {DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="cai-button cai-button--secondary"
+              disabled={isUpdating || project.sections.length >= 8}
+              type="button"
+              onClick={() => void handleOperation({ type: "add-section", moduleType: addModuleType })}
+            >
+              添加到末尾
+            </button>
+          </div>
+          <p className="product-detail-plan-note">Phase 1 只保存结构与证据。本阶段不会生成新图片，也不会自动匹配已有素材。</p>
         </>
       ) : (
-        <div className="product-detail-plan-placeholder">
-          <strong>规划结果会显示在这里</strong>
-          <p>生成后将展示 {count} 张详情页规划卡片，可选择其中任意一张单独生成图片。</p>
-        </div>
+        <>
+          <div className="product-detail-page-settings">
+            <fieldset>
+              <legend>推荐屏数</legend>
+              <div className="product-detail-count-grid">
+                {[5, 6, 7, 8].map((count) => (
+                  <label className={sectionCount === count ? "active" : ""} key={count}>
+                    <input checked={sectionCount === count} name="detailPageSectionCount" type="radio" value={count} onChange={() => setSectionCount(count)} />
+                    <strong>{count} 屏</strong>
+                    <span>{count === 7 ? "完整 MVP 结构" : "按商品内容密度规划"}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>视觉方向</legend>
+              <div className="product-detail-style-grid">
+                {styleOptions.map((option) => (
+                  <label className={style === option.value ? "active" : ""} key={option.value}>
+                    <input checked={style === option.value} name="detailPageStyle" type="radio" value={option.value} onChange={() => setStyle(option.value)} />
+                    <strong>{option.label}</strong>
+                    <span>作为整页共享方向保存</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          <div className="product-generation-action-stack">
+            <ProductGenerationCostHint compact type="detail-page" estimatedCost={0} label="策划不会消耗图片额度" description="AI 策划按现有文案 Usage 规则记录；基础 fallback 不调用图片 Provider。" />
+            <button className="cai-button cai-button--primary" disabled={isCreating} type="button" onClick={() => void handleCreatePlan()}>
+              {isCreating ? (
+                <>
+                  <AiThinkingLoading size="sm" />
+                  正在创建策划...
+                </>
+              ) : (
+                "创建详情页策划"
+              )}
+            </button>
+          </div>
+        </>
       )}
+
+      {error ? <p className="image-generation-error" role="alert">{error}</p> : null}
     </section>
   );
 }

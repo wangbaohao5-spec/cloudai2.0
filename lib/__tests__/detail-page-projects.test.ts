@@ -1,0 +1,169 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  create: vi.fn(),
+  findFirst: vi.fn(),
+  updateMany: vi.fn(),
+}));
+
+vi.mock("@/lib/db", () => ({
+  db: {
+    historyRecord: {
+      create: mocks.create,
+      findFirst: mocks.findFirst,
+      updateMany: mocks.updateMany,
+    },
+  },
+}));
+
+import { createDetailPageProject } from "@/lib/detail-page-project";
+import {
+  getDetailPageProjectForUser,
+  getDetailPageProjectRecordId,
+  persistDetailPageProject,
+  updateDetailPageProject,
+} from "@/lib/detail-page-projects";
+
+function makeProject(overrides: { analysisHistoryId?: string; userId?: string } = {}) {
+  let id = 0;
+  return createDetailPageProject({
+    analysisHistoryId: overrides.analysisHistoryId ?? "analysis-1",
+    idFactory: () => `section-${++id}`,
+    now: new Date("2026-09-19T08:00:00.000Z"),
+    projectId: "detail-page-project-analysis-1",
+    sectionCount: 5,
+    sourceAssetId: "asset-1",
+    userId: overrides.userId ?? "user-1",
+  });
+}
+
+describe("detail page project persistence", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.create.mockResolvedValue({ id: "detail-page-project-analysis-1" });
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it("uses a stable history id scoped by user, analysis, and project type", async () => {
+    mocks.findFirst.mockResolvedValue(null);
+
+    await expect(getDetailPageProjectForUser("user-1", "analysis-1")).resolves.toBeNull();
+    expect(getDetailPageProjectRecordId("analysis-1")).toBe("detail-page-project-analysis-1");
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "detail-page-project-analysis-1",
+        type: "detail-page-project",
+        userId: "user-1",
+      },
+    });
+  });
+
+  it("does not recover a project whose embedded ownership does not match", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "detail-page-project-analysis-1",
+      output: makeProject({ userId: "user-2" }),
+    });
+
+    await expect(getDetailPageProjectForUser("user-1", "analysis-1")).resolves.toBeNull();
+  });
+
+  it("recovers a valid persisted project after refresh", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+
+    await expect(getDetailPageProjectForUser("user-1", "analysis-1")).resolves.toEqual(project);
+  });
+
+  it("ignores malformed project JSON without leaking or throwing", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mocks.findFirst.mockResolvedValue({ id: "detail-page-project-analysis-1", output: { version: 2, userId: "user-1" } });
+
+    await expect(getDetailPageProjectForUser("user-1", "analysis-1")).resolves.toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      "[detail-page-project] malformed project ignored",
+      expect.objectContaining({ analysisHistoryId: "analysis-1", historyId: "detail-page-project-analysis-1" }),
+    );
+    warn.mockRestore();
+  });
+
+  it("creates a new project without inventing schema fields", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue(null);
+
+    await expect(persistDetailPageProject(project, "测试商品")).resolves.toEqual(project);
+    expect(mocks.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        assetId: null,
+        id: "detail-page-project-analysis-1",
+        input: { analysisHistoryId: "analysis-1", source: "detail-page-v2" },
+        output: project,
+        title: "测试商品 详情页策划",
+        type: "detail-page-project",
+        userId: "user-1",
+      }),
+    });
+  });
+
+  it("returns an already persisted valid project instead of overwriting it", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+
+    await expect(persistDetailPageProject(makeProject(), "测试商品")).resolves.toEqual(project);
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("updates with expected revision and increments revision atomically", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+
+    const next = await updateDetailPageProject({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 1,
+      operation: { direction: "down", sectionId: "section-1", type: "move-section" },
+      userId: "user-1",
+    });
+
+    expect(next.revision).toBe(2);
+    expect(next.sections.map((section) => section.id).slice(0, 2)).toEqual(["section-2", "section-1"]);
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      data: { output: next },
+      where: {
+        id: "detail-page-project-analysis-1",
+        output: { equals: 1, path: ["revision"] },
+        type: "detail-page-project",
+        userId: "user-1",
+      },
+    });
+  });
+
+  it("rejects a stale revision before writing", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: { ...project, revision: 2 } });
+
+    await expect(
+      updateDetailPageProject({
+        analysisHistoryId: "analysis-1",
+        expectedRevision: 1,
+        operation: { direction: "down", sectionId: "section-1", type: "move-section" },
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("returns a safe conflict when the compare-and-swap update loses a race", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+    mocks.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      updateDetailPageProject({
+        analysisHistoryId: "analysis-1",
+        expectedRevision: 1,
+        operation: { direction: "down", sectionId: "section-1", type: "move-section" },
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+  });
+});

@@ -25,13 +25,13 @@ describe("history clear safety", () => {
     mocks.deleteMany.mockResolvedValue({ count: 3 });
   });
 
-  it("clears ordinary generation history while preserving product-analysis anchors", async () => {
+  it("clears ordinary generation history while preserving product and detail-page project anchors", async () => {
     await expect(clearHistory("user-1")).resolves.toBe(3);
     expect(mocks.deleteMany).toHaveBeenCalledWith({
       where: {
         userId: "user-1",
         type: {
-          not: "product-analysis",
+          notIn: ["product-analysis", "detail-page-project"],
         },
       },
     });
@@ -43,7 +43,7 @@ describe("history clear safety", () => {
       where: {
         userId: "user-2",
         type: {
-          not: "product-analysis",
+          notIn: ["product-analysis", "detail-page-project"],
         },
       },
     });
@@ -56,7 +56,7 @@ describe("history clear safety", () => {
         id: "history-1",
         userId: "user-1",
         type: {
-          not: "product-analysis",
+          notIn: ["product-analysis", "detail-page-project"],
         },
       },
     });

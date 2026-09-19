@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import { getFileUrl, getImagePreviewUrlOrOriginal } from "@/lib/storage";
 import type { HistoryRecord } from "@/lib/types";
+
+const INTERNAL_HISTORY_TYPES = ["detail-page-project"];
+const PROTECTED_HISTORY_TYPES = ["product-analysis", ...INTERNAL_HISTORY_TYPES];
 import type { Prisma } from "@prisma/client";
 
 export type HistoryRecordInput = {
@@ -120,6 +123,9 @@ export async function getHistory(userId: string): Promise<HistoryRecord[]> {
   const records = await db.historyRecord.findMany({
     where: {
       userId,
+      type: {
+        notIn: INTERNAL_HISTORY_TYPES,
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -134,6 +140,9 @@ export async function getHistoryPage(userId: string, take = 20, cursor?: string 
   const records = await db.historyRecord.findMany({
     where: {
       userId,
+      type: {
+        notIn: INTERNAL_HISTORY_TYPES,
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -164,6 +173,9 @@ export async function getRecentHistory(userId: string, take = 8): Promise<Histor
   const records = await db.historyRecord.findMany({
     where: {
       userId,
+      type: {
+        notIn: INTERNAL_HISTORY_TYPES,
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -240,7 +252,7 @@ export async function deleteHistory(userId: string, id: string) {
       id,
       userId,
       type: {
-        not: "product-analysis",
+        notIn: PROTECTED_HISTORY_TYPES,
       },
     },
   });
@@ -254,7 +266,7 @@ export async function clearHistory(userId: string) {
       userId,
       // Product analysis records currently provide the stable product identity.
       type: {
-        not: "product-analysis",
+        notIn: PROTECTED_HISTORY_TYPES,
       },
     },
   });

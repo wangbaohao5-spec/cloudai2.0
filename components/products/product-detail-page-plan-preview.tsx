@@ -1,159 +1,184 @@
 "use client";
 
-import { buildImageDownloadFilename, ImageDownloadButton } from "@/components/ui/image-download-button";
-import { ImageLightbox } from "@/components/ui/image-lightbox";
-import { LongGenerationLoading } from "@/components/ui/loading";
-import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
-import type { ProductDetailPagePlanPage } from "@/lib/ai/product-detail-page-plan-prompt-builder";
-import { useState } from "react";
-
-export type DetailPageImageResult = {
-  assetId: string;
-  historyId?: string;
-  imageUrl: string;
-  page: ProductDetailPagePlanPage;
-  prompt: string;
-  status: "success";
-  storagePath: string;
-  type: "商品详情页";
-  warnings?: string[];
-};
+import {
+  DETAIL_PAGE_MODULE_DEFINITIONS,
+  DETAIL_PAGE_MODULE_TYPES,
+  type DetailPageModuleType,
+  type DetailPageProjectOperation,
+  type DetailPageProjectV2,
+  type DetailPageSectionV2,
+} from "@/lib/detail-page-project";
+import { useEffect, useState } from "react";
 
 type ProductDetailPagePlanPreviewProps = {
-  generatingPageIndex?: number | null;
-  onGeneratePage?: (page: ProductDetailPagePlanPage) => void;
-  pageErrors?: Record<number, string>;
-  pageResults?: Record<number, DetailPageImageResult>;
-  pages: ProductDetailPagePlanPage[];
+  isUpdating?: boolean;
+  onOperation: (operation: DetailPageProjectOperation) => void;
+  project: DetailPageProjectV2;
 };
 
-const SECTION_TYPE_LABELS = {
-  comparison: "对比说明",
-  cta: "购买理由",
-  "detail-closeup": "细节特写",
-  feature: "核心内容",
-  "flat-lay": "平铺展示",
-  "four-grid-detail": "四宫格细节",
-  hero: "首屏卖点",
-  "material-detail": "材质细节",
-  "model-wearing": "上身展示",
-  "multi-color": "多色展示",
-  "selling-point": "核心卖点",
-  specification: "规格说明",
-  trust: "信任背书",
-  "usage-scene": "使用场景",
-} satisfies Partial<Record<ProductDetailPagePlanPage["sectionType"], string>>;
+const READINESS_LABELS = {
+  READY: "可继续",
+  NEEDS_INPUT: "需要补充",
+  EXISTING_ASSET: "已有素材",
+  OPTIONAL: "可选",
+} as const;
 
-export function ProductDetailPagePlanPreview({
-  generatingPageIndex = null,
-  onGeneratePage,
-  pageErrors = {},
-  pageResults = {},
-  pages,
-}: ProductDetailPagePlanPreviewProps) {
-  const [lightboxImage, setLightboxImage] = useState<{ alt: string; title: string; url: string } | null>(null);
+function getConfirmedEvidenceValue(section: DetailPageSectionV2) {
+  const field = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].evidenceField;
+  return section.evidence.find((item) => item.sourceType === "user-confirmed" && item.field === field)?.value || "";
+}
 
-  if (!pages.length) {
+function EvidenceInput({ disabled, onSave, section }: { disabled: boolean; onSave: (value: string) => void; section: DetailPageSectionV2 }) {
+  const [value, setValue] = useState(() => getConfirmedEvidenceValue(section));
+
+  useEffect(() => {
+    setValue(getConfirmedEvidenceValue(section));
+  }, [section]);
+
+  if (section.readiness !== "NEEDS_INPUT" && !getConfirmedEvidenceValue(section)) {
     return null;
   }
 
+  const definition = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType];
+
   return (
-    <div className="product-detail-plan-preview" aria-label="商品详情页规划预览">
-      {pages.map((page) => {
-        const isGenerating = generatingPageIndex === page.pageIndex;
-        const result = pageResults[page.pageIndex];
-        const error = pageErrors[page.pageIndex];
+    <div className="product-detail-evidence-input">
+      <label htmlFor={`detail-page-evidence-${section.id}`}>{definition.inputLabel}</label>
+      <textarea
+        id={`detail-page-evidence-${section.id}`}
+        disabled={disabled}
+        maxLength={1200}
+        placeholder={section.moduleType === "PRODUCT_DETAIL" ? "说明现有图片是否足以展示细节，或记录还需要补充的参考图。" : "只填写你能够确认、愿意用于详情页的真实资料。"}
+        rows={3}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+      />
+      <div>
+        <span>AI 分析不会自动作为已验证事实。</span>
+        <button className="cai-button cai-button--secondary cai-button--sm" disabled={disabled} type="button" onClick={() => onSave(value.trim())}>
+          保存资料
+        </button>
+      </div>
+    </div>
+  );
+}
 
-        return (
-          <article className="product-detail-plan-card" key={`${page.pageIndex}-${page.sectionTitle}`}>
-            <div className="product-detail-plan-card-header">
-              <span>第 {page.pageIndex} 张</span>
-              <em>{SECTION_TYPE_LABELS[page.sectionType] || page.sectionType}</em>
-            </div>
-            <h3>{page.sectionTitle}</h3>
-            <dl>
-              <div>
-                <dt>标题</dt>
-                <dd>{page.headline || "暂无"}</dd>
-              </div>
-              <div>
-                <dt>副标题</dt>
-                <dd>{page.subheadline || "暂无"}</dd>
-              </div>
-              <div>
-                <dt>核心卖点</dt>
-                <dd>{page.sellingPoint || "暂无"}</dd>
-              </div>
-              <div>
-                <dt>画面建议</dt>
-                <dd>{page.visualDirection || "暂无"}</dd>
-              </div>
-              <div>
-                <dt>文案建议</dt>
-                <dd>{page.bodyCopy || "暂无"}</dd>
-              </div>
-            </dl>
-            {page.notes ? <p>{page.notes}</p> : null}
+function DetailPageSectionCard({
+  disabled,
+  index,
+  onOperation,
+  section,
+  total,
+}: {
+  disabled: boolean;
+  index: number;
+  onOperation: (operation: DetailPageProjectOperation) => void;
+  section: DetailPageSectionV2;
+  total: number;
+}) {
+  const [replacement, setReplacement] = useState<DetailPageModuleType>(section.moduleType);
+  const definition = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType];
 
-            {result ? (
-              <div className="product-detail-generated-preview">
-                <div>
-                  <button
-                    className="product-image-preview-button"
-                    type="button"
-                    aria-label={`放大查看第 ${page.pageIndex} 张详情页制作结果`}
-                    onClick={() =>
-                      setLightboxImage({
-                        alt: `第 ${page.pageIndex} 张详情页制作结果`,
-                        title: `第 ${page.pageIndex} 张详情页 · ${page.sectionTitle}`,
-                        url: result.imageUrl,
-                      })
-                    }
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img alt={`第 ${page.pageIndex} 张详情页制作结果`} decoding="async" loading="lazy" src={result.imageUrl} />
-                  </button>
-                </div>
-                <span>已生成详情页图片，点击图片查看大图</span>
-                <div className="product-preview-actions">
-                  <ImageDownloadButton
-                    filename={buildImageDownloadFilename("detail-page", [String(page.pageIndex).padStart(2, "0"), page.sectionType])}
-                    imageUrl={result.imageUrl}
-                  />
-                </div>
-                <small>当前显示的是最近一次生成结果，历史记录会保留之前版本。</small>
-              </div>
-            ) : null}
+  useEffect(() => {
+    setReplacement(section.moduleType);
+  }, [section.moduleType]);
 
-            {error ? <p className="image-generation-error">{error}</p> : null}
+  return (
+    <article className="product-detail-v2-section-card">
+      <header>
+        <div>
+          <span className="product-detail-v2-order">{String(section.order).padStart(2, "0")}</span>
+          <div>
+            <p>{definition.kind}</p>
+            <h3>{definition.label}</h3>
+          </div>
+        </div>
+        <span className={`product-detail-readiness product-detail-readiness--${section.readiness.toLowerCase().replace("_", "-")}`}>
+          {READINESS_LABELS[section.readiness]}
+        </span>
+      </header>
 
-            <div className="product-detail-plan-card-actions">
-              <ProductGenerationCostHint
-                compact
-                type="detail-page"
-                label="生成这张详情图预计消耗 1 张图片额度"
-                description="生成前请确认页面文案、保真模式和商品细节要求；实际记录以额度中心为准。"
-              />
-              <button className="cai-button cai-button--secondary" disabled={isGenerating} type="button" onClick={() => onGeneratePage?.(page)}>
-                {isGenerating ? (
-                  <>
-                    <LongGenerationLoading size="sm" />
-                    正在生成...
-                  </>
-                ) : result ? (
-                  "重新生成这一页"
-                ) : (
-                  "生成这张详情图"
-                )}
-              </button>
-              <small>AI 生成图中文字可能需要人工检查。</small>
-            </div>
-          </article>
-        );
-      })}
-      {lightboxImage ? (
-        <ImageLightbox alt={lightboxImage.alt} imageUrl={lightboxImage.url} title={lightboxImage.title} onClose={() => setLightboxImage(null)} />
+      <div className="product-detail-v2-section-copy">
+        <p>{section.purpose}</p>
+        <span>{section.reason}</span>
+      </div>
+
+      {section.copy.headline || section.copy.body ? (
+        <div className="product-detail-v2-draft-copy">
+          <strong>文案草稿</strong>
+          {section.copy.headline ? <p>{section.copy.headline}</p> : null}
+          {section.copy.body ? <span>{section.copy.body}</span> : null}
+          <small>草稿不代表事实已验证，发布前仍需人工确认。</small>
+        </div>
       ) : null}
+
+      <EvidenceInput disabled={disabled} section={section} onSave={(value) => onOperation({ type: "set-evidence", sectionId: section.id, value })} />
+
+      <footer>
+        <div className="product-detail-v2-move-actions" aria-label={`${definition.label}排序操作`}>
+          <button
+            className="cai-button cai-button--ghost cai-button--sm"
+            disabled={disabled || index === 0}
+            type="button"
+            onClick={() => onOperation({ type: "move-section", sectionId: section.id, direction: "up" })}
+          >
+            上移
+          </button>
+          <button
+            className="cai-button cai-button--ghost cai-button--sm"
+            disabled={disabled || index === total - 1}
+            type="button"
+            onClick={() => onOperation({ type: "move-section", sectionId: section.id, direction: "down" })}
+          >
+            下移
+          </button>
+        </div>
+        <div className="product-detail-v2-replace-actions">
+          <label>
+            <span className="sr-only">替换模块类型</span>
+            <select disabled={disabled} value={replacement} onChange={(event) => setReplacement(event.target.value as DetailPageModuleType)}>
+              {DETAIL_PAGE_MODULE_TYPES.map((moduleType) => (
+                <option key={moduleType} value={moduleType}>
+                  {DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="cai-button cai-button--secondary cai-button--sm"
+            disabled={disabled || replacement === section.moduleType}
+            type="button"
+            onClick={() => onOperation({ type: "replace-module", sectionId: section.id, moduleType: replacement })}
+          >
+            替换
+          </button>
+          <button
+            className="cai-button cai-button--ghost cai-button--sm"
+            disabled={disabled || total <= 3}
+            type="button"
+            onClick={() => onOperation({ type: "delete-section", sectionId: section.id })}
+          >
+            删除
+          </button>
+        </div>
+      </footer>
+    </article>
+  );
+}
+
+export function ProductDetailPagePlanPreview({ isUpdating = false, onOperation, project }: ProductDetailPagePlanPreviewProps) {
+  return (
+    <div className="product-detail-v2-plan" aria-label="详情页策划结构">
+      {project.sections.map((section, index) => (
+        <DetailPageSectionCard
+          key={section.id}
+          disabled={isUpdating}
+          index={index}
+          section={section}
+          total={project.sections.length}
+          onOperation={onOperation}
+        />
+      ))}
     </div>
   );
 }

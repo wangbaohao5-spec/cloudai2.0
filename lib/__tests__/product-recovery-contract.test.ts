@@ -22,13 +22,14 @@ function matchesJsonPath(record: StoredHistoryRecord, condition: Record<string, 
 }
 
 function matchesWhere(record: StoredHistoryRecord, where: Record<string, unknown>): boolean {
-  const typeFilter = where.type as { in?: string[]; not?: string } | string | undefined;
+  const typeFilter = where.type as { in?: string[]; not?: string; notIn?: string[] } | string | undefined;
   const orFilters = where.OR as Array<Record<string, unknown>> | undefined;
 
   if (where.userId && record.userId !== where.userId) return false;
   if (where.id && record.id !== where.id) return false;
   if (typeof typeFilter === "string" && record.type !== typeFilter) return false;
   if (typeof typeFilter === "object" && typeFilter.not && record.type === typeFilter.not) return false;
+  if (typeof typeFilter === "object" && typeFilter.notIn?.includes(record.type)) return false;
   if (typeof typeFilter === "object" && typeFilter.in && !typeFilter.in.includes(record.type)) return false;
   if (orFilters && !orFilters.some((condition) => {
     if (condition.type && record.type !== condition.type) return false;
@@ -93,6 +94,19 @@ function generationRecord(id: string, analysisHistoryId: string, createdAt: stri
   };
 }
 
+function detailPageProjectRecord(analysisHistoryId: string): StoredHistoryRecord {
+  return {
+    id: `detail-page-project-${analysisHistoryId}`,
+    userId: "user-a",
+    assetId: null,
+    type: "detail-page-project",
+    title: "详情页策划",
+    input: { analysisHistoryId },
+    output: { version: 2 },
+    createdAt: new Date("2026-09-04T12:00:00.000Z"),
+  };
+}
+
 describe("product recovery after clearing generation history", () => {
   beforeEach(() => {
     mocks.records.splice(
@@ -102,6 +116,7 @@ describe("product recovery after clearing generation history", () => {
       generationRecord("copy-a", "analysis-a", "2026-09-02T00:00:00.000Z"),
       analysisRecord("analysis-b", "Product B", "2026-09-03T00:00:00.000Z"),
       generationRecord("copy-b", "analysis-b", "2026-09-04T00:00:00.000Z"),
+      detailPageProjectRecord("analysis-a"),
       { ...analysisRecord("analysis-other", "Other Product", "2026-09-05T00:00:00.000Z"), userId: "user-b" },
     );
   });
@@ -109,8 +124,12 @@ describe("product recovery after clearing generation history", () => {
   it("retains both product anchors for recent, all-products, and Workspace recovery consumers", async () => {
     await expect(clearHistory("user-a")).resolves.toBe(2);
 
-    expect(mocks.records.filter((record) => record.userId === "user-a" && record.type !== "product-analysis")).toEqual([]);
-    expect(mocks.records.filter((record) => record.userId === "user-a").map((record) => record.id)).toEqual(["analysis-a", "analysis-b"]);
+    expect(mocks.records.filter((record) => record.userId === "user-a" && !["product-analysis", "detail-page-project"].includes(record.type))).toEqual([]);
+    expect(mocks.records.filter((record) => record.userId === "user-a").map((record) => record.id)).toEqual([
+      "analysis-a",
+      "analysis-b",
+      "detail-page-project-analysis-a",
+    ]);
     expect(mocks.records.some((record) => record.id === "analysis-other")).toBe(true);
 
     const recentAnalysisId = await getLatestValidProductAnalysisHistoryId("user-a");

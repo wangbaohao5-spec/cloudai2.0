@@ -1,15 +1,21 @@
+import { buildProductDetailPageV2PlanPrompt, type ProductDetailPageStyle } from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import { generateText, getTextProviderModelId } from "@/lib/ai/text-router";
-import { scanProductContentRisk } from "@/lib/ai/product-content-risk-scanner";
-import {
-  buildProductDetailPagePlanPrompt,
-  type ProductDetailPageCount,
-  type ProductDetailPagePlan,
-  type ProductDetailPagePlanPage,
-  type ProductDetailPageSectionType,
-  type ProductDetailPageStyle,
-} from "@/lib/ai/product-detail-page-plan-prompt-builder";
 import { ApiError, jsonError } from "@/lib/api-errors";
 import { getCurrentUser } from "@/lib/current-user";
+import {
+  createDetailPageProject,
+  createFallbackDetailPageProject,
+  DetailPageProjectError,
+  isDetailPageStylePreset,
+  parseDetailPageProjectOperation,
+  type DetailPagePlanCandidate,
+} from "@/lib/detail-page-project";
+import {
+  getDetailPageProjectForUser,
+  getDetailPageProjectRecordId,
+  persistDetailPageProject,
+  updateDetailPageProject,
+} from "@/lib/detail-page-projects";
 import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
 import { sanitizeProductGenerationBrief } from "@/lib/product-generation-brief";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
@@ -22,42 +28,17 @@ export const runtime = "nodejs";
 
 type ProductDetailPagePlanRequestBody = {
   analysisHistoryId?: string;
-  count?: number;
   generationBrief?: unknown;
   outputSettings?: unknown;
+  sectionCount?: number;
   style?: string;
 };
 
-const DETAIL_PAGE_STYLES = ["brand-site", "ecommerce", "minimal", "xiaohongshu"] as const;
-const DETAIL_PAGE_COUNTS = [3, 5, 8] as const;
-const SECTION_TYPES = [
-  "comparison",
-  "cta",
-  "detail-closeup",
-  "feature",
-  "flat-lay",
-  "four-grid-detail",
-  "hero",
-  "material-detail",
-  "model-wearing",
-  "multi-color",
-  "selling-point",
-  "specification",
-  "trust",
-  "usage-scene",
-] as const;
-
-function isDetailPageStyle(value: string): value is ProductDetailPageStyle {
-  return DETAIL_PAGE_STYLES.includes(value as ProductDetailPageStyle);
-}
-
-function isDetailPageCount(value: number): value is ProductDetailPageCount {
-  return DETAIL_PAGE_COUNTS.includes(value as ProductDetailPageCount);
-}
-
-function isSectionType(value: string): value is ProductDetailPageSectionType {
-  return SECTION_TYPES.includes(value as ProductDetailPageSectionType);
-}
+type ProductDetailPagePatchRequestBody = {
+  analysisHistoryId?: string;
+  expectedRevision?: number;
+  operation?: unknown;
+};
 
 function parseJsonResponse(response: string) {
   const trimmed = response.trim();
@@ -66,64 +47,74 @@ function parseJsonResponse(response: string) {
     .replace(/^```\s*/i, "")
     .replace(/```$/i, "")
     .trim();
+  const parsed = JSON.parse(withoutFence) as unknown;
 
-  return JSON.parse(withoutFence) as ProductDetailPagePlan;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Detail page plan response is invalid.");
+  }
+
+  return parsed as DetailPagePlanCandidate;
 }
 
-function normalizeText(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+function normalizeSectionCount(value: unknown) {
+  const sectionCount = Number(value ?? 7);
+
+  if (!Number.isInteger(sectionCount) || sectionCount < 5 || sectionCount > 8) {
+    throw new ApiError("详情页策划需包含 5 到 8 个模块。", 400);
+  }
+
+  return sectionCount;
 }
 
-function getFallbackSectionType(index: number, count: ProductDetailPageCount): ProductDetailPageSectionType {
-  if (index === 0) {
-    return "hero";
+async function getProductAnalysis(userId: string, analysisHistoryId: string) {
+  const analysisRecord = await getHistoryRecordForUser(userId, analysisHistoryId);
+
+  if (!analysisRecord) {
+    throw new ApiError("Product analysis history not found.", 404);
   }
 
-  if (index === count - 1) {
-    return "cta";
+  if (analysisRecord.type !== "product-analysis") {
+    throw new ApiError("History record is not a product analysis.", 400);
   }
 
-  if (count === 3) {
-    return "selling-point";
+  if (!isProductImageAnalysis(analysisRecord.output)) {
+    throw new ApiError("Product analysis result is invalid.", 400);
   }
-
-  if (count === 5) {
-    return (["selling-point", "usage-scene", "detail-closeup"] as ProductDetailPageSectionType[])[index - 1] || "selling-point";
-  }
-
-  return (
-    (["selling-point", "usage-scene", "detail-closeup", "four-grid-detail", "material-detail", "specification"] as ProductDetailPageSectionType[])[index - 1] ||
-    "selling-point"
-  );
-}
-
-function normalizePlanPage(value: unknown, index: number, count: ProductDetailPageCount): ProductDetailPagePlanPage {
-  const page = value && typeof value === "object" ? (value as Partial<ProductDetailPagePlanPage>) : {};
-  const pageIndex = index + 1;
-  const sectionType = normalizeText(page.sectionType);
-  const normalizedSectionType = isSectionType(sectionType) ? sectionType : getFallbackSectionType(index, count);
 
   return {
-    pageIndex,
-    sectionType: normalizedSectionType,
-    sectionTitle: normalizeText(page.sectionTitle) || (pageIndex === 1 ? "首屏卖点" : pageIndex === count ? "购买理由" : "详情页模块"),
-    headline: normalizeText(page.headline),
-    subheadline: normalizeText(page.subheadline),
-    sellingPoint: normalizeText(page.sellingPoint),
-    visualDirection: normalizeText(page.visualDirection),
-    bodyCopy: normalizeText(page.bodyCopy),
-    notes: normalizeText(page.notes),
+    ...analysisRecord,
+    output: analysisRecord.output,
   };
 }
 
-function normalizePlan(plan: ProductDetailPagePlan, count: ProductDetailPageCount): ProductDetailPagePlan {
-  const pages = Array.isArray(plan.pages) ? plan.pages.slice(0, count).map((page, index) => normalizePlanPage(page, index, count)) : [];
+export async function GET(request: Request) {
+  try {
+    const user = await getCurrentUser();
 
-  if (pages.length !== count) {
-    throw new Error(`Detail page plan must include exactly ${count} pages.`);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const analysisHistoryId = new URL(request.url).searchParams.get("analysisHistoryId")?.trim();
+
+    if (!analysisHistoryId) {
+      throw new ApiError("Analysis history id is required.", 400);
+    }
+
+    await getProductAnalysis(user.id, analysisHistoryId);
+    const project = await getDetailPageProjectForUser(user.id, analysisHistoryId);
+
+    return NextResponse.json(
+      { project },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    );
+  } catch (error) {
+    return jsonError(error, "Detail page project could not be loaded.");
   }
-
-  return { pages };
 }
 
 export async function POST(request: Request) {
@@ -136,110 +127,159 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ProductDetailPagePlanRequestBody;
     const analysisHistoryId = body.analysisHistoryId?.trim();
-    const style = body.style?.trim() || "ecommerce";
-    const count = Number(body.count || 3);
-    const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
-    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
 
     if (!analysisHistoryId) {
-      return NextResponse.json({ error: "Analysis history id is required." }, { status: 400 });
+      throw new ApiError("Analysis history id is required.", 400);
     }
 
-    if (!isDetailPageCount(count)) {
-      return NextResponse.json({ error: "详情页数量无效，请选择 3、5 或 8 张。" }, { status: 400 });
+    const analysisRecord = await getProductAnalysis(user.id, analysisHistoryId);
+    const existingProject = await getDetailPageProjectForUser(user.id, analysisHistoryId);
+
+    if (existingProject) {
+      return NextResponse.json({ project: existingProject, source: "recovered" as const });
     }
 
-    if (!isDetailPageStyle(style)) {
-      return NextResponse.json({ error: "Unsupported detail page style." }, { status: 400 });
-    }
-
-    const analysisRecord = await getHistoryRecordForUser(user.id, analysisHistoryId);
-
-    if (!analysisRecord) {
-      return NextResponse.json({ error: "Product analysis history not found." }, { status: 404 });
-    }
-
-    if (analysisRecord.type !== "product-analysis") {
-      return NextResponse.json({ error: "History record is not a product analysis." }, { status: 400 });
-    }
-
-    if (!isProductImageAnalysis(analysisRecord.output)) {
-      return NextResponse.json({ error: "Product analysis result is invalid." }, { status: 400 });
-    }
-
+    const sectionCount = normalizeSectionCount(body.sectionCount);
+    const style: ProductDetailPageStyle = isDetailPageStylePreset(body.style) ? body.style : "ecommerce";
+    const generationBrief = sanitizeProductGenerationBrief(body.generationBrief);
+    const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
     const relatedHistory = await getProductRelatedHistory({
       userId: user.id,
       analysisHistoryId: analysisRecord.id,
       sourceAssetId: analysisRecord.assetId,
     });
     const copywritingRecords = relatedHistory.filter((record) => record.type === "copywriting");
-    const prompt = buildProductDetailPagePlanPrompt({
+    const projectId = getDetailPageProjectRecordId(analysisRecord.id);
+    const prompt = buildProductDetailPageV2PlanPrompt({
       analysis: analysisRecord.output,
       copywritingRecords,
-      count,
       generationBrief,
       outputSettings,
       productTitle: analysisRecord.title,
+      sectionCount,
       style,
     });
+
     const usageReservation = await reserveUsage({
       userId: user.id,
       type: "copywriting",
       model: getTextProviderModelId("detail-page-plan", outputSettings),
       requestId: getUsageRequestId(request),
-      metadata: { route: "/api/products/detail-page/plan", analysisHistoryId, count },
+      metadata: { route: "/api/products/detail-page/plan", analysisHistoryId, sectionCount },
     });
 
     if (!usageReservation.created) {
       throw new ApiError("This generation request has already been reserved.", 409);
     }
 
-    const result = await runReservedUsageTask({
-      usageRecordId: usageReservation.record.id,
-      userId: user.id,
-      logLabel: "detail page planning",
-      task: async ({ setFailureCode }) => {
-        const response = await generateText({
-          messages: [
-            {
-              role: "system",
-              content: "你是 Vahoro 的电商详情页规划助手，只输出严格 JSON，不输出 Markdown 或解释。",
-            },
-            { role: "user", content: prompt },
-          ],
-          jsonMode: true,
-          outputSettings,
-          task: "detail-page-plan",
-          temperature: 0.62,
+    try {
+      const project = await runReservedUsageTask({
+        usageRecordId: usageReservation.record.id,
+        userId: user.id,
+        logLabel: "detail page V2 planning",
+        task: async ({ setFailureCode }) => {
+          const response = await generateText({
+            messages: [
+              {
+                role: "system",
+                content: "你是 Vahoro 的电商详情页策划助手，只输出严格 JSON，不输出 Markdown 或解释。",
+              },
+              { role: "user", content: prompt },
+            ],
+            jsonMode: true,
+            outputSettings,
+            task: "detail-page-plan",
+            temperature: 0.45,
+          });
+          setFailureCode("PARSE_ERROR");
+          const candidate = parseJsonResponse(response);
+          const normalizedProject = createDetailPageProject({
+            analysisHistoryId,
+            candidate,
+            preset: style,
+            projectId,
+            sectionCount,
+            sourceAssetId: analysisRecord.assetId,
+            userId: user.id,
+          });
+          setFailureCode("HISTORY_PERSIST_ERROR");
+          return persistDetailPageProject(normalizedProject, analysisRecord.title);
+        },
+      });
+
+      try {
+        await finalizeUsage({
+          usageRecordId: usageReservation.record.id,
+          userId: user.id,
+          metadata: { route: "/api/products/detail-page/plan", analysisHistoryId, sectionCount, projectId: project.projectId },
         });
-        setFailureCode("PARSE_ERROR");
-        const plan = normalizePlan(parseJsonResponse(response), count);
-        setFailureCode("INTERNAL_ERROR");
-        const riskScan = scanProductContentRisk(JSON.stringify(plan));
+      } catch (error) {
+        console.error("[usage] detail page V2 planning finalize failed", {
+          usageRecordId: usageReservation.record.id,
+          route: "/api/products/detail-page/plan",
+          errorName: error instanceof Error ? error.name : typeof error,
+        });
+      }
 
-        return { plan, riskScan };
-      },
-    });
-
-    await finalizeUsage({
-      usageRecordId: usageReservation.record.id,
-      userId: user.id,
-      metadata: { route: "/api/products/detail-page/plan", analysisHistoryId, count },
-    });
-
-    console.info("[product-risk-scan]", {
-      source: "detail-page-plan",
-      level: result.riskScan.level,
-      matches: result.riskScan.matches,
-    });
-
-    return NextResponse.json({
-      count,
-      style,
-      ...result.plan,
-      riskScan: result.riskScan,
-    });
+      return NextResponse.json({ project, source: "ai" as const });
+    } catch (error) {
+      console.warn("[detail-page-project] AI planning unavailable, using fallback", {
+        analysisHistoryId,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+      const fallbackProject = createFallbackDetailPageProject({
+        analysisHistoryId,
+        preset: style,
+        projectId,
+        sectionCount,
+        sourceAssetId: analysisRecord.assetId,
+        userId: user.id,
+      });
+      const project = await persistDetailPageProject(fallbackProject, analysisRecord.title);
+      return NextResponse.json({ project, source: "fallback" as const });
+    }
   } catch (error) {
-    return jsonError(error, "Product detail page plan generation failed.");
+    return jsonError(error, "Detail page project could not be created.");
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = (await request.json()) as ProductDetailPagePatchRequestBody;
+    const analysisHistoryId = body.analysisHistoryId?.trim();
+    const expectedRevision = Number(body.expectedRevision);
+    const operation = parseDetailPageProjectOperation(body.operation);
+
+    if (!analysisHistoryId) {
+      throw new ApiError("Analysis history id is required.", 400);
+    }
+
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
+      throw new ApiError("Detail page project revision is invalid.", 400);
+    }
+
+    if (!operation) {
+      throw new ApiError("Detail page project update is invalid.", 400);
+    }
+
+    await getProductAnalysis(user.id, analysisHistoryId);
+
+    try {
+      const project = await updateDetailPageProject({ analysisHistoryId, expectedRevision, operation, userId: user.id });
+      return NextResponse.json({ project });
+    } catch (error) {
+      if (error instanceof DetailPageProjectError) {
+        throw new ApiError(error.message, error.status);
+      }
+      throw error;
+    }
+  } catch (error) {
+    return jsonError(error, "Detail page project could not be updated.");
   }
 }
