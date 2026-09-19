@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { FeatureSection } from "@/components/landing/feature-section";
 import { HeroSection } from "@/components/landing/hero-section";
 import { LandingMotion } from "@/components/landing/landing-motion";
+import { RealCaseSection } from "@/components/landing/real-case-section";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
 import "@/components/landing/landing.css";
@@ -19,7 +20,7 @@ export default async function HomePage() {
       <SiteHeader isAuthenticated={isAuthenticated} />
       <main id="landing-main">
         <HeroSection isAuthenticated={isAuthenticated} />
-        {/* An approved real-product case will be inserted here in B10-3. */}
+        <RealCaseSection />
         <FeatureSection isAuthenticated={isAuthenticated} />
       </main>
       <SiteFooter isAuthenticated={isAuthenticated} />
