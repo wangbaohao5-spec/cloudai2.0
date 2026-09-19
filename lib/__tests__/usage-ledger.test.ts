@@ -211,6 +211,19 @@ describe("usage ledger", () => {
     await expect(finalizeUsage({ usageRecordId: baseRecord.id, userId: baseRecord.userId })).rejects.toMatchObject({ status: 409 });
   });
 
+  it("does not let another user finalize the owner's usage record", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    tx.usageRecord.findFirst.mockImplementation(async ({ where }: { where: { id: string; userId: string } }) =>
+      where.id === baseRecord.id && where.userId === baseRecord.userId ? baseRecord : null,
+    );
+
+    await expect(finalizeUsage({ usageRecordId: baseRecord.id, userId: "user-2" })).rejects.toMatchObject({ status: 404 });
+
+    expect(tx.usageRecord.findFirst).toHaveBeenCalledWith({ where: { id: baseRecord.id, userId: "user-2" } });
+    expect(tx.usageRecord.update).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
   it("refunds pending usage with a controlled code", async () => {
     tx.usageRecord.findFirst.mockResolvedValueOnce(baseRecord);
 
@@ -237,6 +250,17 @@ describe("usage ledger", () => {
     tx.usageRecord.findFirst.mockResolvedValueOnce({ ...baseRecord, status: "succeeded" });
 
     await expect(refundUsage({ usageRecordId: baseRecord.id, userId: baseRecord.userId, failureCode: "INTERNAL_ERROR" })).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("does not let another user refund the owner's usage record", async () => {
+    tx.usageRecord.findFirst.mockImplementation(async ({ where }: { where: { id: string; userId: string } }) =>
+      where.id === baseRecord.id && where.userId === baseRecord.userId ? baseRecord : null,
+    );
+
+    await expect(refundUsage({ usageRecordId: baseRecord.id, userId: "user-2", failureCode: "INTERNAL_ERROR" })).rejects.toMatchObject({ status: 404 });
+
+    expect(tx.usageRecord.findFirst).toHaveBeenCalledWith({ where: { id: baseRecord.id, userId: "user-2" } });
+    expect(tx.usageRecord.update).not.toHaveBeenCalled();
   });
 
   it("queries stale pending usage without automatically refunding it", async () => {

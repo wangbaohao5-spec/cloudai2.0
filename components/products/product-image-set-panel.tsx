@@ -16,6 +16,13 @@ import type { ImageSetStructureValidationResult } from "@/lib/ai/product-image-s
 import { createGenerationAttempt } from "@/lib/generation-request";
 import { formatCustomStructure, getImageSetPurposeLabel, getImageSetStructureModeLabel } from "@/lib/image-set-structure-labels";
 import { getImageSetCostEstimate } from "@/lib/product-generation-cost";
+import {
+  clearImageSetFailure,
+  getFailedImageSetSlots,
+  getRemainingImageSetSlots,
+  recordImageSetFailure,
+  recordImageSetSuccess,
+} from "@/lib/product-image-set-progress";
 import { formatProductOutputSettingsSummary } from "@/lib/product-output-settings";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
 import { useState } from "react";
@@ -201,8 +208,8 @@ export function ProductImageSetPanel({
       : structureMode === "custom" && customStructureTotal < 1
         ? "当前至少需要 1 张，请增加一种图片类型。"
         : "";
-  const remainingImages = plan?.images.filter((image) => !imageResults[image.imageIndex]).sort((left, right) => left.imageIndex - right.imageIndex) || [];
-  const failedImages = plan?.images.filter((image) => !imageResults[image.imageIndex] && Boolean(imageErrors[image.imageIndex])).sort((left, right) => left.imageIndex - right.imageIndex) || [];
+  const remainingImages = plan ? getRemainingImageSetSlots(plan.images, imageResults) : [];
+  const failedImages = plan ? getFailedImageSetSlots(plan.images, imageResults, imageErrors) : [];
   const generatedCount = plan ? plan.images.length - remainingImages.length : 0;
   const failedCount = failedImages.length;
   const pendingCount = Math.max(remainingImages.length - failedCount, 0);
@@ -359,11 +366,7 @@ export function ProductImageSetPanel({
     const isRegeneration = Boolean(imageResults[image.imageIndex]);
 
     setGeneratingImageIndex(image.imageIndex);
-    setImageErrors((current) => {
-      const next = { ...current };
-      delete next[image.imageIndex];
-      return next;
-    });
+    setImageErrors((current) => clearImageSetFailure(current, image.imageIndex));
 
     try {
       const generationAttempt = createGenerationAttempt();
@@ -392,10 +395,7 @@ export function ProductImageSetPanel({
 
       const data = (await response.json()) as ProductImageSetImageResult;
 
-      setImageResults((current) => ({
-        ...current,
-        [image.imageIndex]: data,
-      }));
+      setImageResults((current) => recordImageSetSuccess(current, image.imageIndex, data));
       if (refreshOnSuccess) {
         onGenerated?.();
       }
@@ -409,10 +409,7 @@ export function ProductImageSetPanel({
             ? caughtError.message
             : fallbackMessage;
 
-      setImageErrors((current) => ({
-        ...current,
-        [image.imageIndex]: message,
-      }));
+      setImageErrors((current) => recordImageSetFailure(current, image.imageIndex, message));
       return false;
     } finally {
       setGeneratingImageIndex(null);
