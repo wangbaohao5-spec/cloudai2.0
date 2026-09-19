@@ -125,38 +125,12 @@ export async function validateImageBytes(content: ArrayBuffer | Buffer | Uint8Ar
   }
 }
 
-export async function ensureAssetBucket() {
-  const supabase = getSupabaseStorageClient();
-  const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-
-  if (listError) {
-    throw new Error(listError.message);
-  }
-
-  const bucketExists = buckets.some((bucket) => bucket.name === ASSET_BUCKET);
-
-  if (bucketExists) {
-    return;
-  }
-
-  const { error } = await supabase.storage.createBucket(ASSET_BUCKET, {
-    public: false,
-    fileSizeLimit: 1024 * 1024 * 200,
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-}
-
 export async function uploadFile({ userId, type, name, content, contentType }: UploadFileInput) {
   validateAssetFile({
     type,
     contentType,
     size: getContentSize(content),
   });
-
-  await ensureAssetBucket();
 
   const supabase = getSupabaseStorageClient();
   const path = `${userId}/${type}/${Date.now()}-${sanitizeFileName(name)}`;

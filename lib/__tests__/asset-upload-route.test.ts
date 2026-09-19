@@ -51,6 +51,7 @@ describe("asset upload compensation", () => {
     mocks.uploadFile.mockRejectedValue(new Error("storage failed"));
     const response = await POST(createUploadRequest());
     expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: "服务器暂时无法处理请求，请稍后重试。" });
     expect(mocks.createAsset).not.toHaveBeenCalled();
   });
 

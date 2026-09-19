@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
-import "./product-workspace.css";
 
 export const metadata: Metadata = {
   applicationName: BRAND.name,

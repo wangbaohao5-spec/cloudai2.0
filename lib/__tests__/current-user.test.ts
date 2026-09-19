@@ -87,4 +87,18 @@ describe("getCurrentUser", () => {
     await expect(getCurrentUser()).resolves.toEqual(user);
     expect(findUnique).toHaveBeenCalledWith({ where: { id: DATABASE_USER_ID } });
   });
+
+  it("does not reuse a user across separate request contexts", async () => {
+    const secondUser = { ...buildUser(), id: "cm0987654321seconduser", email: "second@example.com" };
+    mockedAuth
+      .mockResolvedValueOnce(buildSession(DATABASE_USER_ID))
+      .mockResolvedValueOnce(buildSession(secondUser.id));
+    findUnique
+      .mockResolvedValueOnce(buildUser())
+      .mockResolvedValueOnce(secondUser);
+
+    await expect(getCurrentUser()).resolves.toMatchObject({ id: DATABASE_USER_ID });
+    await expect(getCurrentUser()).resolves.toMatchObject({ id: secondUser.id });
+    expect(findUnique).toHaveBeenNthCalledWith(2, { where: { id: secondUser.id } });
+  });
 });

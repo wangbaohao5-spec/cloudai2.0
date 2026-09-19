@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { hasProductAnalysisHistory } from "@/lib/first-product-onboarding-server";
 import { getLatestValidProductAnalysisHistoryId } from "@/lib/recent-product-analysis";
 import { redirect } from "next/navigation";
+import "../../product-workspace.css";
 
 type ProductsPageProps = {
   searchParams?: Promise<{

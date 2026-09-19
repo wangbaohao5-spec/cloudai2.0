@@ -1,7 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { cache } from "react";
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async function getCurrentUser() {
   const session = await auth();
   const userId = session?.user?.id?.trim();
 
@@ -16,4 +17,4 @@ export async function getCurrentUser() {
   });
 
   return user?.isActive ? user : null;
-}
+});
