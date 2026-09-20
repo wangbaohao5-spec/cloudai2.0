@@ -5067,6 +5067,16 @@
   font-size: .82rem;
 }
 
+.product-detail-preview-export-note {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--status-warning-border);
+  border-radius: var(--radius-sm);
+  color: var(--status-warning-text);
+  background: var(--status-warning-bg);
+  font-size: .82rem;
+}
+
 .product-detail-preview-hidden {
   flex-wrap: wrap;
   padding: var(--space-3);

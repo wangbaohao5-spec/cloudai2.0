@@ -21,11 +21,53 @@ export type DetailPagePreviewSection = {
   state: DetailPagePreviewState;
 };
 
-const PAGE_STYLE_CLASSES: Record<DetailPageStylePreset, string> = {
-  "brand-site": "is-brand-site",
-  ecommerce: "is-ecommerce",
-  minimal: "is-minimal",
-  xiaohongshu: "is-xiaohongshu",
+export type DetailPageStyleRole = {
+  accent: string;
+  background: string;
+  className: string;
+  muted: string;
+  surface: string;
+  surfaceAlt: string;
+  text: string;
+};
+
+export const DETAIL_PAGE_STYLE_ROLES: Record<DetailPageStylePreset, DetailPageStyleRole> = {
+  "brand-site": {
+    className: "is-brand-site",
+    background: "#f3f0e9",
+    surface: "#faf8f2",
+    surfaceAlt: "#e7e5de",
+    text: "#1f2925",
+    muted: "#64706b",
+    accent: "#315e50",
+  },
+  ecommerce: {
+    className: "is-ecommerce",
+    background: "#f8f6f1",
+    surface: "#fffdf8",
+    surfaceAlt: "#f0eee8",
+    text: "#1f2925",
+    muted: "#64706b",
+    accent: "#2f6552",
+  },
+  minimal: {
+    className: "is-minimal",
+    background: "#f6f6f3",
+    surface: "#ffffff",
+    surfaceAlt: "#eeeeea",
+    text: "#1f2925",
+    muted: "#64706b",
+    accent: "#3f554c",
+  },
+  xiaohongshu: {
+    className: "is-xiaohongshu",
+    background: "#faf4ef",
+    surface: "#fffaf6",
+    surfaceAlt: "#f3e9e1",
+    text: "#1f2925",
+    muted: "#64706b",
+    accent: "#8b574a",
+  },
 };
 
 export function getDetailPagePreviewState(section: DetailPageSectionV2): DetailPagePreviewState {
@@ -37,7 +79,11 @@ export function getDetailPagePreviewState(section: DetailPageSectionV2): DetailP
 }
 
 export function getDetailPageStyleClass(preset: DetailPageStylePreset) {
-  return PAGE_STYLE_CLASSES[preset];
+  return DETAIL_PAGE_STYLE_ROLES[preset].className;
+}
+
+export function getDetailPageStyleRole(preset: DetailPageStylePreset) {
+  return DETAIL_PAGE_STYLE_ROLES[preset];
 }
 
 export function getDetailPageLayoutVariants(moduleType: DetailPageModuleType): readonly DetailPageLayout[] {

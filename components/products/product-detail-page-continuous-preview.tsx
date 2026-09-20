@@ -13,6 +13,7 @@ import {
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
 } from "@/lib/detail-page-project";
+import { getDetailPageSectionExportBlockers } from "@/lib/detail-page-export";
 import {
   DETAIL_PAGE_LOGICAL_WIDTH,
   buildDetailPagePreview,
@@ -27,7 +28,9 @@ type ProductDetailPageContinuousPreviewProps = {
   generatingSectionId?: string;
   isLoadingAssets?: boolean;
   isUpdating?: boolean;
+  downloadingExport?: "full" | string;
   onBackToBuild: () => void;
+  onDownloadExport: (mode: "full" | "section", sectionId?: string) => void;
   onGenerateSection: (sectionId: string) => void;
   onOperation: (operation: DetailPageProjectOperation) => void;
   project: DetailPageProjectV2;
@@ -145,9 +148,12 @@ function SectionControls({
   isLoadingAssets,
   item,
   onBackToBuild,
+  onDownloadExport,
   onGenerateSection,
   onOperation,
   total,
+  downloadable,
+  downloading,
 }: {
   candidates: DetailPageAssetCandidate[];
   disabled: boolean;
@@ -155,9 +161,12 @@ function SectionControls({
   isLoadingAssets: boolean;
   item: DetailPagePreviewSection;
   onBackToBuild: () => void;
+  onDownloadExport: (mode: "full" | "section", sectionId?: string) => void;
   onGenerateSection: (sectionId: string) => void;
   onOperation: (operation: DetailPageProjectOperation) => void;
   total: number;
+  downloadable: boolean;
+  downloading: boolean;
 }) {
   const section = item.section;
   const variants = getDetailPageLayoutVariants(section.moduleType);
@@ -197,6 +206,9 @@ function SectionControls({
           <DetailPageSectionCopyEditor disabled={disabled} section={section} onSave={(headline, body) => onOperation({ type: "set-copy", sectionId: section.id, headline, body })} />
           <DetailPageExistingAssetPicker candidates={candidates} disabled={disabled} isLoading={isLoadingAssets} section={section} onOperation={onOperation} />
           <div className="product-detail-preview-generation-actions">
+            <button className="cai-button cai-button--primary cai-button--sm" disabled={disabled || !downloadable || downloading} type="button" onClick={() => onDownloadExport("section", section.id)}>
+              {downloading ? "正在生成切片…" : "下载此切片"}
+            </button>
             <button className="cai-button cai-button--secondary cai-button--sm" disabled={disabled || !canGenerate} type="button" onClick={() => onGenerateSection(section.id)}>
               {section.selectedAssetId ? "重新生成" : "生成视觉"}
             </button>
@@ -210,16 +222,24 @@ function SectionControls({
 
 export function ProductDetailPageContinuousPreview({
   candidates,
+  downloadingExport,
   generatingSectionId = "",
   isLoadingAssets = false,
   isUpdating = false,
   onBackToBuild,
+  onDownloadExport,
   onGenerateSection,
   onOperation,
   project,
 }: ProductDetailPageContinuousPreviewProps) {
   const preview = buildDetailPagePreview(project, candidates);
   const disabled = isUpdating || Boolean(generatingSectionId) || project.sections.some((section) => section.lifecycle === "GENERATING");
+  const candidateIds = new Set(candidates.map((candidate) => candidate.assetId));
+  const exportableSectionIds = new Set(preview.visible.filter((item) => {
+    const needsAsset = canBindExistingAssetToModule(item.section.moduleType);
+    return !getDetailPageSectionExportBlockers(item.section).length && (!needsAsset || Boolean(item.section.selectedAssetId && candidateIds.has(item.section.selectedAssetId)));
+  }).map((item) => item.section.id));
+  const fullExportReady = preview.visible.length > 0 && exportableSectionIds.size === preview.visible.length && !disabled;
 
   return (
     <div className="product-detail-preview-workspace">
@@ -227,10 +247,13 @@ export function ProductDetailPageContinuousPreview({
         <div>
           <p>Continuous Preview · {DETAIL_PAGE_LOGICAL_WIDTH}px</p>
           <h3>连续详情页预览</h3>
-          <span>版式、顺序、文案和素材绑定会保存到当前详情页项目。</span>
+          <span>{exportableSectionIds.size} / {preview.visible.length} 个可见模块已完成{fullExportReady ? " · Ready to export" : ""}</span>
         </div>
-        <button className="cai-button cai-button--secondary" disabled type="button" title="Phase 3B 提供导出能力">导出 · 下一阶段</button>
+        <button className="cai-button cai-button--primary" disabled={!fullExportReady || Boolean(downloadingExport)} type="button" onClick={() => onDownloadExport("full")}>
+          {downloadingExport === "full" ? "正在生成长图…" : "下载完整长图"}
+        </button>
       </div>
+      {!fullExportReady ? <p className="product-detail-preview-export-note">还有 {preview.visible.length - exportableSectionIds.size} 个模块需要完成后才能导出完整详情页。已完成模块仍可单独下载切片。</p> : null}
 
       {preview.hidden.length ? (
         <aside className="product-detail-preview-hidden" aria-label="已隐藏模块">
@@ -254,8 +277,11 @@ export function ProductDetailPageContinuousPreview({
                 index={index}
                 isLoadingAssets={isLoadingAssets}
                 item={item}
+                downloadable={exportableSectionIds.has(item.section.id)}
+                downloading={downloadingExport === item.section.id}
                 total={preview.visible.length}
                 onBackToBuild={onBackToBuild}
+                onDownloadExport={onDownloadExport}
                 onGenerateSection={onGenerateSection}
                 onOperation={onOperation}
               />

@@ -44,6 +44,10 @@ type SectionGenerationResponse = {
   warning?: string | null;
 };
 
+type ExportErrorResponse = {
+  error?: string;
+};
+
 const styleOptions: Array<{ label: string; value: DetailPageStylePreset }> = [
   { value: "ecommerce", label: "电商清晰" },
   { value: "brand-site", label: "品牌克制" },
@@ -81,12 +85,19 @@ async function readSectionGenerationResponse(response: Response) {
   return data;
 }
 
+function getDownloadFilename(response: Response, fallback: string) {
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const match = disposition.match(/filename="([a-zA-Z0-9._-]+)"/);
+  return match?.[1] || fallback;
+}
+
 export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings, onGenerated }: ProductDetailPagePanelProps) {
   const analysisHistoryId = analysisResult?.historyId || "";
   const [addModuleType, setAddModuleType] = useState<DetailPageModuleType>("PRODUCT_DETAIL");
   const [assetError, setAssetError] = useState("");
   const [candidates, setCandidates] = useState<DetailPageAssetCandidate[]>([]);
   const [error, setError] = useState("");
+  const [downloadingExport, setDownloadingExport] = useState<"full" | string>("");
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
@@ -269,6 +280,48 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
     }
   }
 
+  async function handleDownloadExport(mode: "full" | "section", sectionId?: string) {
+    if (!project || downloadingExport) return;
+
+    const downloadKey = mode === "full" ? "full" : sectionId || "section";
+    setError("");
+    setDownloadingExport(downloadKey);
+
+    try {
+      const response = await fetchWithAuthHandling("/api/products/detail-page/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisHistoryId,
+          expectedRevision: project.revision,
+          mode,
+          projectId: project.projectId,
+          sectionId,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as ExportErrorResponse | null;
+        if (response.status === 409) await loadWorkspaceState();
+        throw new Error(data?.error || "详情页暂时无法导出，请稍后重试。");
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = getDownloadFilename(response, mode === "full" ? "vahoro-detail-page.jpg" : "detail-page-section.jpg");
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "详情页暂时无法导出，请稍后重试。");
+    } finally {
+      setDownloadingExport("");
+    }
+  }
+
   if (!analysisResult) {
     return (
       <section className="product-detail-page-panel product-workspace-tool-surface">
@@ -334,11 +387,13 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
           {viewMode === "preview" ? (
             <ProductDetailPageContinuousPreview
               candidates={candidates}
+              downloadingExport={downloadingExport || undefined}
               generatingSectionId={generatingSectionId}
               isLoadingAssets={isLoadingAssets}
               isUpdating={isUpdating}
               project={project}
               onBackToBuild={() => setViewMode("build")}
+              onDownloadExport={(mode, sectionId) => void handleDownloadExport(mode, sectionId)}
               onGenerateSection={(sectionId) => void handleGenerateSection(sectionId)}
               onOperation={(operation) => void handleOperation(operation)}
             />

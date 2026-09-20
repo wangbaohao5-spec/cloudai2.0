@@ -162,6 +162,21 @@ export async function getFileUrl(path: string, expiresIn = SIGNED_URL_EXPIRES_IN
   return data.signedUrl;
 }
 
+export async function downloadFile(path: string, maxBytes?: number) {
+  const supabase = getSupabaseStorageClient();
+  const { data, error } = await supabase.storage.from(ASSET_BUCKET).download(path);
+
+  if (error || !data) {
+    throw new Error("Storage object could not be downloaded.");
+  }
+
+  if (maxBytes && data.size > maxBytes) {
+    throw new Error("Storage object exceeds the allowed download size.");
+  }
+
+  return Buffer.from(await data.arrayBuffer());
+}
+
 export async function getImagePreviewUrl(path: string, expiresIn = SIGNED_URL_EXPIRES_IN, transform = DEFAULT_IMAGE_PREVIEW_TRANSFORM) {
   const supabase = getSupabaseStorageClient();
   const { data, error } = await supabase.storage.from(ASSET_BUCKET).createSignedUrl(path, expiresIn, {
