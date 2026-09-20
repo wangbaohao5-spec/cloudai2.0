@@ -1,5 +1,6 @@
 "use client";
 
+import { ProductDetailPageContinuousPreview } from "@/components/products/product-detail-page-continuous-preview";
 import { ProductDetailPagePlanPreview } from "@/components/products/product-detail-page-plan-preview";
 import { ProductGenerationCostHint } from "@/components/products/product-generation-cost-hint";
 import { AiThinkingLoading } from "@/components/ui/loading";
@@ -95,6 +96,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   const [sectionCount, setSectionCount] = useState(7);
   const [source, setSource] = useState<ProjectResponse["source"]>();
   const [style, setStyle] = useState<DetailPageStylePreset>("ecommerce");
+  const [viewMode, setViewMode] = useState<"build" | "preview">("build");
   const generationAttemptsRef = useRef(new Map<string, ReturnType<typeof createGenerationAttempt>>());
 
   async function loadWorkspaceState() {
@@ -134,6 +136,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   }
 
   useEffect(() => {
+    setViewMode("build");
     void loadWorkspaceState();
     // The loader intentionally follows the selected product context only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,16 +282,20 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   return (
     <section className="product-detail-page-panel product-workspace-tool-surface">
       <div className="product-detail-v2-steps" aria-label="详情页制作阶段">
-        <strong>策划</strong>
-        <span>制作</span>
-        <span>预览与导出</span>
+        <button className={!project ? "is-active" : ""} disabled={!project} type="button" onClick={() => setViewMode("build")}>策划</button>
+        <button className={project && viewMode === "build" ? "is-active" : ""} disabled={!project} type="button" onClick={() => setViewMode("build")}>制作</button>
+        <button className={project && viewMode === "preview" ? "is-active" : ""} disabled={!project} type="button" onClick={() => setViewMode("preview")}>预览与导出</button>
       </div>
 
       <div className="dashboard-section-header">
         <div>
-          <p className="product-workspace-kicker">Detail Page V2 · Phase 2B</p>
-          <h2>详情页策划</h2>
-          <p className="image-generation-intro">先确定页面结构和事实依据，再进入素材制作。AI 分析不会自动成为已验证事实。</p>
+          <p className="product-workspace-kicker">Detail Page V2 · Phase 3A</p>
+          <h2>{viewMode === "preview" && project ? "预览与组装" : "详情页策划"}</h2>
+          <p className="image-generation-intro">
+            {viewMode === "preview" && project
+              ? "将已完成模块组织为一条连续详情页。导出将在下一阶段开放。"
+              : "先确定页面结构和事实依据，再进入素材制作。AI 分析不会自动成为已验证事实。"}
+          </p>
         </div>
         {project ? <span>Revision {project.revision}</span> : <span>策划准备</span>}
       </div>
@@ -324,37 +331,52 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
           {source === "fallback" ? <p className="product-detail-v2-notice">AI 策划暂时不可用，当前使用可编辑的基础详情页结构。</p> : null}
 
-          <ProductDetailPagePlanPreview
-            candidates={candidates}
-            generatingSectionId={generatingSectionId}
-            isLoadingAssets={isLoadingAssets}
-            project={project}
-            isUpdating={isUpdating}
-            onGenerateSection={(sectionId) => void handleGenerateSection(sectionId)}
-            onOperation={(operation) => void handleOperation(operation)}
-          />
+          {viewMode === "preview" ? (
+            <ProductDetailPageContinuousPreview
+              candidates={candidates}
+              generatingSectionId={generatingSectionId}
+              isLoadingAssets={isLoadingAssets}
+              isUpdating={isUpdating}
+              project={project}
+              onBackToBuild={() => setViewMode("build")}
+              onGenerateSection={(sectionId) => void handleGenerateSection(sectionId)}
+              onOperation={(operation) => void handleOperation(operation)}
+            />
+          ) : (
+            <>
+              <ProductDetailPagePlanPreview
+                candidates={candidates}
+                generatingSectionId={generatingSectionId}
+                isLoadingAssets={isLoadingAssets}
+                project={project}
+                isUpdating={isUpdating}
+                onGenerateSection={(sectionId) => void handleGenerateSection(sectionId)}
+                onOperation={(operation) => void handleOperation(operation)}
+              />
 
-          <div className="product-detail-v2-add-module">
-            <label>
-              <span>添加模块</span>
-              <select disabled={isUpdating || generatingSectionId.length > 0 || project.sections.some((section) => section.lifecycle === "GENERATING") || project.sections.length >= 8} value={addModuleType} onChange={(event) => setAddModuleType(event.target.value as DetailPageModuleType)}>
-                {DETAIL_PAGE_MODULE_TYPES.map((moduleType) => (
-                  <option key={moduleType} value={moduleType}>
-                    {DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="cai-button cai-button--secondary"
-              disabled={isUpdating || generatingSectionId.length > 0 || project.sections.some((section) => section.lifecycle === "GENERATING") || project.sections.length >= 8}
-              type="button"
-              onClick={() => void handleOperation({ type: "add-section", moduleType: addModuleType })}
-            >
-              添加到末尾
-            </button>
-          </div>
-          <p className="product-detail-plan-note">复用已有素材保持零图片额度消耗；只有点击“生成视觉”才会创建新的图片任务。一次只制作一个模块。</p>
+              <div className="product-detail-v2-add-module">
+                <label>
+                  <span>添加模块</span>
+                  <select disabled={isUpdating || generatingSectionId.length > 0 || project.sections.some((section) => section.lifecycle === "GENERATING") || project.sections.length >= 8} value={addModuleType} onChange={(event) => setAddModuleType(event.target.value as DetailPageModuleType)}>
+                    {DETAIL_PAGE_MODULE_TYPES.map((moduleType) => (
+                      <option key={moduleType} value={moduleType}>
+                        {DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="cai-button cai-button--secondary"
+                  disabled={isUpdating || generatingSectionId.length > 0 || project.sections.some((section) => section.lifecycle === "GENERATING") || project.sections.length >= 8}
+                  type="button"
+                  onClick={() => void handleOperation({ type: "add-section", moduleType: addModuleType })}
+                >
+                  添加到末尾
+                </button>
+              </div>
+              <p className="product-detail-plan-note">复用已有素材保持零图片额度消耗；只有点击“生成视觉”才会创建新的图片任务。一次只制作一个模块。</p>
+            </>
+          )}
         </>
       ) : (
         <>

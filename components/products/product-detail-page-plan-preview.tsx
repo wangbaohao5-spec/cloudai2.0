@@ -88,7 +88,7 @@ function EvidenceInput({ disabled, onSave, section }: { disabled: boolean; onSav
   );
 }
 
-function SectionCopyEditor({ disabled, onSave, section }: { disabled: boolean; onSave: (headline: string, body: string) => void; section: DetailPageSectionV2 }) {
+export function DetailPageSectionCopyEditor({ disabled, onSave, section }: { disabled: boolean; onSave: (headline: string, body: string) => void; section: DetailPageSectionV2 }) {
   const [headline, setHeadline] = useState(section.copy.headline);
   const [body, setBody] = useState(section.copy.body);
 
@@ -120,7 +120,7 @@ function SectionCopyEditor({ disabled, onSave, section }: { disabled: boolean; o
   );
 }
 
-function ExistingAssetPicker({
+export function DetailPageExistingAssetPicker({
   candidates,
   disabled,
   isLoading,
@@ -284,7 +284,7 @@ function DetailPageSectionCard({
         <span>{section.reason}</span>
       </div>
 
-      <SectionCopyEditor
+      <DetailPageSectionCopyEditor
         disabled={disabled}
         section={section}
         onSave={(headline, body) => onOperation({ type: "set-copy", sectionId: section.id, headline, body })}
@@ -292,7 +292,7 @@ function DetailPageSectionCard({
 
       <EvidenceInput disabled={disabled} section={section} onSave={(value) => onOperation({ type: "set-evidence", sectionId: section.id, value })} />
 
-      <ExistingAssetPicker candidates={candidates} disabled={disabled} isLoading={isLoadingAssets} section={section} onOperation={onOperation} />
+      <DetailPageExistingAssetPicker candidates={candidates} disabled={disabled} isLoading={isLoadingAssets} section={section} onOperation={onOperation} />
 
       {supportsGeneration ? (
         <div className="product-detail-generation-action">

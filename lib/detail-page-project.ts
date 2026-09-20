@@ -18,6 +18,17 @@ export type DetailPageModuleKind = "Visual" | "Hybrid" | "Fact";
 export type DetailPageReadiness = "READY" | "NEEDS_INPUT" | "EXISTING_ASSET" | "OPTIONAL";
 export type DetailPageLifecycle = "PLANNED" | "GENERATING" | "COMPLETE" | "FAILED";
 export type DetailPageStylePreset = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
+export const DETAIL_PAGE_LAYOUT_VARIANTS = {
+  HERO: ["FULL_VISUAL", "SPLIT"],
+  BENEFITS: ["TEXT_LED", "SPLIT"],
+  USAGE_SCENE: ["FULL_VISUAL", "SPLIT"],
+  PRODUCT_DETAIL: ["SINGLE_DETAIL", "SPLIT_DETAIL"],
+  USAGE_GUIDE: ["TEXT_LED", "STEP_TEXT"],
+  BRAND_CONTENT: ["FULL_VISUAL", "EDITORIAL_SPLIT"],
+  SPECS: ["SIMPLE_FACTS", "TWO_COLUMN_FACTS"],
+} as const satisfies Record<DetailPageModuleType, readonly string[]>;
+
+export type DetailPageLayout = (typeof DETAIL_PAGE_LAYOUT_VARIANTS)[DetailPageModuleType][number];
 export type DetailPageEvidenceSourceType = "existing-asset" | "product-brief" | "product-image" | "user-confirmed";
 export type DetailPageAssetBindingSource = DetailPageEvidenceSourceType | "generated";
 export type DetailPageAssetSourceType = "detail-page" | "image-edit" | "image-set" | "original" | "product-image" | "scene-image";
@@ -66,7 +77,7 @@ export type DetailPageSectionV2 = {
   generationOperationId: string | null;
   generationRequestId: string | null;
   lastError: string | null;
-  layout: string | null;
+  layout: DetailPageLayout;
   lifecycle: DetailPageLifecycle;
   moduleType: DetailPageModuleType;
   order: number;
@@ -109,7 +120,33 @@ export type DetailPageProjectOperation =
   | { sectionId: string; type: "delete-section" }
   | { body: string; headline: string; sectionId: string; type: "set-copy" }
   | { sectionId: string; type: "set-evidence"; value: string }
+  | { hidden: boolean; sectionId: string; type: "set-hidden" }
+  | { layout: DetailPageLayout; sectionId: string; type: "set-layout" }
   | { sectionId: string; type: "unbind-asset" };
+
+export const DETAIL_PAGE_DEFAULT_LAYOUTS: Record<DetailPageModuleType, DetailPageLayout> = {
+  HERO: "FULL_VISUAL",
+  BENEFITS: "TEXT_LED",
+  USAGE_SCENE: "FULL_VISUAL",
+  PRODUCT_DETAIL: "SINGLE_DETAIL",
+  USAGE_GUIDE: "STEP_TEXT",
+  BRAND_CONTENT: "EDITORIAL_SPLIT",
+  SPECS: "SIMPLE_FACTS",
+};
+
+export function getDetailPageDefaultLayout(moduleType: DetailPageModuleType) {
+  return DETAIL_PAGE_DEFAULT_LAYOUTS[moduleType];
+}
+
+export function isDetailPageLayout(value: unknown): value is DetailPageLayout {
+  return typeof value === "string" && Object.values(DETAIL_PAGE_LAYOUT_VARIANTS).some((variants) =>
+    (variants as readonly string[]).includes(value),
+  );
+}
+
+export function isDetailPageLayoutSupported(moduleType: DetailPageModuleType, layout: unknown): layout is DetailPageLayout {
+  return typeof layout === "string" && (DETAIL_PAGE_LAYOUT_VARIANTS[moduleType] as readonly string[]).includes(layout);
+}
 
 export const DETAIL_PAGE_ASSET_MODULE_TYPES: DetailPageModuleType[] = [
   "HERO",
@@ -409,7 +446,7 @@ function createSection(
     },
     selectedAssetId: null,
     assetSource: null,
-    layout: null,
+    layout: getDetailPageDefaultLayout(moduleType),
     hidden: false,
     generationOperationId: null,
     generationRequestId: null,
@@ -608,7 +645,9 @@ export function parseDetailPageProject(value: unknown, expected?: { analysisHist
         rawSection.assetSource === "user-confirmed"
           ? rawSection.assetSource
           : null,
-      layout: typeof rawSection.layout === "string" ? cleanText(rawSection.layout, 120) || null : null,
+      layout: isDetailPageLayoutSupported(rawSection.moduleType, rawSection.layout)
+        ? rawSection.layout
+        : getDetailPageDefaultLayout(rawSection.moduleType),
       hidden: rawSection.hidden,
       generationOperationId:
         typeof rawSection.generationOperationId === "string" ? cleanText(rawSection.generationOperationId, 200) || null : null,
@@ -674,6 +713,14 @@ export function parseDetailPageProjectOperation(value: unknown): DetailPageProje
       headline: cleanText(value.headline, 200),
       body: cleanText(value.body, 800),
     };
+  }
+
+  if (value.type === "set-hidden" && sectionId && typeof value.hidden === "boolean") {
+    return { type: "set-hidden", sectionId, hidden: value.hidden };
+  }
+
+  if (value.type === "set-layout" && sectionId && isDetailPageLayout(value.layout)) {
+    return { type: "set-layout", sectionId, layout: value.layout };
   }
 
   return null;
@@ -779,6 +826,22 @@ export function applyDetailPageProjectOperation(
         headline: operation.headline,
         body: operation.body,
       },
+    };
+  } else if (operation.type === "set-hidden") {
+    sections[sectionIndex] = {
+      ...sections[sectionIndex],
+      hidden: operation.hidden,
+    };
+  } else if (operation.type === "set-layout") {
+    const section = sections[sectionIndex];
+
+    if (!isDetailPageLayoutSupported(section.moduleType, operation.layout)) {
+      throw new DetailPageProjectError("当前模块不支持该版式。", 400);
+    }
+
+    sections[sectionIndex] = {
+      ...section,
+      layout: operation.layout,
     };
   }
 

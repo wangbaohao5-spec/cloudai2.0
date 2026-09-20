@@ -240,4 +240,43 @@ describe("detail page project persistence", () => {
     expect(next.sections[0].copy).toEqual({ headline: "标题", body: "正文" });
     expect(next.revision).toBe(2);
   });
+
+  it("persists layout and visibility assembly changes through the shared revision contract", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValueOnce({ id: project.projectId, output: project });
+
+    const layout = await updateDetailPageProject({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 1,
+      operation: { type: "set-layout", sectionId: "section-1", layout: "SPLIT" },
+      userId: "user-1",
+    });
+
+    expect(layout.sections[0].layout).toBe("SPLIT");
+    expect(layout.revision).toBe(2);
+
+    mocks.findFirst.mockResolvedValueOnce({ id: project.projectId, output: layout });
+    const hidden = await updateDetailPageProject({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 2,
+      operation: { type: "set-hidden", sectionId: "section-1", hidden: true },
+      userId: "user-1",
+    });
+
+    expect(hidden.sections[0].hidden).toBe(true);
+    expect(hidden.revision).toBe(3);
+  });
+
+  it("returns 409 for a stale layout mutation", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: { ...project, revision: 4 } });
+
+    await expect(updateDetailPageProject({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 3,
+      operation: { type: "set-layout", sectionId: "section-1", layout: "SPLIT" },
+      userId: "user-1",
+    })).rejects.toMatchObject({ status: 409 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
 });

@@ -304,4 +304,23 @@ describe("remaining usage route coverage", () => {
     expect(mocks.uploadFile).not.toHaveBeenCalled();
     expect(mocks.saveHistory).not.toHaveBeenCalled();
   });
+
+  it.each([
+    { type: "set-layout", sectionId: "section-1", layout: "SPLIT" },
+    { type: "set-hidden", sectionId: "section-1", hidden: true },
+    { type: "move-section", sectionId: "section-1", direction: "down" },
+    { type: "set-copy", sectionId: "section-1", headline: "标题", body: "正文" },
+  ])("applies $type assembly changes with zero generation side effects", async (operation) => {
+    mocks.updateDetailPageProject.mockResolvedValueOnce({ revision: 2, sections: [] });
+
+    const response = await detailPagePlanPatch(post({ analysisHistoryId: "analysis-1", expectedRevision: 1, operation }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.reserveUsage).not.toHaveBeenCalled();
+    expect(mocks.generateText).not.toHaveBeenCalled();
+    expect(mocks.generateImage).not.toHaveBeenCalled();
+    expect(mocks.editImage).not.toHaveBeenCalled();
+    expect(mocks.uploadFile).not.toHaveBeenCalled();
+    expect(mocks.saveHistory).not.toHaveBeenCalled();
+  });
 });
