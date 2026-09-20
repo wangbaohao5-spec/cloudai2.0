@@ -163,16 +163,18 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
     const candidateMap = new Map(candidates.map((candidate) => [candidate.assetId, candidate]));
     let boundAssets = 0;
+    let completed = 0;
 
     project?.sections.forEach((section) => {
       const selectedCandidate = section.selectedAssetId ? candidateMap.get(section.selectedAssetId) : null;
-      const selectedAssetAvailable = Boolean(selectedCandidate?.previewUrl);
+      const selectedAssetAvailable = Boolean(selectedCandidate);
       const effectiveState = getDetailPageSectionEffectiveState(section, selectedAssetAvailable);
       counts[effectiveState.readiness] += 1;
+      if (effectiveState.complete) completed += 1;
       if (selectedCandidate) boundAssets += 1;
     });
 
-    return { ...counts, boundAssets };
+    return { ...counts, boundAssets, completed };
   }, [candidates, project]);
 
   async function handleCreatePlan() {
@@ -342,11 +344,11 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
       <div className="dashboard-section-header">
         <div>
-          <p className="product-workspace-kicker">Detail Page V2 · Phase 3A</p>
-          <h2>{viewMode === "preview" && project ? "预览与组装" : "详情页策划"}</h2>
+          <p className="product-workspace-kicker">详情页制作</p>
+          <h2>{viewMode === "preview" && project ? "预览与导出" : "详情页策划"}</h2>
           <p className="image-generation-intro">
             {viewMode === "preview" && project
-              ? "将已完成模块组织为一条连续详情页。导出将在下一阶段开放。"
+              ? "将已完成模块组织为一条连续详情页，可下载完整长图或单个模块。"
               : "先确定页面结构和事实依据，再进入素材制作。AI 分析不会自动成为已验证事实。"}
           </p>
         </div>
@@ -367,6 +369,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
             </div>
             <div>
               <span>可继续 {summary.READY}</span>
+              <span>已完成 {summary.completed}</span>
               {summary.boundAssets ? <span>{summary.boundAssets} 个模块使用已有素材</span> : null}
               <span>需要补充 {summary.NEEDS_INPUT}</span>
               {summary.OPTIONAL ? <span>可选 {summary.OPTIONAL}</span> : null}

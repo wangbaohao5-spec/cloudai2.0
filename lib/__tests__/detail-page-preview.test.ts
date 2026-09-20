@@ -153,9 +153,9 @@ describe("Detail Page V2 continuous preview", () => {
   });
 
   it.each([
-    ["COMPLETE", "READY", "complete"],
+    ["COMPLETE", "READY", "planned"],
     ["PLANNED", "READY", "planned"],
-    ["PLANNED", "NEEDS_INPUT", "needs-input"],
+    ["PLANNED", "NEEDS_INPUT", "planned"],
     ["FAILED", "READY", "failed"],
     ["GENERATING", "READY", "generating"],
   ] as Array<[DetailPageLifecycle, DetailPageReadiness, string]>)("maps %s/%s to %s", (lifecycle, readiness, state) => {

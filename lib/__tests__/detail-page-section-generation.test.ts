@@ -4,10 +4,13 @@ const mocks = vi.hoisted(() => ({
   assetCreate: vi.fn(),
   findFirst: vi.fn(),
   historyCreate: vi.fn(),
+  finalizeUsage: vi.fn(),
+  refundUsage: vi.fn(),
   transaction: vi.fn(),
   txFindFirst: vi.fn(),
   txUpdateMany: vi.fn(),
   updateMany: vi.fn(),
+  usageFindFirst: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -17,7 +20,15 @@ vi.mock("@/lib/db", () => ({
       findFirst: mocks.findFirst,
       updateMany: mocks.updateMany,
     },
+    usageRecord: {
+      findFirst: mocks.usageFindFirst,
+    },
   },
+}));
+
+vi.mock("@/lib/usage", () => ({
+  finalizeUsage: mocks.finalizeUsage,
+  refundUsage: mocks.refundUsage,
 }));
 
 import {
@@ -29,9 +40,11 @@ import {
 import {
   assertDetailPageSectionGenerationEligibility,
   beginDetailPageSectionGeneration,
+  DETAIL_PAGE_GENERATION_STALE_MS,
   failDetailPageSectionGeneration,
   persistGeneratedDetailPageSection,
   prepareDetailPageSectionGeneration,
+  reconcileStaleDetailPageGeneration,
   recoverGeneratedDetailPageSection,
 } from "@/lib/detail-page-section-generation";
 
@@ -57,7 +70,12 @@ function withConfirmedEvidence(project: DetailPageProjectV2, moduleType: DetailP
   return applyDetailPageProjectOperation(project, { type: "set-evidence", sectionId: section.id, value });
 }
 
-function withGeneration(project: DetailPageProjectV2, sectionId = "section-1", selectedAssetId: string | null = null) {
+function withGeneration(
+  project: DetailPageProjectV2,
+  sectionId = "section-1",
+  selectedAssetId: string | null = null,
+  generationStartedAt = new Date().toISOString(),
+) {
   return {
     ...project,
     revision: project.revision + 1,
@@ -69,6 +87,7 @@ function withGeneration(project: DetailPageProjectV2, sectionId = "section-1", s
             lifecycle: "GENERATING" as const,
             generationOperationId: "operation-1",
             generationRequestId: "request-1",
+            generationStartedAt,
           }
         : section,
     ),
@@ -82,6 +101,9 @@ describe("detail page section generation state", () => {
     mocks.txUpdateMany.mockResolvedValue({ count: 1 });
     mocks.assetCreate.mockResolvedValue({ id: "asset-generated", name: "generated.png", type: "image", url: "user/image/generated.png", createdAt: new Date("2026-09-19T09:00:00.000Z") });
     mocks.historyCreate.mockResolvedValue({ id: "history-generated" });
+    mocks.finalizeUsage.mockResolvedValue({ status: "succeeded" });
+    mocks.refundUsage.mockResolvedValue({ status: "refunded" });
+    mocks.usageFindFirst.mockResolvedValue(null);
     mocks.transaction.mockImplementation(async (callback) =>
       callback({
         asset: { create: mocks.assetCreate },
@@ -138,6 +160,7 @@ describe("detail page section generation state", () => {
     });
 
     expect(next.sections[0]).toMatchObject({ lifecycle: "GENERATING", selectedAssetId: "asset-old", generationOperationId: "operation-1", generationRequestId: "request-1" });
+    expect(next.sections[0].generationStartedAt).toEqual(expect.any(String));
     expect(next.sections[1]).toEqual(project.sections[1]);
   });
 
@@ -246,5 +269,93 @@ describe("detail page section generation state", () => {
     mocks.findFirst.mockResolvedValue({ output: project });
 
     await expect(recoverGeneratedDetailPageSection({ analysisHistoryId: "analysis-1", requestId: "request-other", sectionId: "section-1", userId: "user-1" })).resolves.toBeNull();
+  });
+
+  it("does not reconcile a fresh generation", async () => {
+    const project = withGeneration(makeProject());
+
+    await expect(reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" })).resolves.toEqual(project);
+    expect(mocks.findFirst).not.toHaveBeenCalled();
+    expect(mocks.usageFindFirst).not.toHaveBeenCalled();
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("refunds stale pending Usage before releasing an initial generation", async () => {
+    const startedAt = new Date(Date.now() - DETAIL_PAGE_GENERATION_STALE_MS - 1).toISOString();
+    const project = withGeneration(makeProject(), "section-1", null, startedAt);
+    mocks.findFirst.mockResolvedValue(null);
+    mocks.usageFindFirst.mockResolvedValue({ id: "usage-1", status: "pending" });
+
+    const next = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
+
+    expect(mocks.refundUsage).toHaveBeenCalledWith(expect.objectContaining({ usageRecordId: "usage-1", userId: "user-1" }));
+    expect(next.sections[0]).toMatchObject({ lifecycle: "FAILED", selectedAssetId: null, generationOperationId: null, generationStartedAt: null });
+    expect(next.revision).toBe(project.revision + 1);
+    expect(mocks.assetCreate).not.toHaveBeenCalled();
+    expect(mocks.historyCreate).not.toHaveBeenCalled();
+  });
+
+  it("preserves the previous Asset when a stale regenerate is interrupted", async () => {
+    const startedAt = new Date(Date.now() - DETAIL_PAGE_GENERATION_STALE_MS - 1).toISOString();
+    const project = withGeneration(makeProject(), "section-1", "asset-old", startedAt);
+    mocks.findFirst.mockResolvedValue(null);
+
+    const next = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
+
+    expect(next.sections[0]).toMatchObject({ lifecycle: "COMPLETE", selectedAssetId: "asset-old", generationOperationId: null });
+  });
+
+  it("recovers a durable result and settles pending Usage without generating again", async () => {
+    const startedAt = new Date(Date.now() - DETAIL_PAGE_GENERATION_STALE_MS - 1).toISOString();
+    const project = withGeneration(makeProject(), "section-1", null, startedAt);
+    mocks.findFirst.mockResolvedValue({ id: "history-generated", assetId: "asset-generated" });
+    mocks.usageFindFirst.mockResolvedValue({ id: "usage-1", status: "pending" });
+
+    const next = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
+
+    expect(mocks.finalizeUsage).toHaveBeenCalledWith(expect.objectContaining({ usageRecordId: "usage-1", userId: "user-1" }));
+    expect(next.sections[0]).toMatchObject({ lifecycle: "COMPLETE", selectedAssetId: "asset-generated", generationOperationId: null });
+    expect(mocks.assetCreate).not.toHaveBeenCalled();
+    expect(mocks.historyCreate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the project locked when Usage reconciliation fails", async () => {
+    const startedAt = new Date(Date.now() - DETAIL_PAGE_GENERATION_STALE_MS - 1).toISOString();
+    const project = withGeneration(makeProject(), "section-1", null, startedAt);
+    mocks.findFirst.mockResolvedValue(null);
+    mocks.usageFindFirst.mockResolvedValue({ id: "usage-1", status: "pending" });
+    mocks.refundUsage.mockRejectedValue(new Error("ledger unavailable"));
+
+    const next = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
+
+    expect(next).toEqual(project);
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("keeps the project locked when Usage succeeded but no durable result exists", async () => {
+    const startedAt = new Date(Date.now() - DETAIL_PAGE_GENERATION_STALE_MS - 1).toISOString();
+    const project = withGeneration(makeProject(), "section-1", null, startedAt);
+    mocks.findFirst.mockResolvedValue(null);
+    mocks.usageFindFirst.mockResolvedValue({ id: "usage-1", status: "succeeded" });
+
+    const next = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
+
+    expect(next).toEqual(project);
+    expect(mocks.refundUsage).not.toHaveBeenCalled();
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("is idempotent after stale recovery has released the operation", async () => {
+    const startedAt = new Date(Date.now() - DETAIL_PAGE_GENERATION_STALE_MS - 1).toISOString();
+    const project = withGeneration(makeProject(), "section-1", null, startedAt);
+    mocks.findFirst.mockResolvedValue(null);
+    mocks.usageFindFirst.mockResolvedValue({ id: "usage-1", status: "pending" });
+
+    const recovered = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
+    const repeated = await reconcileStaleDetailPageGeneration({ analysisHistoryId: "analysis-1", project: recovered, userId: "user-1" });
+
+    expect(repeated).toEqual(recovered);
+    expect(mocks.refundUsage).toHaveBeenCalledOnce();
+    expect(mocks.updateMany).toHaveBeenCalledOnce();
   });
 });

@@ -5,12 +5,13 @@ import {
   DETAIL_PAGE_PROJECT_HISTORY_TYPE,
   evaluateDetailPageReadiness,
   getActiveDetailPageGeneration,
+  getDetailPageProjectRecordId,
   type DetailPageModuleType,
   type DetailPageProjectV2,
   type DetailPageSectionV2,
   parseDetailPageProject,
 } from "@/lib/detail-page-project";
-import { getDetailPageProjectRecordId } from "@/lib/detail-page-projects";
+import { finalizeUsage, refundUsage } from "@/lib/usage";
 import type { Prisma } from "@prisma/client";
 
 export const DETAIL_PAGE_GENERATABLE_MODULE_TYPES = [
@@ -22,6 +23,8 @@ export const DETAIL_PAGE_GENERATABLE_MODULE_TYPES = [
 ] as const satisfies readonly DetailPageModuleType[];
 
 const SAFE_GENERATION_ERROR = "视觉生成失败，请稍后重试。";
+const SAFE_INTERRUPTED_GENERATION_ERROR = "上次视觉制作已中断，请按需重试。";
+export const DETAIL_PAGE_GENERATION_STALE_MS = 10 * 60 * 1000;
 
 type GeneratedSectionPersistenceInput = {
   analysisHistoryId: string;
@@ -101,7 +104,11 @@ export async function prepareDetailPageSectionGeneration({
     },
     select: { output: true },
   });
-  const project = parseProjectRecord(record, { analysisHistoryId, userId });
+  let project = parseProjectRecord(record, { analysisHistoryId, userId });
+
+  if (getActiveDetailPageGeneration(project)) {
+    project = await reconcileStaleDetailPageGeneration({ analysisHistoryId, project, userId });
+  }
 
   if (project.revision !== expectedRevision) {
     throw new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409);
@@ -140,6 +147,7 @@ export async function beginDetailPageSectionGeneration({
             ...section,
             generationOperationId,
             generationRequestId: requestId,
+            generationStartedAt: new Date().toISOString(),
             lastError: null,
             lifecycle: "GENERATING",
           }
@@ -195,6 +203,7 @@ export async function failDetailPageSectionGeneration({
         ? {
             ...item,
             generationOperationId: null,
+            generationStartedAt: null,
             lastError: SAFE_GENERATION_ERROR,
             lifecycle: item.selectedAssetId ? "COMPLETE" : "FAILED",
           }
@@ -257,6 +266,7 @@ export async function persistGeneratedDetailPageSection(input: GeneratedSectionP
               ...item,
               assetSource: "generated",
               generationOperationId: null,
+              generationStartedAt: null,
               lastError: null,
               lifecycle: "COMPLETE",
               readiness: "EXISTING_ASSET",
@@ -310,4 +320,140 @@ export async function recoverGeneratedDetailPageSection({
   }
 
   return { assetId: section.selectedAssetId, project };
+}
+
+async function loadCurrentProject(userId: string, analysisHistoryId: string) {
+  const record = await db.historyRecord.findFirst({
+    where: {
+      id: getDetailPageProjectRecordId(analysisHistoryId),
+      type: DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+      userId,
+    },
+    select: { output: true },
+  });
+
+  return parseProjectRecord(record, { analysisHistoryId, userId });
+}
+
+async function persistReconciledProject(project: DetailPageProjectV2, sectionId: string, assetId?: string | null) {
+  const nextProject: DetailPageProjectV2 = {
+    ...project,
+    revision: project.revision + 1,
+    updatedAt: new Date().toISOString(),
+    sections: project.sections.map((section) =>
+      section.id === sectionId
+        ? {
+            ...section,
+            ...(assetId ? { assetSource: "generated" as const, readiness: "EXISTING_ASSET" as const, selectedAssetId: assetId } : {}),
+            generationOperationId: null,
+            generationStartedAt: null,
+            lastError: assetId ? null : SAFE_INTERRUPTED_GENERATION_ERROR,
+            lifecycle: assetId || section.selectedAssetId ? "COMPLETE" : "FAILED",
+          }
+        : section,
+    ),
+  };
+  const result = await db.historyRecord.updateMany({
+    where: {
+      id: getDetailPageProjectRecordId(project.analysisHistoryId),
+      userId: project.userId,
+      type: DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+      output: { path: ["revision"], equals: project.revision },
+    },
+    data: { output: nextProject as unknown as Prisma.InputJsonValue },
+  });
+
+  if (result.count) return nextProject;
+  return loadCurrentProject(project.userId, project.analysisHistoryId);
+}
+
+export async function reconcileStaleDetailPageGeneration({
+  analysisHistoryId,
+  now = new Date(),
+  project,
+  userId,
+}: {
+  analysisHistoryId: string;
+  now?: Date;
+  project?: DetailPageProjectV2;
+  userId: string;
+}) {
+  const currentProject = project || await loadCurrentProject(userId, analysisHistoryId);
+  const section = getActiveDetailPageGeneration(currentProject);
+
+  if (!section) return currentProject;
+
+  const startedAt = section.generationStartedAt || currentProject.updatedAt;
+  if (now.getTime() - Date.parse(startedAt) < DETAIL_PAGE_GENERATION_STALE_MS) {
+    return currentProject;
+  }
+
+  const requestId = section.generationRequestId;
+  if (!requestId) {
+    return persistReconciledProject(currentProject, section.id);
+  }
+
+  const durableHistory = await db.historyRecord.findFirst({
+    where: {
+      userId,
+      type: "image",
+      assetId: { not: null },
+      AND: [
+        { input: { path: ["source"], equals: "detail-page-v2" } },
+        { input: { path: ["analysisHistoryId"], equals: analysisHistoryId } },
+        { input: { path: ["sectionId"], equals: section.id } },
+        { input: { path: ["requestId"], equals: requestId } },
+      ],
+    },
+    select: { assetId: true, id: true },
+  });
+  const usageRecord = await db.usageRecord.findFirst({
+    where: { requestId, userId },
+    select: { id: true, status: true },
+  });
+
+  if (durableHistory?.assetId) {
+    if (usageRecord?.status === "pending") {
+      try {
+        await finalizeUsage({
+          usageRecordId: usageRecord.id,
+          userId,
+          metadata: {
+            route: "/api/products/detail-page/sections/generate",
+            analysisHistoryId,
+            sectionId: section.id,
+            assetId: durableHistory.assetId,
+            historyId: durableHistory.id,
+            reconciliation: "stale-generation-durable-result",
+          },
+        });
+      } catch {
+        return currentProject;
+      }
+    }
+
+    return persistReconciledProject(currentProject, section.id, durableHistory.assetId);
+  }
+
+  if (usageRecord?.status === "pending") {
+    try {
+      await refundUsage({
+        usageRecordId: usageRecord.id,
+        userId,
+        failureCode: "INTERNAL_ERROR",
+        metadata: {
+          route: "/api/products/detail-page/sections/generate",
+          analysisHistoryId,
+          sectionId: section.id,
+          reconciliation: "stale-generation-no-result",
+        },
+      });
+    } catch {
+      return currentProject;
+    }
+  } else if (usageRecord && usageRecord.status !== "refunded") {
+    return currentProject;
+  }
+
+  return persistReconciledProject(currentProject, section.id);
 }

@@ -7,6 +7,7 @@ import {
 import {
   DETAIL_PAGE_MODULE_DEFINITIONS,
   canBindExistingAssetToModule,
+  getDetailPageSectionCompletion,
   evaluateDetailPageReadiness,
   type DetailPageAssetCandidate,
   type DetailPageModuleType,
@@ -236,8 +237,8 @@ export function ProductDetailPageContinuousPreview({
   const disabled = isUpdating || Boolean(generatingSectionId) || project.sections.some((section) => section.lifecycle === "GENERATING");
   const candidateIds = new Set(candidates.map((candidate) => candidate.assetId));
   const exportableSectionIds = new Set(preview.visible.filter((item) => {
-    const needsAsset = canBindExistingAssetToModule(item.section.moduleType);
-    return !getDetailPageSectionExportBlockers(item.section).length && (!needsAsset || Boolean(item.section.selectedAssetId && candidateIds.has(item.section.selectedAssetId)));
+    const completion = getDetailPageSectionCompletion(item.section, Boolean(item.section.selectedAssetId && candidateIds.has(item.section.selectedAssetId)));
+    return completion.complete && !getDetailPageSectionExportBlockers(item.section).length;
   }).map((item) => item.section.id));
   const fullExportReady = preview.visible.length > 0 && exportableSectionIds.size === preview.visible.length && !disabled;
 

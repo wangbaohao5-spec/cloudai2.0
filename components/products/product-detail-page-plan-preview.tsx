@@ -249,7 +249,7 @@ function DetailPageSectionCard({
   const definition = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType];
   const selectedCandidate = section.selectedAssetId ? candidates.find((candidate) => candidate.assetId === section.selectedAssetId) : null;
   const selectedAssetAvailable = Boolean(
-    section.selectedAssetId && (isLoadingAssets || selectedCandidate?.previewUrl),
+    section.selectedAssetId && (isLoadingAssets || selectedCandidate),
   );
   const effectiveState = getDetailPageSectionEffectiveState(section, selectedAssetAvailable);
   const generationReadiness = evaluateDetailPageReadiness(section.moduleType, section.evidence, null);
@@ -276,6 +276,7 @@ function DetailPageSectionCard({
             {READINESS_LABELS[effectiveState.readiness]}
           </span>
           <span className={`product-detail-lifecycle product-detail-lifecycle--${section.lifecycle.toLowerCase()}`}>{LIFECYCLE_LABELS[section.lifecycle]}</span>
+          {effectiveState.complete && section.lifecycle === "PLANNED" ? <span className="product-detail-readiness product-detail-readiness--ready">内容已完成</span> : null}
         </div>
       </header>
 

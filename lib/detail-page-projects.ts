@@ -5,16 +5,16 @@ import {
   applyDetailPageProjectOperation,
   canBindExistingAssetToModule,
   DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+  getDetailPageProjectRecordId,
   isDetailPageProjectBusy,
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
   parseDetailPageProject,
 } from "@/lib/detail-page-project";
+import { reconcileStaleDetailPageGeneration } from "@/lib/detail-page-section-generation";
 import { Prisma } from "@prisma/client";
 
-export function getDetailPageProjectRecordId(analysisHistoryId: string) {
-  return `detail-page-project-${analysisHistoryId}`;
-}
+export { getDetailPageProjectRecordId };
 
 export async function getDetailPageProjectForUser(userId: string, analysisHistoryId: string) {
   const record = await db.historyRecord.findFirst({
@@ -36,6 +36,10 @@ export async function getDetailPageProjectForUser(userId: string, analysisHistor
       analysisHistoryId,
       historyId: record.id,
     });
+  }
+
+  if (project && isDetailPageProjectBusy(project)) {
+    return reconcileStaleDetailPageGeneration({ analysisHistoryId, project, userId });
   }
 
   return project;
@@ -116,7 +120,7 @@ export async function updateDetailPageProject({
     throw new ApiError("详情页策划不存在，请重新创建。", 404);
   }
 
-  const currentProject = parseDetailPageProject(record.output, { userId, analysisHistoryId });
+  let currentProject = parseDetailPageProject(record.output, { userId, analysisHistoryId });
 
   if (!currentProject) {
     throw new ApiError("详情页策划数据不可用，请重新创建。", 409);
@@ -127,7 +131,17 @@ export async function updateDetailPageProject({
   }
 
   if (isDetailPageProjectBusy(currentProject)) {
-    throw new ApiError("当前详情页正在制作视觉，请完成后再修改。", 409);
+    const reconciled = await reconcileStaleDetailPageGeneration({ analysisHistoryId, project: currentProject, userId });
+
+    if (isDetailPageProjectBusy(reconciled)) {
+      throw new ApiError("当前详情页正在制作视觉，请完成后再修改。", 409);
+    }
+
+    if (reconciled.revision !== expectedRevision) {
+      throw new ApiError("详情页制作状态已恢复，请刷新后继续。", 409);
+    }
+
+    currentProject = reconciled;
   }
 
   if (operation.type === "bind-asset") {

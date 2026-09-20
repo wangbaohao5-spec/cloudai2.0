@@ -1,7 +1,7 @@
 import { ApiError } from "@/lib/api-errors";
 import {
   DETAIL_PAGE_MAX_SECTIONS,
-  canBindExistingAssetToModule,
+  getDetailPageSectionCompletion,
   getActiveDetailPageGeneration,
   isDetailPageLayoutSupported,
   type DetailPageModuleType,
@@ -63,11 +63,12 @@ function blocker(section: DetailPageSectionV2, reasonCode: DetailPageExportReaso
 
 export function getDetailPageSectionExportBlockers(section: DetailPageSectionV2) {
   const blockers: DetailPageExportBlocker[] = [];
+  const completion = getDetailPageSectionCompletion(section);
 
   if (!isDetailPageLayoutSupported(section.moduleType, section.layout)) blockers.push(blocker(section, "UNSUPPORTED_LAYOUT"));
   if (section.lifecycle === "GENERATING") blockers.push(blocker(section, "GENERATING"));
   if (section.lifecycle === "FAILED") blockers.push(blocker(section, "FAILED"));
-  if (section.readiness === "NEEDS_INPUT") blockers.push(blocker(section, "NEEDS_INPUT"));
+  if (completion.readiness === "NEEDS_INPUT") blockers.push(blocker(section, "NEEDS_INPUT"));
 
   if (
     section.copy.headline.length > DETAIL_PAGE_EXPORT_LIMITS.maxHeadlineLength ||
@@ -76,10 +77,12 @@ export function getDetailPageSectionExportBlockers(section: DetailPageSectionV2)
     blockers.push(blocker(section, "MALFORMED_COPY"));
   }
 
-  if (canBindExistingAssetToModule(section.moduleType)) {
+  if (completion.requiresAsset) {
     if (section.lifecycle !== "COMPLETE") blockers.push(blocker(section, "INCOMPLETE_VISUAL"));
     if (!section.selectedAssetId) blockers.push(blocker(section, "MISSING_ASSET"));
-  } else if (!section.copy.headline.trim() || !section.copy.body.trim()) {
+  }
+
+  if (completion.requiresCopy && !completion.hasValidCopy) {
     blockers.push(blocker(section, "COPY_REQUIRED"));
   }
 

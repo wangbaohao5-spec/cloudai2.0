@@ -170,6 +170,16 @@ describe("Detail Page V2 project contract", () => {
     expect(parseDetailPageProject({ version: 2, revision: 1 })).toBeNull();
   });
 
+  it("keeps old project JSON compatible when generation timing metadata is absent", () => {
+    const project = createProject();
+    const legacy = {
+      ...project,
+      sections: project.sections.map((section) => Object.fromEntries(Object.entries(section).filter(([key]) => key !== "generationStartedAt"))),
+    };
+
+    expect(parseDetailPageProject(legacy)?.sections.every((section) => section.generationStartedAt === null)).toBe(true);
+  });
+
   it("binds and replaces an existing visual asset without persisting a signed URL", () => {
     const project = createProject();
     const hero = project.sections.find((section) => section.moduleType === "HERO")!;
@@ -228,7 +238,7 @@ describe("Detail Page V2 project contract", () => {
     const bound = applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: hero.id, assetId: "asset-a" });
     const boundHero = bound.sections.find((section) => section.id === hero.id)!;
 
-    expect(getDetailPageSectionEffectiveState(boundHero, false)).toEqual({ readiness: "READY", lifecycle: "PLANNED" });
+    expect(getDetailPageSectionEffectiveState(boundHero, false)).toMatchObject({ complete: false, readiness: "READY", lifecycle: "PLANNED" });
     expect(boundHero.selectedAssetId).toBe("asset-a");
   });
 

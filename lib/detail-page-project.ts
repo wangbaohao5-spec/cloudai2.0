@@ -76,6 +76,7 @@ export type DetailPageSectionV2 = {
   id: string;
   generationOperationId: string | null;
   generationRequestId: string | null;
+  generationStartedAt: string | null;
   lastError: string | null;
   layout: DetailPageLayout;
   lifecycle: DetailPageLifecycle;
@@ -362,6 +363,45 @@ export function canBindExistingAssetToModule(moduleType: DetailPageModuleType) {
   return DETAIL_PAGE_ASSET_MODULE_TYPES.includes(moduleType);
 }
 
+export function detailPageSectionRequiresAsset(section: Pick<DetailPageSectionV2, "layout" | "moduleType">) {
+  if (section.moduleType === "BENEFITS") {
+    return section.layout === "SPLIT";
+  }
+
+  return section.moduleType === "HERO" ||
+    section.moduleType === "USAGE_SCENE" ||
+    section.moduleType === "PRODUCT_DETAIL" ||
+    section.moduleType === "BRAND_CONTENT";
+}
+
+function hasRenderableDetailPageCopy(section: Pick<DetailPageSectionV2, "copy">) {
+  return Boolean(section.copy.headline.trim() && section.copy.body.trim());
+}
+
+export function getDetailPageSectionCompletion(
+  section: DetailPageSectionV2,
+  selectedAssetAvailable = Boolean(section.selectedAssetId),
+) {
+  const selectedAssetId = section.selectedAssetId && selectedAssetAvailable ? section.selectedAssetId : null;
+  const readiness = evaluateDetailPageReadiness(section.moduleType, section.evidence, selectedAssetId);
+  const requiresAsset = detailPageSectionRequiresAsset(section);
+  const requiresCopy = DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].kind !== "Visual";
+  const hasValidCopy = hasRenderableDetailPageCopy(section);
+  const taskSettled = section.lifecycle !== "GENERATING" && section.lifecycle !== "FAILED";
+
+  return {
+    complete:
+      taskSettled &&
+      readiness !== "NEEDS_INPUT" &&
+      (!requiresCopy || hasValidCopy) &&
+      (!requiresAsset || Boolean(selectedAssetId && section.lifecycle === "COMPLETE")),
+    hasValidCopy,
+    readiness,
+    requiresAsset,
+    requiresCopy,
+  };
+}
+
 export function evaluateDetailPageReadiness(
   moduleType: DetailPageModuleType,
   evidence: DetailPageEvidence[],
@@ -403,6 +443,7 @@ export function getDetailPageSectionEffectiveState(section: DetailPageSectionV2,
   const readiness = evaluateDetailPageReadiness(section.moduleType, section.evidence, selectedAssetId);
 
   return {
+    ...getDetailPageSectionCompletion(section, selectedAssetAvailable),
     lifecycle: evaluateDetailPageLifecycle(section.moduleType, readiness, selectedAssetId),
     readiness,
   };
@@ -450,6 +491,7 @@ function createSection(
     hidden: false,
     generationOperationId: null,
     generationRequestId: null,
+    generationStartedAt: null,
     lastError: null,
   };
 }
@@ -653,6 +695,7 @@ export function parseDetailPageProject(value: unknown, expected?: { analysisHist
         typeof rawSection.generationOperationId === "string" ? cleanText(rawSection.generationOperationId, 200) || null : null,
       generationRequestId:
         typeof rawSection.generationRequestId === "string" ? cleanText(rawSection.generationRequestId, 200) || null : null,
+      generationStartedAt: isIsoDate(rawSection.generationStartedAt) ? rawSection.generationStartedAt : null,
       lastError: typeof rawSection.lastError === "string" ? cleanText(rawSection.lastError, 300) || null : null,
     });
   }
@@ -854,6 +897,10 @@ export function applyDetailPageProjectOperation(
 
 export function getActiveDetailPageGeneration(project: DetailPageProjectV2) {
   return project.sections.find((section) => section.lifecycle === "GENERATING") || null;
+}
+
+export function getDetailPageProjectRecordId(analysisHistoryId: string) {
+  return `detail-page-project-${analysisHistoryId}`;
 }
 
 export function isDetailPageProjectBusy(project: DetailPageProjectV2) {

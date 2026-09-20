@@ -8,7 +8,7 @@ import {
   sanitizeDetailPageExportSlug,
   withDetailPageExportTimeout,
 } from "@/lib/detail-page-export";
-import { createFallbackDetailPageProject, type DetailPageProjectV2, type DetailPageSectionV2 } from "@/lib/detail-page-project";
+import { DETAIL_PAGE_MODULE_DEFINITIONS, createFallbackDetailPageProject, type DetailPageProjectV2, type DetailPageSectionV2 } from "@/lib/detail-page-project";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 afterEach(() => {
@@ -32,8 +32,19 @@ function exportableProject() {
   return {
     ...value,
     sections: value.sections.map((section) => {
-      if (["USAGE_GUIDE", "SPECS"].includes(section.moduleType)) {
-        return { ...section, readiness: "READY" as const, copy: { headline: "确认标题", body: "确认正文" } };
+      const needsConfirmedCopy = ["BENEFITS", "USAGE_GUIDE", "SPECS"].includes(section.moduleType);
+      if (needsConfirmedCopy) {
+        return {
+          ...section,
+          readiness: "READY" as const,
+          copy: { headline: "确认标题", body: "确认正文" },
+          evidence: [{
+            field: DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].evidenceField,
+            sourceType: "user-confirmed" as const,
+            value: "人工确认内容",
+            verifiedByUser: true,
+          }],
+        };
       }
       return {
         ...section,
@@ -68,7 +79,6 @@ describe("Detail Page V2 export contract", () => {
   });
 
   it.each([
-    [{ readiness: "NEEDS_INPUT" }, "NEEDS_INPUT"],
     [{ lifecycle: "FAILED" }, "FAILED"],
     [{ lifecycle: "GENERATING" }, "PROJECT_BUSY"],
   ] as Array<[Partial<DetailPageSectionV2>, string]>)("blocks visible invalid state %s", (update, reason) => {
@@ -78,6 +88,16 @@ describe("Detail Page V2 export contract", () => {
       getDetailPageExportSelection(value, "full");
     } catch (error) {
       expect((error as DetailPageExportReadinessError).blockingSections.map((item) => item.reasonCode)).toContain(reason);
+    }
+  });
+
+  it("blocks a section whose canonical evidence is still incomplete", () => {
+    const value = replaceSection(exportableProject(), "section-2", { evidence: [], readiness: "NEEDS_INPUT" });
+    expect(() => getDetailPageExportSelection(value, "full")).toThrowError(DetailPageExportReadinessError);
+    try {
+      getDetailPageExportSelection(value, "full");
+    } catch (error) {
+      expect((error as DetailPageExportReadinessError).blockingSections.map((item) => item.reasonCode)).toContain("NEEDS_INPUT");
     }
   });
 

@@ -82,9 +82,11 @@ function isSceneImageForAnalysis(record: HistoryRecord, analysisHistoryId: strin
 }
 
 function isDetailPageForAnalysis(record: HistoryRecord, analysisHistoryId: string) {
+  const source = getStringField(record.input, "source");
+
   return (
     record.type === "image" &&
-    getStringField(record.input, "source") === "product-detail-page" &&
+    (source === "product-detail-page" || source === "detail-page-v2") &&
     getStringField(record.input, "analysisHistoryId") === analysisHistoryId
   );
 }

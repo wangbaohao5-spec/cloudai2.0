@@ -1,6 +1,7 @@
 import {
   DETAIL_PAGE_LAYOUT_VARIANTS,
   getDetailPageDefaultLayout,
+  getDetailPageSectionCompletion,
   type DetailPageAssetCandidate,
   type DetailPageLayout,
   type DetailPageModuleType,
@@ -70,11 +71,12 @@ export const DETAIL_PAGE_STYLE_ROLES: Record<DetailPageStylePreset, DetailPageSt
   },
 };
 
-export function getDetailPagePreviewState(section: DetailPageSectionV2): DetailPagePreviewState {
+export function getDetailPagePreviewState(section: DetailPageSectionV2, selectedAssetAvailable = Boolean(section.selectedAssetId)): DetailPagePreviewState {
   if (section.lifecycle === "GENERATING") return "generating";
   if (section.lifecycle === "FAILED") return "failed";
-  if (section.readiness === "NEEDS_INPUT") return "needs-input";
-  if (section.lifecycle === "COMPLETE") return "complete";
+  const completion = getDetailPageSectionCompletion(section, selectedAssetAvailable);
+  if (completion.readiness === "NEEDS_INPUT") return "needs-input";
+  if (completion.complete) return "complete";
   return "planned";
 }
 
@@ -108,7 +110,7 @@ export function buildDetailPagePreview(project: DetailPageProjectV2, candidates:
       layout: section.layout || getDetailPageDefaultLayout(section.moduleType),
       missingPreview: Boolean(section.selectedAssetId && !asset?.previewUrl),
       section,
-      state: getDetailPagePreviewState(section),
+      state: getDetailPagePreviewState(section, Boolean(asset)),
     };
 
     if (section.hidden) hidden.push(item);

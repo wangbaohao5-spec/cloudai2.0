@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   findFirst: vi.fn(),
   getDetailPageAssetCandidateForBinding: vi.fn(),
+  reconcile: vi.fn(),
   updateMany: vi.fn(),
 }));
 
@@ -19,6 +20,10 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/detail-page-assets", () => ({
   getDetailPageAssetCandidateForBinding: mocks.getDetailPageAssetCandidateForBinding,
+}));
+
+vi.mock("@/lib/detail-page-section-generation", () => ({
+  reconcileStaleDetailPageGeneration: mocks.reconcile,
 }));
 
 import { createDetailPageProject } from "@/lib/detail-page-project";
@@ -47,6 +52,7 @@ describe("detail page project persistence", () => {
     vi.clearAllMocks();
     mocks.create.mockResolvedValue({ id: "detail-page-project-analysis-1" });
     mocks.getDetailPageAssetCandidateForBinding.mockResolvedValue({ assetId: "asset-a" });
+    mocks.reconcile.mockImplementation(async ({ project }: { project: unknown }) => project);
     mocks.updateMany.mockResolvedValue({ count: 1 });
   });
 
@@ -78,6 +84,23 @@ describe("detail page project persistence", () => {
     mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
 
     await expect(getDetailPageProjectForUser("user-1", "analysis-1")).resolves.toEqual(project);
+  });
+
+  it("reconciles an active generation when a project is reopened", async () => {
+    const project = makeProject();
+    project.sections[0] = {
+      ...project.sections[0],
+      generationOperationId: "operation-1",
+      generationRequestId: "request-1",
+      generationStartedAt: "2026-09-19T08:00:00.000Z",
+      lifecycle: "GENERATING",
+    };
+    const reconciled = { ...project, revision: project.revision + 1, sections: project.sections.map((section, index) => index ? section : { ...section, generationOperationId: null, generationStartedAt: null, lifecycle: "FAILED" as const }) };
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+    mocks.reconcile.mockResolvedValueOnce(reconciled);
+
+    await expect(getDetailPageProjectForUser("user-1", "analysis-1")).resolves.toEqual(reconciled);
+    expect(mocks.reconcile).toHaveBeenCalledWith({ analysisHistoryId: "analysis-1", project, userId: "user-1" });
   });
 
   it("ignores malformed project JSON without leaking or throwing", async () => {
@@ -211,6 +234,7 @@ describe("detail page project persistence", () => {
       ...project.sections[0],
       generationOperationId: "operation-1",
       generationRequestId: "request-1",
+      generationStartedAt: new Date().toISOString(),
       lifecycle: "GENERATING",
     };
     mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });

@@ -84,6 +84,38 @@ describe("Product Creation Center asset hydration", () => {
     expect(data.detailPages[0].output).toEqual({ imageUrl: "https://storage.test/fresh-detail-1.png" });
   });
 
+  it("classifies legacy and V2 detail-page assets for only the requested Product", async () => {
+    const legacy = imageRecord("product-detail-page", "detail-legacy");
+    const v2 = {
+      ...imageRecord("detail-page-v2", "detail-v2"),
+      input: {
+        analysisHistoryId: "analysis-1",
+        moduleType: "PRODUCT_DETAIL",
+        sectionId: "section-4",
+        source: "detail-page-v2",
+      },
+      output: { assetId: "asset-detail-v2", moduleType: "PRODUCT_DETAIL" },
+    };
+    const otherProduct = {
+      ...imageRecord("detail-page-v2", "detail-other-product"),
+      input: { analysisHistoryId: "analysis-2", moduleType: "HERO", source: "detail-page-v2" },
+    };
+    mocks.getProductRelatedHistory.mockResolvedValue([legacy, v2, otherProduct]);
+    mocks.hydrateHistoryAssetUrls.mockResolvedValue([
+      legacy,
+      { ...v2, originalUrl: "https://storage.test/fresh-detail-v2.png", output: { ...v2.output, imageUrl: "https://storage.test/fresh-detail-v2.png" } },
+      otherProduct,
+    ]);
+
+    const data = await getProductCreationCenterData("user-1", "analysis-1");
+
+    expect(mocks.getProductRelatedHistory).toHaveBeenCalledWith({ userId: "user-1", analysisHistoryId: "analysis-1", sourceAssetId: "source-1" });
+    expect(data.detailPages.map((record) => record.id)).toEqual(["detail-legacy", "detail-v2"]);
+    expect(data.detailPages[1].input).toMatchObject({ moduleType: "PRODUCT_DETAIL", sectionId: "section-4" });
+    expect(data.detailPages[1].output).toMatchObject({ imageUrl: "https://storage.test/fresh-detail-v2.png", moduleType: "PRODUCT_DETAIL" });
+    expect(JSON.stringify(v2)).not.toContain("storage.test/fresh-detail-v2.png");
+  });
+
   it("maps an image edit with no persisted image URL to its fresh hydrated URL", async () => {
     const rawRecord = {
       ...imageRecord("product-image-edit", "edit-1"),
