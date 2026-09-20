@@ -5,6 +5,7 @@ import {
   applyDetailPageProjectOperation,
   canBindExistingAssetToModule,
   DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+  isDetailPageProjectBusy,
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
   parseDetailPageProject,
@@ -123,6 +124,10 @@ export async function updateDetailPageProject({
 
   if (currentProject.revision !== expectedRevision) {
     throw new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409);
+  }
+
+  if (isDetailPageProjectBusy(currentProject)) {
+    throw new ApiError("当前详情页正在制作视觉，请完成后再修改。", 409);
   }
 
   if (operation.type === "bind-asset") {

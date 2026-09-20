@@ -19,6 +19,7 @@ export type DetailPageReadiness = "READY" | "NEEDS_INPUT" | "EXISTING_ASSET" | "
 export type DetailPageLifecycle = "PLANNED" | "GENERATING" | "COMPLETE" | "FAILED";
 export type DetailPageStylePreset = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
 export type DetailPageEvidenceSourceType = "existing-asset" | "product-brief" | "product-image" | "user-confirmed";
+export type DetailPageAssetBindingSource = DetailPageEvidenceSourceType | "generated";
 export type DetailPageAssetSourceType = "detail-page" | "image-edit" | "image-set" | "original" | "product-image" | "scene-image";
 export type DetailPageAssetRelationEvidence = "analysis-source-asset" | "history-analysis-id" | "history-source-asset";
 
@@ -57,11 +58,13 @@ export type DetailPageStyle = {
 };
 
 export type DetailPageSectionV2 = {
-  assetSource: DetailPageEvidenceSourceType | null;
+  assetSource: DetailPageAssetBindingSource | null;
   copy: DetailPageSectionCopy;
   evidence: DetailPageEvidence[];
   hidden: boolean;
   id: string;
+  generationOperationId: string | null;
+  generationRequestId: string | null;
   lastError: string | null;
   layout: string | null;
   lifecycle: DetailPageLifecycle;
@@ -104,6 +107,7 @@ export type DetailPageProjectOperation =
   | { assetId: string; sectionId: string; type: "bind-asset" }
   | { moduleType: DetailPageModuleType; sectionId: string; type: "replace-module" }
   | { sectionId: string; type: "delete-section" }
+  | { body: string; headline: string; sectionId: string; type: "set-copy" }
   | { sectionId: string; type: "set-evidence"; value: string }
   | { sectionId: string; type: "unbind-asset" };
 
@@ -407,6 +411,8 @@ function createSection(
     assetSource: null,
     layout: null,
     hidden: false,
+    generationOperationId: null,
+    generationRequestId: null,
     lastError: null,
   };
 }
@@ -596,6 +602,7 @@ export function parseDetailPageProject(value: unknown, expected?: { analysisHist
       selectedAssetId: typeof rawSection.selectedAssetId === "string" ? cleanText(rawSection.selectedAssetId, 200) || null : null,
       assetSource:
         rawSection.assetSource === "existing-asset" ||
+        rawSection.assetSource === "generated" ||
         rawSection.assetSource === "product-brief" ||
         rawSection.assetSource === "product-image" ||
         rawSection.assetSource === "user-confirmed"
@@ -603,6 +610,10 @@ export function parseDetailPageProject(value: unknown, expected?: { analysisHist
           : null,
       layout: typeof rawSection.layout === "string" ? cleanText(rawSection.layout, 120) || null : null,
       hidden: rawSection.hidden,
+      generationOperationId:
+        typeof rawSection.generationOperationId === "string" ? cleanText(rawSection.generationOperationId, 200) || null : null,
+      generationRequestId:
+        typeof rawSection.generationRequestId === "string" ? cleanText(rawSection.generationRequestId, 200) || null : null,
       lastError: typeof rawSection.lastError === "string" ? cleanText(rawSection.lastError, 300) || null : null,
     });
   }
@@ -654,6 +665,15 @@ export function parseDetailPageProjectOperation(value: unknown): DetailPageProje
 
   if (value.type === "set-evidence" && sectionId && typeof value.value === "string") {
     return { type: "set-evidence", sectionId, value: cleanText(value.value, 1200) };
+  }
+
+  if (value.type === "set-copy" && sectionId && typeof value.headline === "string" && typeof value.body === "string") {
+    return {
+      type: "set-copy",
+      sectionId,
+      headline: cleanText(value.headline, 200),
+      body: cleanText(value.body, 800),
+    };
   }
 
   return null;
@@ -751,6 +771,15 @@ export function applyDetailPageProjectOperation(
       lifecycle: evaluateDetailPageLifecycle(section.moduleType, readiness, section.selectedAssetId),
       lastError: null,
     };
+  } else if (operation.type === "set-copy") {
+    const section = sections[sectionIndex];
+    sections[sectionIndex] = {
+      ...section,
+      copy: {
+        headline: operation.headline,
+        body: operation.body,
+      },
+    };
   }
 
   return {
@@ -758,4 +787,12 @@ export function applyDetailPageProjectOperation(
     sections: normalizeSectionOrder(sections),
     updatedAt: (options.now || new Date()).toISOString(),
   };
+}
+
+export function getActiveDetailPageGeneration(project: DetailPageProjectV2) {
+  return project.sections.find((section) => section.lifecycle === "GENERATING") || null;
+}
+
+export function isDetailPageProjectBusy(project: DetailPageProjectV2) {
+  return Boolean(getActiveDetailPageGeneration(project));
 }

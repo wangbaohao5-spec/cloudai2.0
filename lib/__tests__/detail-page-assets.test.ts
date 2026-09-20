@@ -143,4 +143,17 @@ describe("detail page existing asset discovery", () => {
     expect(getSuggestedDetailPageModuleTypes("image-edit", null)).toEqual([]);
     expect(getSuggestedDetailPageModuleTypes("product-image", "my-hero-looking-filename.png")).toEqual([]);
   });
+
+  it("recovers V2 generated detail-page assets with module suggestions", async () => {
+    mocks.getProductRelatedHistory.mockResolvedValue([
+      historyRecord({ assetId: "asset-generated", historyId: "history-generated", imageType: "PRODUCT_DETAIL", source: "detail-page-v2" }),
+    ]);
+    mocks.assetFindMany.mockResolvedValue([
+      { id: "asset-generated", type: "image", name: "detail.png", url: "user-a/image/detail.png", createdAt: new Date("2026-09-19T02:00:00.000Z") },
+    ]);
+
+    const candidates = await getDetailPageAssetCandidates("user-a", "analysis-a");
+
+    expect(candidates[0]).toMatchObject({ sourceType: "detail-page", suggestedModuleTypes: ["PRODUCT_DETAIL"] });
+  });
 });

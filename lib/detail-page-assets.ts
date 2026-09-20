@@ -44,12 +44,12 @@ export function getSuggestedDetailPageModuleTypes(sourceType: DetailPageAssetSou
     return ["HERO"] satisfies DetailPageModuleType[];
   }
 
-  const normalized = imageType?.trim().toLowerCase() || "";
+  const normalized = imageType?.trim().toLowerCase().replaceAll("_", "-") || "";
   const suggestions: DetailPageModuleType[] = [];
 
   if (/^(hero|main|main-image|commerce-hero|product-hero)$/.test(normalized)) suggestions.push("HERO");
   if (/^(scene|usage-scene|lifestyle|environment)$/.test(normalized)) suggestions.push("USAGE_SCENE");
-  if (/^(detail|detail-closeup|close-up|closeup|material-detail|four-grid-detail)$/.test(normalized)) suggestions.push("PRODUCT_DETAIL");
+  if (/^(detail|product-detail|detail-closeup|close-up|closeup|material-detail|four-grid-detail)$/.test(normalized)) suggestions.push("PRODUCT_DETAIL");
   if (/^(brand|brand-content|editorial|trust|cta)$/.test(normalized)) suggestions.push("BRAND_CONTENT");
   if (/^(benefits|selling-point|feature)$/.test(normalized)) suggestions.push("BENEFITS");
 
@@ -60,7 +60,7 @@ function getSourceType(record: HistoryRecord): DetailPageAssetSourceType {
   const source = getStringField(record.input, "source");
 
   if (source === "product-image-set") return "image-set";
-  if (source === "product-detail-page") return "detail-page";
+  if (source === "product-detail-page" || source === "detail-page-v2") return "detail-page";
   if (source === "product-scene-image") return "scene-image";
   if (source === "product-image-edit" || record.type === "image-enhance") return "image-edit";
   return "product-image";
@@ -70,6 +70,7 @@ function getImageType(record: HistoryRecord) {
   return (
     getStringField(record.input, "imageType") ||
     getStringField(record.input, "sectionType") ||
+    getStringField(record.input, "moduleType") ||
     getNestedStringField(record.input, "image", "imageType") ||
     getNestedStringField(record.input, "page", "sectionType") ||
     null

@@ -231,4 +231,44 @@ describe("Detail Page V2 project contract", () => {
     expect(getDetailPageSectionEffectiveState(boundHero, false)).toEqual({ readiness: "READY", lifecycle: "PLANNED" });
     expect(boundHero.selectedAssetId).toBe("asset-a");
   });
+
+  it("persists manually edited structured copy", () => {
+    const project = createProject();
+    const section = project.sections[0];
+    const updated = applyDetailPageProjectOperation(project, {
+      type: "set-copy",
+      sectionId: section.id,
+      headline: "人工标题",
+      body: "人工正文",
+    });
+
+    expect(updated.sections[0].copy).toEqual({ headline: "人工标题", body: "人工正文" });
+    expect(parseDetailPageProject(updated)?.sections[0].copy).toEqual({ headline: "人工标题", body: "人工正文" });
+  });
+
+  it("round-trips generated binding metadata without stable signed URLs", () => {
+    const project = createProject();
+    const generated = {
+      ...project,
+      sections: project.sections.map((section, index) =>
+        index === 0
+          ? {
+              ...section,
+              assetSource: "generated" as const,
+              generationOperationId: null,
+              generationRequestId: "request-1",
+              lifecycle: "COMPLETE" as const,
+              selectedAssetId: "asset-generated",
+            }
+          : section,
+      ),
+    };
+
+    expect(parseDetailPageProject(generated)?.sections[0]).toMatchObject({
+      assetSource: "generated",
+      generationRequestId: "request-1",
+      selectedAssetId: "asset-generated",
+    });
+    expect(JSON.stringify(generated)).not.toContain("signedUrl");
+  });
 });

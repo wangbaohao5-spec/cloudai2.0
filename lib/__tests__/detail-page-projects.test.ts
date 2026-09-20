@@ -204,4 +204,40 @@ describe("detail page project persistence", () => {
     ).rejects.toMatchObject({ status: 404, message: "该素材不可用于当前商品，请重新选择。" });
     expect(mocks.updateMany).not.toHaveBeenCalled();
   });
+
+  it("rejects every project mutation while a generation operation is active", async () => {
+    const project = makeProject();
+    project.sections[0] = {
+      ...project.sections[0],
+      generationOperationId: "operation-1",
+      generationRequestId: "request-1",
+      lifecycle: "GENERATING",
+    };
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+
+    await expect(
+      updateDetailPageProject({
+        analysisHistoryId: "analysis-1",
+        expectedRevision: 1,
+        operation: { type: "set-copy", sectionId: "section-2", headline: "标题", body: "正文" },
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("persists copy editing with revision protection", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ id: project.projectId, output: project });
+
+    const next = await updateDetailPageProject({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 1,
+      operation: { type: "set-copy", sectionId: "section-1", headline: "标题", body: "正文" },
+      userId: "user-1",
+    });
+
+    expect(next.sections[0].copy).toEqual({ headline: "标题", body: "正文" });
+    expect(next.revision).toBe(2);
+  });
 });

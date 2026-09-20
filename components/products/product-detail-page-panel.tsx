@@ -16,7 +16,7 @@ import {
 } from "@/lib/detail-page-project";
 import { createGenerationAttempt } from "@/lib/generation-request";
 import type { ProductAnalysisResponse, ProductGenerationBrief, ProductOutputSettings } from "@/lib/product-types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type ProductDetailPagePanelProps = {
   analysisResult: ProductAnalysisResponse | null;
@@ -33,6 +33,14 @@ type ProjectResponse = {
 
 type AssetCandidatesResponse = {
   candidates: DetailPageAssetCandidate[];
+};
+
+type SectionGenerationResponse = {
+  candidate: DetailPageAssetCandidate | null;
+  error?: string;
+  project: DetailPageProjectV2;
+  recovered: boolean;
+  warning?: string | null;
 };
 
 const styleOptions: Array<{ label: string; value: DetailPageStylePreset }> = [
@@ -62,7 +70,17 @@ async function readAssetCandidatesResponse(response: Response) {
   return data?.candidates || [];
 }
 
-export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings }: ProductDetailPagePanelProps) {
+async function readSectionGenerationResponse(response: Response) {
+  const data = (await response.json().catch(() => null)) as SectionGenerationResponse | null;
+
+  if (!response.ok || !data) {
+    throw new Error(data?.error || "详情页视觉生成失败，请稍后重试。");
+  }
+
+  return data;
+}
+
+export function ProductDetailPagePanel({ analysisResult, generationBrief, outputSettings, onGenerated }: ProductDetailPagePanelProps) {
   const analysisHistoryId = analysisResult?.historyId || "";
   const [addModuleType, setAddModuleType] = useState<DetailPageModuleType>("PRODUCT_DETAIL");
   const [assetError, setAssetError] = useState("");
@@ -71,11 +89,13 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [generatingSectionId, setGeneratingSectionId] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [project, setProject] = useState<DetailPageProjectV2 | null>(null);
   const [sectionCount, setSectionCount] = useState(7);
   const [source, setSource] = useState<ProjectResponse["source"]>();
   const [style, setStyle] = useState<DetailPageStylePreset>("ecommerce");
+  const generationAttemptsRef = useRef(new Map<string, ReturnType<typeof createGenerationAttempt>>());
 
   async function loadWorkspaceState() {
     if (!analysisHistoryId) {
@@ -206,6 +226,46 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
     }
   }
 
+  async function handleGenerateSection(sectionId: string) {
+    if (!project || generatingSectionId) return;
+
+    const attempt = generationAttemptsRef.current.get(sectionId) || createGenerationAttempt();
+    generationAttemptsRef.current.set(sectionId, attempt);
+    setError("");
+    setGeneratingSectionId(sectionId);
+    let receivedResponse = false;
+
+    try {
+      const response = await attempt.fetch("/api/products/detail-page/sections/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisHistoryId,
+          expectedRevision: project.revision,
+          outputSettings: outputSettings || undefined,
+          sectionId,
+        }),
+      });
+      receivedResponse = true;
+      const data = await readSectionGenerationResponse(response);
+      generationAttemptsRef.current.delete(sectionId);
+      setProject(data.project);
+
+      if (data.candidate) {
+        setCandidates((current) => [data.candidate!, ...current.filter((candidate) => candidate.assetId !== data.candidate?.assetId)]);
+      }
+
+      if (data.warning) setError(data.warning);
+      onGenerated?.();
+    } catch (caughtError) {
+      if (receivedResponse) generationAttemptsRef.current.delete(sectionId);
+      await loadWorkspaceState();
+      setError(caughtError instanceof Error ? caughtError.message : "详情页视觉生成失败，请稍后重试。");
+    } finally {
+      setGeneratingSectionId("");
+    }
+  }
+
   if (!analysisResult) {
     return (
       <section className="product-detail-page-panel product-workspace-tool-surface">
@@ -226,7 +286,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
       <div className="dashboard-section-header">
         <div>
-          <p className="product-workspace-kicker">Detail Page V2 · Phase 2A</p>
+          <p className="product-workspace-kicker">Detail Page V2 · Phase 2B</p>
           <h2>详情页策划</h2>
           <p className="image-generation-intro">先确定页面结构和事实依据，再进入素材制作。AI 分析不会自动成为已验证事实。</p>
         </div>
@@ -266,16 +326,18 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
 
           <ProductDetailPagePlanPreview
             candidates={candidates}
+            generatingSectionId={generatingSectionId}
             isLoadingAssets={isLoadingAssets}
             project={project}
             isUpdating={isUpdating}
+            onGenerateSection={(sectionId) => void handleGenerateSection(sectionId)}
             onOperation={(operation) => void handleOperation(operation)}
           />
 
           <div className="product-detail-v2-add-module">
             <label>
               <span>添加模块</span>
-              <select disabled={isUpdating || project.sections.length >= 8} value={addModuleType} onChange={(event) => setAddModuleType(event.target.value as DetailPageModuleType)}>
+              <select disabled={isUpdating || generatingSectionId.length > 0 || project.sections.some((section) => section.lifecycle === "GENERATING") || project.sections.length >= 8} value={addModuleType} onChange={(event) => setAddModuleType(event.target.value as DetailPageModuleType)}>
                 {DETAIL_PAGE_MODULE_TYPES.map((moduleType) => (
                   <option key={moduleType} value={moduleType}>
                     {DETAIL_PAGE_MODULE_DEFINITIONS[moduleType].label}
@@ -285,14 +347,14 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
             </label>
             <button
               className="cai-button cai-button--secondary"
-              disabled={isUpdating || project.sections.length >= 8}
+              disabled={isUpdating || generatingSectionId.length > 0 || project.sections.some((section) => section.lifecycle === "GENERATING") || project.sections.length >= 8}
               type="button"
               onClick={() => void handleOperation({ type: "add-section", moduleType: addModuleType })}
             >
               添加到末尾
             </button>
           </div>
-          <p className="product-detail-plan-note">复用已有素材不会生成新图片、上传文件或消耗图片额度。素材建议只来自当前商品的正式关联记录。</p>
+          <p className="product-detail-plan-note">复用已有素材保持零图片额度消耗；只有点击“生成视觉”才会创建新的图片任务。一次只制作一个模块。</p>
         </>
       ) : (
         <>
