@@ -21,6 +21,15 @@ type CandidateReference = {
   suggestedModuleTypes: DetailPageModuleType[];
 };
 
+type InternalAssetCandidate = DetailPageAssetCandidate & {
+  storagePath: string;
+};
+
+function toPublicAssetCandidate({ storagePath, ...candidate }: InternalAssetCandidate) {
+  void storagePath;
+  return candidate;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
@@ -92,11 +101,13 @@ function getRelationEvidence(record: HistoryRecord, analysisHistoryId: string, s
 async function discoverDetailPageAssetCandidates({
   analysisHistoryId,
   assetId,
+  assetIds,
   includePreview,
   userId,
 }: {
   analysisHistoryId: string;
   assetId?: string;
+  assetIds?: readonly string[];
   includePreview: boolean;
   userId: string;
 }) {
@@ -137,8 +148,9 @@ async function discoverDetailPageAssetCandidates({
     });
   }
 
+  const requestedAssetIds = assetIds ? new Set(assetIds) : null;
   const scopedReferences = Array.from(references.values())
-    .filter((reference) => !assetId || reference.assetId === assetId)
+    .filter((reference) => (!assetId || reference.assetId === assetId) && (!requestedAssetIds || requestedAssetIds.has(reference.assetId)))
     .slice(0, DETAIL_PAGE_ASSET_CANDIDATE_LIMIT);
 
   if (!scopedReferences.length) return [];
@@ -160,7 +172,7 @@ async function discoverDetailPageAssetCandidates({
   const referenceMap = new Map(scopedReferences.map((reference) => [reference.assetId, reference]));
 
   const candidates = await Promise.all(
-    assets.map(async (asset): Promise<DetailPageAssetCandidate> => {
+    assets.map(async (asset): Promise<InternalAssetCandidate> => {
       const reference = referenceMap.get(asset.id)!;
       let displayUrl: string | null = null;
       let previewUrl: string | null = null;
@@ -194,6 +206,7 @@ async function discoverDetailPageAssetCandidates({
         previewUrl,
         productRelationEvidence: reference.productRelationEvidence,
         sourceType: reference.sourceType,
+        storagePath: asset.url,
         suggestedModuleTypes: reference.suggestedModuleTypes,
       };
     }),
@@ -207,10 +220,16 @@ async function discoverDetailPageAssetCandidates({
 }
 
 export function getDetailPageAssetCandidates(userId: string, analysisHistoryId: string) {
-  return discoverDetailPageAssetCandidates({ userId, analysisHistoryId, includePreview: true });
+  return discoverDetailPageAssetCandidates({ userId, analysisHistoryId, includePreview: true }).then((candidates) => candidates.map(toPublicAssetCandidate));
 }
 
 export async function getDetailPageAssetCandidateForBinding(userId: string, analysisHistoryId: string, assetId: string) {
   const candidates = await discoverDetailPageAssetCandidates({ userId, analysisHistoryId, assetId, includePreview: false });
-  return candidates[0] || null;
+  if (!candidates[0]) return null;
+  return toPublicAssetCandidate(candidates[0]);
+}
+
+export async function getDetailPageAssetStoragePathsForExport(userId: string, analysisHistoryId: string, assetIds: readonly string[]) {
+  const candidates = await discoverDetailPageAssetCandidates({ userId, analysisHistoryId, assetIds, includePreview: false });
+  return new Map(candidates.map((candidate) => [candidate.assetId, candidate.storagePath]));
 }

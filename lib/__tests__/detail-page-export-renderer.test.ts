@@ -4,6 +4,7 @@ import {
 } from "@/lib/detail-page-export";
 import {
   composeDetailPageExport,
+  encodeDetailPageSection,
   escapeDetailPageSvgText,
   getDetailPageExportContentType,
   getDetailPageSectionRenderPlan,
@@ -41,7 +42,7 @@ function exportable(section: DetailPageSectionV2, update: Partial<DetailPageSect
 }
 
 async function source(width = 300, height = 600) {
-  return sharp({ create: { width, height, channels: 3, background: "#dde7e1" } }).jpeg().toBuffer();
+  return sharp({ create: { width, height, channels: 3, background: "#204060" } }).jpeg().toBuffer();
 }
 
 describe("Detail Page V2 export renderer", () => {
@@ -74,11 +75,38 @@ describe("Detail Page V2 export renderer", () => {
   it("renders a CJK visual section without crashing", async () => {
     const section = exportable(sections()[0]);
     const rendered = await renderDetailPageSection({ assetBuffer: await source(), pageStyle: "ecommerce", section });
-    const metadata = await sharp(rendered.buffer).metadata();
+    const encoded = await encodeDetailPageSection(rendered);
+    const metadata = await sharp(encoded).metadata();
 
+    expect(encoded.byteLength).toBeGreaterThan(0);
     expect(metadata.format).toBe("jpeg");
     expect(metadata.width).toBe(1_200);
     expect(metadata.height).toBe(getDetailPageSectionRenderPlan(section).height);
+  });
+
+  it("renders and composes five sections within the bounded export contract", async () => {
+    const startedAt = performance.now();
+    const input = await source(360, 640);
+    const rendered = [];
+
+    for (const section of sections().slice(0, 5)) {
+      rendered.push(await renderDetailPageSection({
+        assetBuffer: input,
+        pageStyle: "ecommerce",
+        section: exportable(section),
+      }));
+    }
+
+    const output = await composeDetailPageExport(rendered, "ecommerce");
+    const metadata = await sharp(output).metadata();
+    const expectedHeight = rendered.reduce((total, section) => total + section.height, 0);
+
+    expect(performance.now() - startedAt).toBeLessThan(5_000);
+    expect(output.byteLength).toBeGreaterThan(0);
+    expect(metadata.format).toBe("jpeg");
+    expect(metadata.width).toBe(DETAIL_PAGE_EXPORT_LIMITS.width);
+    expect(metadata.height).toBe(expectedHeight);
+    expect(expectedHeight).toBeLessThanOrEqual(DETAIL_PAGE_EXPORT_LIMITS.maxTotalHeight);
   });
 
   it("uses the same deterministic section renderer for slices", async () => {
@@ -92,18 +120,37 @@ describe("Detail Page V2 export renderer", () => {
   it("normalizes portrait source images without changing the export width", async () => {
     const section = exportable(sections()[0]);
     const rendered = await renderDetailPageSection({ assetBuffer: await source(180, 720), pageStyle: "brand-site", section });
-    expect((await sharp(rendered.buffer).metadata()).width).toBe(DETAIL_PAGE_EXPORT_LIMITS.width);
+    expect(rendered.width).toBe(DETAIL_PAGE_EXPORT_LIMITS.width);
   });
 
   it("uses contain padding instead of stretching a portrait product asset", async () => {
     const section = exportable(sections()[0]);
     const rendered = await renderDetailPageSection({ assetBuffer: await source(120, 600), pageStyle: "ecommerce", section });
-    const { data, info } = await sharp(rendered.buffer).raw().toBuffer({ resolveWithObject: true });
-    const sample = (x: number, y: number) => Array.from(data.subarray((y * info.width + x) * info.channels, (y * info.width + x) * info.channels + 3));
+    const sample = (x: number, y: number) => Array.from(rendered.buffer.subarray((y * rendered.width + x) * rendered.channels, (y * rendered.width + x) * rendered.channels + 3));
     const edge = sample(20, 300);
     const center = sample(600, 300);
 
     expect(Math.abs(edge[0] - center[0]) + Math.abs(edge[1] - center[1]) + Math.abs(edge[2] - center[2])).toBeGreaterThan(12);
+  });
+
+  it("reports observable CJK render timing without exposing copy", async () => {
+    const section = exportable(sections()[0], { copy: { headline: "温和洁面", body: "真实商品，清晰呈现。" } });
+    const timings: Array<Record<string, number>> = [];
+    await renderDetailPageSection({
+      assetBuffer: await source(),
+      pageStyle: "ecommerce",
+      section,
+      onTiming: (timing) => timings.push(timing),
+    });
+
+    expect(timings).toHaveLength(1);
+    expect(timings[0]).toEqual(expect.objectContaining({
+      assetMetadataMs: expect.any(Number),
+      imageDecodeMs: expect.any(Number),
+      sectionRenderMs: expect.any(Number),
+      textSvgBuildMs: expect.any(Number),
+    }));
+    expect(JSON.stringify(timings)).not.toContain("温和洁面");
   });
 
   it("caps PRODUCT_DETAIL media below the HERO canvas and preserves contain geometry", () => {
@@ -129,11 +176,11 @@ describe("Detail Page V2 export renderer", () => {
   });
 
   it("composes section buffers once in the supplied order", async () => {
-    const red = await sharp({ create: { width: 1_200, height: 20, channels: 3, background: "#ff0000" } }).jpeg({ chromaSubsampling: "4:4:4" }).toBuffer();
-    const blue = await sharp({ create: { width: 1_200, height: 20, channels: 3, background: "#0000ff" } }).jpeg({ chromaSubsampling: "4:4:4" }).toBuffer();
+    const red = Buffer.from(Array.from({ length: 1_200 * 20 }, () => [255, 0, 0, 255]).flat());
+    const blue = Buffer.from(Array.from({ length: 1_200 * 20 }, () => [0, 0, 255, 255]).flat());
     const result = await composeDetailPageExport([
-      { buffer: red, height: 20, sectionId: "red" },
-      { buffer: blue, height: 20, sectionId: "blue" },
+      { buffer: red, channels: 4, height: 20, sectionId: "red", width: 1_200 },
+      { buffer: blue, channels: 4, height: 20, sectionId: "blue", width: 1_200 },
     ], "ecommerce");
     const { data, info } = await sharp(result).raw().toBuffer({ resolveWithObject: true });
     const first = Array.from(data.subarray(0, 3));

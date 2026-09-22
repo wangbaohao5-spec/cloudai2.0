@@ -19,8 +19,23 @@ export type DetailPageSectionRenderPlan = {
 
 export type RenderedDetailPageSection = {
   buffer: Buffer;
+  channels: 1 | 2 | 3 | 4;
   height: number;
   sectionId: string;
+  width: number;
+};
+
+export type DetailPageSectionRenderTiming = {
+  assetMetadataMs: number;
+  imageDecodeMs: number;
+  sectionLayoutMs: number;
+  sectionRenderMs: number;
+  textSvgBuildMs: number;
+};
+
+export type DetailPageCompositeTiming = {
+  fullCompositeMs: number;
+  fullJpegEncodeMs: number;
 };
 
 const WIDTH = DETAIL_PAGE_EXPORT_LIMITS.width;
@@ -163,48 +178,96 @@ async function renderMedia(source: Buffer, box: RenderBox, preset: DetailPageSty
     throw new ApiError("素材文件过大，暂时无法安全导出。", 413);
   }
 
-  const metadata = await sharp(source, { failOn: "error", limitInputPixels: DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension ** 2 }).metadata();
+  const metadataStartedAt = performance.now();
+  const image = sharp(source, { failOn: "error", limitInputPixels: DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension ** 2 });
+  const metadata = await image.metadata();
+  const assetMetadataMs = performance.now() - metadataStartedAt;
   if (!metadata.width || !metadata.height || metadata.width > DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension || metadata.height > DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension) {
     throw new ApiError("素材尺寸超出安全导出范围。", 413);
   }
 
   const style = getDetailPageStyleRole(preset);
-  return sharp(source, { failOn: "error", limitInputPixels: DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension ** 2 })
+  const decodeStartedAt = performance.now();
+  const rendered = await image
     .rotate()
     .resize({ width: box.width, height: box.height, fit: "contain", background: style.surfaceAlt, withoutEnlargement: true })
     .flatten({ background: style.surfaceAlt })
-    .png()
-    .toBuffer();
+    .ensureAlpha(1)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  return {
+    assetMetadataMs,
+    imageDecodeMs: performance.now() - decodeStartedAt,
+    rendered,
+  };
 }
 
 export async function renderDetailPageSection({
   assetBuffer,
+  onTiming,
   pageStyle,
   section,
 }: {
   assetBuffer: Buffer | null;
+  onTiming?: (timing: DetailPageSectionRenderTiming) => void;
   pageStyle: DetailPageStylePreset;
   section: DetailPageSectionV2;
 }): Promise<RenderedDetailPageSection> {
+  const layoutStartedAt = performance.now();
   const plan = getDetailPageSectionRenderPlan(section);
   const style = getDetailPageStyleRole(pageStyle);
+  const sectionLayoutMs = performance.now() - layoutStartedAt;
   const composites: sharp.OverlayOptions[] = [];
+  let assetMetadataMs = 0;
+  let imageDecodeMs = 0;
 
   if (plan.media) {
     if (!assetBuffer) throw new ApiError("模块素材不可用，请重新选择后再导出。", 409);
-    composites.push({ input: await renderMedia(assetBuffer, plan.media, pageStyle), left: plan.media.x, top: plan.media.y });
+    const media = await renderMedia(assetBuffer, plan.media, pageStyle);
+    assetMetadataMs = media.assetMetadataMs;
+    imageDecodeMs = media.imageDecodeMs;
+    composites.push({
+      input: media.rendered.data,
+      raw: {
+        width: media.rendered.info.width,
+        height: media.rendered.info.height,
+        channels: media.rendered.info.channels,
+      },
+      left: plan.media.x,
+      top: plan.media.y,
+    });
   }
 
-  composites.push({ input: renderTextSvg(section, plan.copy, pageStyle), left: plan.copy.x, top: plan.copy.y });
+  const textStartedAt = performance.now();
+  const textSvg = renderTextSvg(section, plan.copy, pageStyle);
+  const textSvgBuildMs = performance.now() - textStartedAt;
+  composites.push({ input: textSvg, left: plan.copy.x, top: plan.copy.y });
 
-  const buffer = await sharp({
+  const renderStartedAt = performance.now();
+  const rendered = await sharp({
     create: { width: WIDTH, height: plan.height, channels: 3, background: style.background },
   })
     .composite(composites)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const sectionRenderMs = performance.now() - renderStartedAt;
+
+  onTiming?.({ assetMetadataMs, imageDecodeMs, sectionLayoutMs, sectionRenderMs, textSvgBuildMs });
+
+  return {
+    buffer: rendered.data,
+    channels: rendered.info.channels,
+    height: plan.height,
+    sectionId: section.id,
+    width: WIDTH,
+  };
+}
+
+export async function encodeDetailPageSection(section: RenderedDetailPageSection) {
+  return sharp(section.buffer, { raw: { width: section.width, height: section.height, channels: section.channels } })
     .jpeg({ quality: DETAIL_PAGE_EXPORT_QUALITY, chromaSubsampling: "4:4:4", mozjpeg: true })
     .toBuffer();
-
-  return { buffer, height: plan.height, sectionId: section.id };
 }
 
 export function validateDetailPageCompositeBudget(sections: Array<{ height: number }>) {
@@ -220,20 +283,37 @@ export function validateDetailPageCompositeBudget(sections: Array<{ height: numb
   return { totalHeight, totalPixels };
 }
 
-export async function composeDetailPageExport(sections: RenderedDetailPageSection[], preset: DetailPageStylePreset) {
+export async function composeDetailPageExport(
+  sections: RenderedDetailPageSection[],
+  preset: DetailPageStylePreset,
+  onTiming?: (timing: DetailPageCompositeTiming) => void,
+) {
   const { totalHeight } = validateDetailPageCompositeBudget(sections);
   const style = getDetailPageStyleRole(preset);
   let top = 0;
   const composites = sections.map((section) => {
-    const input = { input: section.buffer, left: 0, top };
+    const input = {
+      input: section.buffer,
+      raw: { width: section.width, height: section.height, channels: section.channels },
+      left: 0,
+      top,
+    };
     top += section.height;
     return input;
   });
 
-  return sharp({ create: { width: WIDTH, height: totalHeight, channels: 3, background: style.background } })
+  const compositeStartedAt = performance.now();
+  const composite = await sharp({ create: { width: WIDTH, height: totalHeight, channels: 3, background: style.background } })
     .composite(composites)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const fullCompositeMs = performance.now() - compositeStartedAt;
+  const encodeStartedAt = performance.now();
+  const output = await sharp(composite.data, { raw: { width: WIDTH, height: totalHeight, channels: composite.info.channels } })
     .jpeg({ quality: DETAIL_PAGE_EXPORT_QUALITY, chromaSubsampling: "4:4:4", mozjpeg: true })
     .toBuffer();
+  onTiming?.({ fullCompositeMs, fullJpegEncodeMs: performance.now() - encodeStartedAt });
+  return output;
 }
 
 export function getDetailPageExportContentType() {

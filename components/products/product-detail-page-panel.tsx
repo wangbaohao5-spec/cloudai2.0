@@ -384,7 +384,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(objectUrl);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "详情页暂时无法导出，请稍后重试。");
     } finally {

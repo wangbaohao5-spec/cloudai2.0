@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   compose: vi.fn(),
   createHistory: vi.fn(),
   downloadFile: vi.fn(),
+  encode: vi.fn(),
   editImage: vi.fn(),
   getCandidate: vi.fn(),
   getCurrentUser: vi.fn(),
@@ -20,7 +21,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/current-user", () => ({ getCurrentUser: mocks.getCurrentUser }));
-vi.mock("@/lib/detail-page-assets", () => ({ getDetailPageAssetCandidateForBinding: mocks.getCandidate }));
+vi.mock("@/lib/detail-page-assets", () => ({ getDetailPageAssetStoragePathsForExport: mocks.getCandidate }));
 vi.mock("@/lib/detail-page-projects", () => ({
   getDetailPageProjectForUser: mocks.getProject,
   updateDetailPageProject: mocks.updateProject,
@@ -37,6 +38,7 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("@/lib/detail-page-export-renderer", () => ({
   composeDetailPageExport: mocks.compose,
+  encodeDetailPageSection: mocks.encode,
   getDetailPageExportContentType: () => "image/jpeg",
   getDetailPageSectionRenderPlan: mocks.getRenderPlan,
   renderDetailPageSection: mocks.renderSection,
@@ -103,15 +105,17 @@ describe("detail page V2 export route", () => {
     mocks.getCurrentUser.mockResolvedValue({ id: "user-1" });
     mocks.getProject.mockResolvedValue(project);
     mocks.getHistory.mockResolvedValue({ id: "analysis-1", title: "Freeplus Cleanser", type: "product-analysis" });
-    mocks.getCandidate.mockResolvedValue({ assetId: "asset-source" });
-    mocks.assetFindFirst.mockResolvedValue({ url: "user-1/upload/source.jpg" });
+    mocks.getCandidate.mockResolvedValue(new Map([["asset-source", "user-1/upload/source.jpg"]]));
     mocks.downloadFile.mockResolvedValue(Buffer.from("source-image"));
     mocks.getRenderPlan.mockReturnValue({ height: 1_000 });
     mocks.renderSection.mockImplementation(async ({ section }) => ({
       buffer: Buffer.from(`rendered-${section.id}`),
+      channels: 3,
       height: 1_000,
       sectionId: section.id,
+      width: 1_200,
     }));
+    mocks.encode.mockImplementation(async (section) => Buffer.from(`encoded-${section.sectionId}`));
     mocks.compose.mockResolvedValue(Buffer.from("full-export"));
     mocks.validateBudget.mockReturnValue({ totalHeight: 1_000, totalPixels: 1_200_000 });
   });
@@ -155,7 +159,7 @@ describe("detail page V2 export route", () => {
   });
 
   it("rejects an asset that is not related to this product", async () => {
-    mocks.getCandidate.mockResolvedValue(null);
+    mocks.getCandidate.mockResolvedValue(new Map());
 
     const response = await POST(makeRequest());
     const data = await response.json();
@@ -164,7 +168,6 @@ describe("detail page V2 export route", () => {
     expect(data.blockingSections).toEqual([
       expect.objectContaining({ reasonCode: "MISSING_ASSET", sectionId: "section-1" }),
     ]);
-    expect(mocks.assetFindFirst).not.toHaveBeenCalled();
     expectNoWritesOrGeneration();
   });
 
@@ -176,7 +179,7 @@ describe("detail page V2 export route", () => {
 
     expect(response.status).toBe(409);
     expect(data.error).not.toContain("service key");
-    expect(data.blockingSections[0]).toMatchObject({ reasonCode: "MISSING_ASSET", sectionId: "section-1" });
+    expect(data.blockingSections[0]).toMatchObject({ reasonCode: "MISSING_ASSET", sectionId: null });
     expectNoWritesOrGeneration();
   });
 
@@ -191,6 +194,9 @@ describe("detail page V2 export route", () => {
     expect(response.headers.get("content-type")).toBe("image/jpeg");
     expect(response.headers.get("content-disposition")).toBe('attachment; filename="vahoro-detail-page-freeplus-cleanser.jpg"');
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("content-length")).toBe(String(Buffer.byteLength("full-export")));
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("server-timing")).toContain("project_load");
     expect(Buffer.from(await response.arrayBuffer()).toString()).toBe("full-export");
     expect(mocks.downloadFile).toHaveBeenCalledWith("user-1/upload/source.jpg", expect.any(Number));
     expect(JSON.stringify(mocks.downloadFile.mock.calls)).not.toContain("attacker.example");
@@ -202,8 +208,13 @@ describe("detail page V2 export route", () => {
     const response = await POST(makeRequest({ mode: "section", sectionId: "section-1" }));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
     expect(response.headers.get("content-disposition")).toBe('attachment; filename="01-hero.jpg"');
-    expect(Buffer.from(await response.arrayBuffer()).toString()).toBe("rendered-section-1");
+    expect(response.headers.get("content-length")).toBe(String(Buffer.byteLength("encoded-section-1")));
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(Buffer.from(await response.arrayBuffer()).toString()).toBe("encoded-section-1");
+    expect(mocks.encode).toHaveBeenCalledTimes(1);
     expect(mocks.compose).not.toHaveBeenCalled();
     expectNoWritesOrGeneration();
   });
@@ -222,8 +233,7 @@ describe("detail page V2 export route", () => {
     };
     const first = { ...project.sections[0], order: 1 };
     mocks.getProject.mockResolvedValue({ ...project, sections: [first, project.sections[1], second, ...project.sections.slice(3)] });
-    mocks.getCandidate.mockImplementation(async (_userId, _analysisId, assetId) => ({ assetId }));
-    mocks.assetFindFirst.mockImplementation(async ({ where }) => ({ url: `user-1/image/${where.id}.jpg` }));
+    mocks.getCandidate.mockImplementation(async (_userId, _analysisId, assetIds) => new Map(assetIds.map((assetId: string) => [assetId, `user-1/image/${assetId}.jpg`])));
 
     const response = await POST(makeRequest());
 
@@ -232,7 +242,83 @@ describe("detail page V2 export route", () => {
     expect(mocks.compose).toHaveBeenCalledWith([
       expect.objectContaining({ sectionId: "section-3" }),
       expect.objectContaining({ sectionId: "section-1" }),
-    ], "ecommerce");
+    ], "ecommerce", expect.any(Function));
+    expectNoWritesOrGeneration();
+  });
+
+  it("deduplicates repeated Asset reads within one export request", async () => {
+    const project = makeProject();
+    const visible = project.sections.slice(0, 2).map((section, index) => ({
+      ...project.sections[0],
+      id: section.id,
+      order: index,
+      assetSource: "existing-asset" as const,
+      copy: { headline: `模块 ${index + 1}`, body: "真实商品内容。" },
+      hidden: false,
+      lifecycle: "COMPLETE" as const,
+      readiness: "EXISTING_ASSET" as const,
+      selectedAssetId: "asset-source",
+    }));
+    mocks.getProject.mockResolvedValue({ ...project, sections: [...visible, ...project.sections.slice(2)] });
+
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    expect(mocks.getCandidate).toHaveBeenCalledTimes(1);
+    expect(mocks.getCandidate).toHaveBeenCalledWith("user-1", "analysis-1", ["asset-source"]);
+    expect(mocks.downloadFile).toHaveBeenCalledTimes(1);
+    expect(mocks.renderSection).toHaveBeenCalledTimes(2);
+    expectNoWritesOrGeneration();
+  });
+
+  it("downloads independent Assets with bounded concurrency", async () => {
+    const project = makeProject();
+    const visible = project.sections.slice(0, 4).map((section, index) => ({
+      ...project.sections[0],
+      id: section.id,
+      order: index,
+      assetSource: "existing-asset" as const,
+      copy: { headline: `模块 ${index + 1}`, body: "真实商品内容。" },
+      hidden: false,
+      lifecycle: "COMPLETE" as const,
+      readiness: "EXISTING_ASSET" as const,
+      selectedAssetId: `asset-${index + 1}`,
+    }));
+    mocks.getProject.mockResolvedValue({ ...project, sections: [...visible, ...project.sections.slice(4)] });
+    mocks.getCandidate.mockImplementation(async (_userId, _analysisId, assetIds) => new Map(assetIds.map((assetId: string) => [assetId, `user-1/image/${assetId}.jpg`])));
+    let active = 0;
+    let maxActive = 0;
+    mocks.downloadFile.mockImplementation(async () => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      active -= 1;
+      return Buffer.from("source-image");
+    });
+
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    expect(mocks.downloadFile).toHaveBeenCalledTimes(4);
+    expect(maxActive).toBeGreaterThan(1);
+    expect(maxActive).toBeLessThanOrEqual(3);
+    expectNoWritesOrGeneration();
+  });
+
+  it("does not resolve or download hidden section Assets", async () => {
+    const project = makeProject();
+    mocks.getProject.mockResolvedValue({
+      ...project,
+      sections: project.sections.map((section, index) => index === 0
+        ? section
+        : { ...section, selectedAssetId: `hidden-asset-${index}` }),
+    });
+
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    expect(mocks.getCandidate).toHaveBeenCalledWith("user-1", "analysis-1", ["asset-source"]);
+    expect(mocks.downloadFile).toHaveBeenCalledTimes(1);
     expectNoWritesOrGeneration();
   });
 
