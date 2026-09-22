@@ -1,5 +1,6 @@
 import { ApiError } from "@/lib/api-errors";
 import { db } from "@/lib/db";
+import { randomUUID } from "node:crypto";
 import {
   DETAIL_PAGE_MODULE_DEFINITIONS,
   DETAIL_PAGE_PROJECT_HISTORY_TYPE,
@@ -7,6 +8,9 @@ import {
   getActiveDetailPageGeneration,
   getDetailPageProjectRecordId,
   type DetailPageModuleType,
+  type DetailPageGenerationEventType,
+  type DetailPageGenerationPagePhase,
+  type DetailPageNavigationType,
   type DetailPageProjectV2,
   type DetailPageSectionV2,
   parseDetailPageProject,
@@ -25,6 +29,7 @@ export const DETAIL_PAGE_GENERATABLE_MODULE_TYPES = [
 const SAFE_GENERATION_ERROR = "视觉生成失败，请稍后重试。";
 const SAFE_INTERRUPTED_GENERATION_ERROR = "上次视觉制作已中断，请按需重试。";
 export const DETAIL_PAGE_GENERATION_STALE_MS = 10 * 60 * 1000;
+export const DETAIL_PAGE_GENERATION_INTENT_TTL_MS = 2 * 60 * 1000;
 
 type GeneratedSectionPersistenceInput = {
   analysisHistoryId: string;
@@ -121,6 +126,166 @@ export async function prepareDetailPageSectionGeneration({
   return { project, section: assertDetailPageSectionGenerationEligibility(findSection(project, sectionId)) };
 }
 
+export async function createDetailPageSectionGenerationIntent({
+  analysisHistoryId,
+  eventType,
+  expectedRevision,
+  navigationType,
+  now = new Date(),
+  pagePhase,
+  sectionId,
+  userId,
+}: {
+  analysisHistoryId: string;
+  eventType: DetailPageGenerationEventType;
+  expectedRevision: number;
+  navigationType: DetailPageNavigationType;
+  now?: Date;
+  pagePhase: DetailPageGenerationPagePhase;
+  sectionId: string;
+  userId: string;
+}) {
+  const { project, section } = await prepareDetailPageSectionGeneration({ analysisHistoryId, expectedRevision, sectionId, userId });
+  const activeIntent = section.generationIntent;
+
+  if (activeIntent && !activeIntent.consumedAt && Date.parse(activeIntent.expiresAt) > now.getTime()) {
+    throw new ApiError("当前模块已有待处理的制作请求，请稍后再试。", 409);
+  }
+
+  const intent = {
+    id: randomUUID(),
+    createdAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + DETAIL_PAGE_GENERATION_INTENT_TTL_MS).toISOString(),
+    consumedAt: null,
+    consumedRequestId: null,
+    eventType,
+    pagePhase,
+    navigationType,
+  } as const;
+  const nextProject: DetailPageProjectV2 = {
+    ...project,
+    revision: project.revision + 1,
+    updatedAt: now.toISOString(),
+    sections: project.sections.map((item) => item.id === sectionId ? { ...item, generationIntent: intent } : item),
+  };
+  const result = await db.historyRecord.updateMany({
+    where: {
+      id: getDetailPageProjectRecordId(analysisHistoryId),
+      userId,
+      type: DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+      output: { path: ["revision"], equals: expectedRevision },
+    },
+    data: { output: nextProject as unknown as Prisma.InputJsonValue },
+  });
+
+  if (!result.count) {
+    throw new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409);
+  }
+
+  return { intent, project: nextProject, section: nextProject.sections.find((item) => item.id === sectionId)! };
+}
+
+export async function consumeDetailPageSectionGenerationIntent({
+  analysisHistoryId,
+  expectedRevision,
+  generationOperationId,
+  intentId,
+  now = new Date(),
+  requestId,
+  sectionId,
+  userId,
+}: {
+  analysisHistoryId: string;
+  expectedRevision: number;
+  generationOperationId: string;
+  intentId: string;
+  now?: Date;
+  requestId: string;
+  sectionId: string;
+  userId: string;
+}) {
+  const record = await db.historyRecord.findFirst({
+    where: {
+      id: getDetailPageProjectRecordId(analysisHistoryId),
+      type: DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+      userId,
+    },
+    select: { output: true },
+  });
+  const project = parseProjectRecord(record, { analysisHistoryId, userId });
+  const section = findSection(project, sectionId);
+  const intent = section.generationIntent;
+
+  if (!intent || intent.id !== intentId) {
+    throw new ApiError("制作请求无效，请重新点击生成。", 409);
+  }
+
+  if (intent.consumedAt) {
+    if (intent.consumedRequestId === requestId) {
+      return { alreadyConsumed: true as const, intent, project, section };
+    }
+    throw new ApiError("本次制作请求已被使用，请重新点击生成。", 409);
+  }
+
+  if (project.revision !== expectedRevision) {
+    throw new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409);
+  }
+
+  if (getActiveDetailPageGeneration(project)) {
+    throw new ApiError("当前详情页已有视觉正在制作，请稍后再试。", 409);
+  }
+
+  assertDetailPageSectionGenerationEligibility(section);
+
+  if (Date.parse(intent.expiresAt) <= now.getTime()) {
+    throw new ApiError("制作请求已过期，请重新点击生成。", 409);
+  }
+
+  const consumedIntent = { ...intent, consumedAt: now.toISOString(), consumedRequestId: requestId };
+  const nextProject: DetailPageProjectV2 = {
+    ...project,
+    revision: project.revision + 1,
+    updatedAt: now.toISOString(),
+    sections: project.sections.map((item) =>
+      item.id === sectionId
+        ? {
+            ...item,
+            generationIntent: consumedIntent,
+            generationOperationId,
+            generationRequestId: requestId,
+            generationStartedAt: now.toISOString(),
+            lastError: null,
+            lastGenerationOutcome: "PENDING",
+            lastGenerationRequestId: requestId,
+            lastGenerationSettledAt: null,
+            lastGenerationStartedAt: now.toISOString(),
+            lifecycle: "GENERATING",
+          }
+        : item,
+    ),
+  };
+  const result = await db.historyRecord.updateMany({
+    where: {
+      id: getDetailPageProjectRecordId(analysisHistoryId),
+      userId,
+      type: DETAIL_PAGE_PROJECT_HISTORY_TYPE,
+      output: { path: ["revision"], equals: expectedRevision },
+    },
+    data: { output: nextProject as unknown as Prisma.InputJsonValue },
+  });
+
+  if (!result.count) {
+    throw new ApiError("详情页策划已在其他页面更新，请刷新后重试。", 409);
+  }
+
+  return {
+    alreadyConsumed: false as const,
+    intent: consumedIntent,
+    project: nextProject,
+    section: nextProject.sections.find((item) => item.id === sectionId)!,
+  };
+}
+
 export async function beginDetailPageSectionGeneration({
   analysisHistoryId,
   expectedRevision,
@@ -148,6 +313,10 @@ export async function beginDetailPageSectionGeneration({
             generationOperationId,
             generationRequestId: requestId,
             generationStartedAt: new Date().toISOString(),
+            lastGenerationOutcome: "PENDING",
+            lastGenerationRequestId: requestId,
+            lastGenerationSettledAt: null,
+            lastGenerationStartedAt: new Date().toISOString(),
             lastError: null,
             lifecycle: "GENERATING",
           }
@@ -204,6 +373,8 @@ export async function failDetailPageSectionGeneration({
             ...item,
             generationOperationId: null,
             generationStartedAt: null,
+            lastGenerationOutcome: "FAILED",
+            lastGenerationSettledAt: new Date().toISOString(),
             lastError: SAFE_GENERATION_ERROR,
             lifecycle: item.selectedAssetId ? "COMPLETE" : "FAILED",
           }
@@ -267,6 +438,8 @@ export async function persistGeneratedDetailPageSection(input: GeneratedSectionP
               assetSource: "generated",
               generationOperationId: null,
               generationStartedAt: null,
+              lastGenerationOutcome: "SUCCEEDED",
+              lastGenerationSettledAt: new Date().toISOString(),
               lastError: null,
               lifecycle: "COMPLETE",
               readiness: "EXISTING_ASSET",
@@ -347,6 +520,8 @@ async function persistReconciledProject(project: DetailPageProjectV2, sectionId:
             ...(assetId ? { assetSource: "generated" as const, readiness: "EXISTING_ASSET" as const, selectedAssetId: assetId } : {}),
             generationOperationId: null,
             generationStartedAt: null,
+            lastGenerationOutcome: assetId ? "SUCCEEDED" : "FAILED",
+            lastGenerationSettledAt: new Date().toISOString(),
             lastError: assetId ? null : SAFE_INTERRUPTED_GENERATION_ERROR,
             lifecycle: assetId || section.selectedAssetId ? "COMPLETE" : "FAILED",
           }

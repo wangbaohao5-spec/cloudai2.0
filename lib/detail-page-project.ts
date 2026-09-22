@@ -17,6 +17,10 @@ export type DetailPageModuleType = (typeof DETAIL_PAGE_MODULE_TYPES)[number];
 export type DetailPageModuleKind = "Visual" | "Hybrid" | "Fact";
 export type DetailPageReadiness = "READY" | "NEEDS_INPUT" | "EXISTING_ASSET" | "OPTIONAL";
 export type DetailPageLifecycle = "PLANNED" | "GENERATING" | "COMPLETE" | "FAILED";
+export type DetailPageGenerationEventType = "generate-click" | "retry-click" | "regenerate-click";
+export type DetailPageGenerationPagePhase = "build" | "preview";
+export type DetailPageNavigationType = "back_forward" | "navigate" | "prerender" | "reload" | "unknown";
+export type DetailPageGenerationOutcome = "FAILED" | "PENDING" | "SUCCEEDED";
 export type DetailPageStylePreset = "brand-site" | "ecommerce" | "minimal" | "xiaohongshu";
 export const DETAIL_PAGE_LAYOUT_VARIANTS = {
   HERO: ["FULL_VISUAL", "SPLIT"],
@@ -59,6 +63,17 @@ export type DetailPageSectionCopy = {
   headline: string;
 };
 
+export type DetailPageGenerationIntent = {
+  consumedAt: string | null;
+  consumedRequestId: string | null;
+  createdAt: string;
+  eventType: DetailPageGenerationEventType;
+  expiresAt: string;
+  id: string;
+  navigationType: DetailPageNavigationType;
+  pagePhase: DetailPageGenerationPagePhase;
+};
+
 export type DetailPageStyle = {
   lighting: string;
   mood: string;
@@ -75,8 +90,13 @@ export type DetailPageSectionV2 = {
   hidden: boolean;
   id: string;
   generationOperationId: string | null;
+  generationIntent: DetailPageGenerationIntent | null;
   generationRequestId: string | null;
   generationStartedAt: string | null;
+  lastGenerationOutcome: DetailPageGenerationOutcome | null;
+  lastGenerationRequestId: string | null;
+  lastGenerationSettledAt: string | null;
+  lastGenerationStartedAt: string | null;
   lastError: string | null;
   layout: DetailPageLayout;
   lifecycle: DetailPageLifecycle;
@@ -490,8 +510,13 @@ function createSection(
     layout: getDetailPageDefaultLayout(moduleType),
     hidden: false,
     generationOperationId: null,
+    generationIntent: null,
     generationRequestId: null,
     generationStartedAt: null,
+    lastGenerationOutcome: null,
+    lastGenerationRequestId: null,
+    lastGenerationSettledAt: null,
+    lastGenerationStartedAt: null,
     lastError: null,
   };
 }
@@ -651,6 +676,28 @@ export function parseDetailPageProject(value: unknown, expected?: { analysisHist
     const copy = isRecord(rawSection.copy) ? rawSection.copy : null;
     const lifecycle = rawSection.lifecycle;
     const readiness = rawSection.readiness;
+    const rawIntent = isRecord(rawSection.generationIntent) ? rawSection.generationIntent : null;
+    const generationIntent = rawIntent &&
+      cleanText(rawIntent.id, 200) &&
+      isIsoDate(rawIntent.createdAt) &&
+      isIsoDate(rawIntent.expiresAt) &&
+      (rawIntent.consumedAt === null || isIsoDate(rawIntent.consumedAt)) &&
+      (rawIntent.consumedRequestId === null || typeof rawIntent.consumedRequestId === "string") &&
+      (rawIntent.eventType === "generate-click" || rawIntent.eventType === "retry-click" || rawIntent.eventType === "regenerate-click") &&
+      (rawIntent.pagePhase === "build" || rawIntent.pagePhase === "preview") &&
+      (rawIntent.navigationType === "navigate" || rawIntent.navigationType === "reload" || rawIntent.navigationType === "back_forward" || rawIntent.navigationType === "prerender" || rawIntent.navigationType === "unknown")
+      ? {
+          id: cleanText(rawIntent.id, 200),
+          createdAt: rawIntent.createdAt,
+          expiresAt: rawIntent.expiresAt,
+          consumedAt: rawIntent.consumedAt,
+          consumedRequestId: typeof rawIntent.consumedRequestId === "string" ? cleanText(rawIntent.consumedRequestId, 200) || null : null,
+          eventType: rawIntent.eventType,
+          pagePhase: rawIntent.pagePhase,
+          navigationType: rawIntent.navigationType,
+        } satisfies DetailPageGenerationIntent
+      : null;
+    const lastGenerationOutcome = rawSection.lastGenerationOutcome;
 
     if (
       !id ||
@@ -693,9 +740,18 @@ export function parseDetailPageProject(value: unknown, expected?: { analysisHist
       hidden: rawSection.hidden,
       generationOperationId:
         typeof rawSection.generationOperationId === "string" ? cleanText(rawSection.generationOperationId, 200) || null : null,
+      generationIntent,
       generationRequestId:
         typeof rawSection.generationRequestId === "string" ? cleanText(rawSection.generationRequestId, 200) || null : null,
       generationStartedAt: isIsoDate(rawSection.generationStartedAt) ? rawSection.generationStartedAt : null,
+      lastGenerationOutcome:
+        lastGenerationOutcome === "PENDING" || lastGenerationOutcome === "SUCCEEDED" || lastGenerationOutcome === "FAILED"
+          ? lastGenerationOutcome
+          : null,
+      lastGenerationRequestId:
+        typeof rawSection.lastGenerationRequestId === "string" ? cleanText(rawSection.lastGenerationRequestId, 200) || null : null,
+      lastGenerationSettledAt: isIsoDate(rawSection.lastGenerationSettledAt) ? rawSection.lastGenerationSettledAt : null,
+      lastGenerationStartedAt: isIsoDate(rawSection.lastGenerationStartedAt) ? rawSection.lastGenerationStartedAt : null,
       lastError: typeof rawSection.lastError === "string" ? cleanText(rawSection.lastError, 300) || null : null,
     });
   }

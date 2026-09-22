@@ -40,6 +40,9 @@ import {
 import {
   assertDetailPageSectionGenerationEligibility,
   beginDetailPageSectionGeneration,
+  consumeDetailPageSectionGenerationIntent,
+  createDetailPageSectionGenerationIntent,
+  DETAIL_PAGE_GENERATION_INTENT_TTL_MS,
   DETAIL_PAGE_GENERATION_STALE_MS,
   failDetailPageSectionGeneration,
   persistGeneratedDetailPageSection,
@@ -94,6 +97,25 @@ function withGeneration(
   };
 }
 
+function withIntent(project: DetailPageProjectV2, options: { consumedAt?: string | null; expiresAt?: string; requestId?: string | null } = {}) {
+  return {
+    ...project,
+    sections: project.sections.map((section, index) => index === 0 ? {
+      ...section,
+      generationIntent: {
+        id: "intent-1",
+        createdAt: "2026-09-19T08:00:00.000Z",
+        expiresAt: options.expiresAt || "2026-09-19T08:02:00.000Z",
+        consumedAt: options.consumedAt === undefined ? null : options.consumedAt,
+        consumedRequestId: options.requestId === undefined ? null : options.requestId,
+        eventType: "generate-click" as const,
+        pagePhase: "build" as const,
+        navigationType: "navigate" as const,
+      },
+    } : section),
+  };
+}
+
 describe("detail page section generation state", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -137,6 +159,203 @@ describe("detail page section generation state", () => {
 
     await expect(prepareDetailPageSectionGeneration({ analysisHistoryId: "analysis-1", expectedRevision: 2, sectionId: "section-1", userId: "user-1" })).rejects.toMatchObject({ status: 409 });
     expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("creates a short-lived server intent without starting generation", async () => {
+    const project = makeProject();
+    mocks.findFirst.mockResolvedValue({ output: project });
+    const now = new Date("2026-09-19T08:00:00.000Z");
+
+    const result = await createDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      eventType: "generate-click",
+      expectedRevision: project.revision,
+      navigationType: "navigate",
+      now,
+      pagePhase: "build",
+      sectionId: "section-1",
+      userId: "user-1",
+    });
+
+    expect(result.intent.id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(Date.parse(result.intent.expiresAt) - now.getTime()).toBe(DETAIL_PAGE_GENERATION_INTENT_TTL_MS);
+    expect(result.section).toMatchObject({ generationIntent: { eventType: "generate-click" }, lifecycle: "PLANNED" });
+    expect(result.section.generationOperationId).toBeNull();
+  });
+
+  it("does not mint a second unconsumed intent for the same section", async () => {
+    const project = withIntent(makeProject());
+    mocks.findFirst.mockResolvedValue({ output: project });
+
+    await expect(createDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      eventType: "generate-click",
+      expectedRevision: project.revision,
+      navigationType: "navigate",
+      now: new Date("2026-09-19T08:01:00.000Z"),
+      pagePhase: "build",
+      sectionId: "section-1",
+      userId: "user-1",
+    })).rejects.toMatchObject({ status: 409 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("atomically consumes one intent and starts only one pending attempt", async () => {
+    const project = withIntent(makeProject());
+    mocks.findFirst.mockResolvedValue({ output: project });
+
+    const result = await consumeDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: project.revision,
+      generationOperationId: "operation-1",
+      intentId: "intent-1",
+      now: new Date("2026-09-19T08:01:00.000Z"),
+      requestId: "request-1",
+      sectionId: "section-1",
+      userId: "user-1",
+    });
+
+    expect(result.alreadyConsumed).toBe(false);
+    expect(result.section).toMatchObject({
+      generationOperationId: "operation-1",
+      generationRequestId: "request-1",
+      lastGenerationOutcome: "PENDING",
+      lifecycle: "GENERATING",
+    });
+    expect(result.intent.consumedRequestId).toBe("request-1");
+  });
+
+  it("replays the same consumed intent and request without a second write", async () => {
+    const project = withGeneration(withIntent(makeProject(), { consumedAt: "2026-09-19T08:01:00.000Z", requestId: "request-1" }));
+    mocks.findFirst.mockResolvedValue({ output: project });
+
+    await expect(consumeDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: 1,
+      generationOperationId: "operation-2",
+      intentId: "intent-1",
+      requestId: "request-1",
+      sectionId: "section-1",
+      userId: "user-1",
+    })).resolves.toMatchObject({ alreadyConsumed: true });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects the same consumed intent with a new requestId", async () => {
+    const project = withIntent(makeProject(), { consumedAt: "2026-09-19T08:01:00.000Z", requestId: "request-1" });
+    mocks.findFirst.mockResolvedValue({ output: project });
+
+    await expect(consumeDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: project.revision,
+      generationOperationId: "operation-2",
+      intentId: "intent-1",
+      requestId: "request-2",
+      sectionId: "section-1",
+      userId: "user-1",
+    })).rejects.toMatchObject({ status: 409 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing, cross-section, and expired intents", async () => {
+    const project = withIntent(makeProject(), { expiresAt: "2026-09-19T08:00:30.000Z" });
+    mocks.findFirst.mockResolvedValue({ output: project });
+    const base = {
+      analysisHistoryId: "analysis-1",
+      expectedRevision: project.revision,
+      generationOperationId: "operation-1",
+      now: new Date("2026-09-19T08:01:00.000Z"),
+      requestId: "request-1",
+      userId: "user-1",
+    };
+
+    await expect(consumeDetailPageSectionGenerationIntent({ ...base, intentId: "missing", sectionId: "section-1" })).rejects.toMatchObject({ status: 409 });
+    await expect(consumeDetailPageSectionGenerationIntent({ ...base, intentId: "intent-1", sectionId: "section-2" })).rejects.toMatchObject({ status: 409 });
+    await expect(consumeDetailPageSectionGenerationIntent({ ...base, intentId: "intent-1", sectionId: "section-1" })).rejects.toMatchObject({ status: 409 });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("denies intents across users and products", async () => {
+    const project = withIntent(makeProject());
+    mocks.findFirst.mockResolvedValue({ output: project });
+    const base = {
+      expectedRevision: project.revision,
+      generationOperationId: "operation-1",
+      intentId: "intent-1",
+      requestId: "request-1",
+      sectionId: "section-1",
+    };
+
+    await expect(consumeDetailPageSectionGenerationIntent({ ...base, analysisHistoryId: "analysis-1", userId: "user-2" })).rejects.toMatchObject({ status: 409 });
+    await expect(consumeDetailPageSectionGenerationIntent({ ...base, analysisHistoryId: "analysis-2", userId: "user-1" })).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("allows a new explicit intent after a settled failure", async () => {
+    const project = withIntent(makeProject(), { consumedAt: "2026-09-19T08:01:00.000Z", requestId: "request-1" });
+    project.sections[0] = { ...project.sections[0], lifecycle: "FAILED", lastGenerationOutcome: "FAILED" };
+    mocks.findFirst.mockResolvedValue({ output: project });
+
+    await expect(createDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      eventType: "retry-click",
+      expectedRevision: project.revision,
+      navigationType: "reload",
+      now: new Date("2026-09-19T08:03:00.000Z"),
+      pagePhase: "build",
+      sectionId: "section-1",
+      userId: "user-1",
+    })).resolves.toMatchObject({ intent: { eventType: "retry-click" } });
+  });
+
+  it("requires and consumes a new explicit intent for regenerate while preserving the old Asset", async () => {
+    const old = withIntent(makeProject(), { consumedAt: "2026-09-19T08:01:00.000Z", requestId: "request-old" });
+    old.sections[0] = { ...old.sections[0], lifecycle: "COMPLETE", selectedAssetId: "asset-old", lastGenerationOutcome: "SUCCEEDED" };
+    mocks.findFirst.mockResolvedValueOnce({ output: old });
+    const prepared = await createDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      eventType: "regenerate-click",
+      expectedRevision: old.revision,
+      navigationType: "navigate",
+      now: new Date("2026-09-19T08:03:00.000Z"),
+      pagePhase: "preview",
+      sectionId: "section-1",
+      userId: "user-1",
+    });
+    mocks.findFirst.mockResolvedValueOnce({ output: prepared.project });
+    const consumed = await consumeDetailPageSectionGenerationIntent({
+      analysisHistoryId: "analysis-1",
+      expectedRevision: prepared.project.revision,
+      generationOperationId: "operation-new",
+      intentId: prepared.intent.id,
+      now: new Date("2026-09-19T08:03:01.000Z"),
+      requestId: "request-new",
+      sectionId: "section-1",
+      userId: "user-1",
+    });
+
+    expect(consumed.intent.eventType).toBe("regenerate-click");
+    expect(consumed.section).toMatchObject({ lifecycle: "GENERATING", selectedAssetId: "asset-old" });
+  });
+
+  it("allows only one winner when two requests consume the same revision", async () => {
+    const project = withIntent(makeProject());
+    mocks.findFirst.mockResolvedValue({ output: project });
+    mocks.updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+    const input = {
+      analysisHistoryId: "analysis-1",
+      expectedRevision: project.revision,
+      intentId: "intent-1",
+      now: new Date("2026-09-19T08:01:00.000Z"),
+      sectionId: "section-1",
+      userId: "user-1",
+    };
+    const results = await Promise.allSettled([
+      consumeDetailPageSectionGenerationIntent({ ...input, generationOperationId: "operation-1", requestId: "request-1" }),
+      consumeDetailPageSectionGenerationIntent({ ...input, generationOperationId: "operation-2", requestId: "request-2" }),
+    ]);
+
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
   });
 
   it("denies a second generation while the project is busy", async () => {
@@ -278,6 +497,7 @@ describe("detail page section generation state", () => {
     expect(mocks.findFirst).not.toHaveBeenCalled();
     expect(mocks.usageFindFirst).not.toHaveBeenCalled();
     expect(mocks.updateMany).not.toHaveBeenCalled();
+    expect(project.sections.every((section) => section.generationIntent === null)).toBe(true);
   });
 
   it("refunds stale pending Usage before releasing an initial generation", async () => {

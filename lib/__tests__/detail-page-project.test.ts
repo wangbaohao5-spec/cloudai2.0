@@ -170,14 +170,30 @@ describe("Detail Page V2 project contract", () => {
     expect(parseDetailPageProject({ version: 2, revision: 1 })).toBeNull();
   });
 
-  it("keeps old project JSON compatible when generation timing metadata is absent", () => {
+  it("keeps old project JSON compatible when generation intent and attempt metadata are absent", () => {
     const project = createProject();
+    const newerFields = new Set([
+      "generationIntent",
+      "generationStartedAt",
+      "lastGenerationOutcome",
+      "lastGenerationRequestId",
+      "lastGenerationSettledAt",
+      "lastGenerationStartedAt",
+    ]);
     const legacy = {
       ...project,
-      sections: project.sections.map((section) => Object.fromEntries(Object.entries(section).filter(([key]) => key !== "generationStartedAt"))),
+      sections: project.sections.map((section) => Object.fromEntries(Object.entries(section).filter(([key]) => !newerFields.has(key)))),
     };
 
-    expect(parseDetailPageProject(legacy)?.sections.every((section) => section.generationStartedAt === null)).toBe(true);
+    expect(parseDetailPageProject(legacy)?.sections).toEqual(project.sections.map((section) => ({
+      ...section,
+      generationIntent: null,
+      generationStartedAt: null,
+      lastGenerationOutcome: null,
+      lastGenerationRequestId: null,
+      lastGenerationSettledAt: null,
+      lastGenerationStartedAt: null,
+    })));
   });
 
   it("binds and replaces an existing visual asset without persisting a signed URL", () => {

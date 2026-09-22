@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { editImage } from "@/lib/ai/image-edit-provider";
+import { createProviderDiagnostic, logProviderDiagnostic } from "@/lib/ai/provider-observability";
 import { resolveImageEditRoute } from "@/lib/ai/image-edit-router";
 import { buildProductDetailPageSectionPrompt } from "@/lib/ai/product-detail-page-section-prompt-builder";
 import { ApiError, jsonError } from "@/lib/api-errors";
@@ -7,12 +8,12 @@ import { getAssetForUser } from "@/lib/assets";
 import { getCurrentUser } from "@/lib/current-user";
 import { getDetailPageAssetCandidates } from "@/lib/detail-page-assets";
 import {
-  beginDetailPageSectionGeneration,
+  consumeDetailPageSectionGenerationIntent,
   failDetailPageSectionGeneration,
   persistGeneratedDetailPageSection,
-  prepareDetailPageSectionGeneration,
   recoverGeneratedDetailPageSection,
 } from "@/lib/detail-page-section-generation";
+import { logDetailPageGenerationTrigger } from "@/lib/detail-page-generation-diagnostics";
 import { cleanupGeneratedAssetAfterFailure } from "@/lib/generated-asset-cleanup";
 import { getHistoryRecordForUser } from "@/lib/history";
 import { sanitizeProductOutputSettings } from "@/lib/product-output-settings";
@@ -28,6 +29,7 @@ export const runtime = "nodejs";
 type DetailPageSectionGenerateBody = {
   analysisHistoryId?: string;
   expectedRevision?: number;
+  intentId?: string;
   outputSettings?: unknown;
   sectionId?: string;
 };
@@ -96,11 +98,12 @@ export async function POST(request: Request) {
     const body = (await request.json()) as DetailPageSectionGenerateBody;
     const analysisHistoryId = cleanId(body.analysisHistoryId);
     const sectionId = cleanId(body.sectionId);
+    const intentId = cleanId(body.intentId);
     const expectedRevision = Number(body.expectedRevision);
     const outputSettings = sanitizeProductOutputSettings(body.outputSettings);
     const requestId = getUsageRequestId(request);
 
-    if (!analysisHistoryId || !sectionId) {
+    if (!analysisHistoryId || !sectionId || !intentId) {
       throw new ApiError("详情页商品和模块不能为空。", 400);
     }
 
@@ -114,29 +117,65 @@ export async function POST(request: Request) {
       return NextResponse.json(alreadyCompleted, { headers: { "Cache-Control": "no-store" } });
     }
 
-    const [{ analysisRecord, sourceAsset }, prepared] = await Promise.all([
-      getCanonicalProductReference(user.id, analysisHistoryId),
-      prepareDetailPageSectionGeneration({ analysisHistoryId, expectedRevision, sectionId, userId: user.id }),
-    ]);
-    const prompt = buildProductDetailPageSectionPrompt({
-      pageStyle: prepared.project.pageStyle,
-      productTitle: analysisRecord.title,
-      section: prepared.section,
-    });
-    const imageEditRoute = resolveImageEditRoute({ task: "product-detail-page", outputSettings }, { log: false });
-    const usageReservation = await reserveUsage({
-      userId: user.id,
-      type: "image",
-      model: imageEditRoute.modelId,
+    const { analysisRecord, sourceAsset } = await getCanonicalProductReference(user.id, analysisHistoryId);
+    const generationOperationId = randomUUID();
+    const consumed = await consumeDetailPageSectionGenerationIntent({
+      analysisHistoryId,
+      expectedRevision,
+      generationOperationId,
+      intentId,
       requestId,
-      metadata: {
-        route: "/api/products/detail-page/sections/generate",
-        analysisHistoryId,
-        detailPageProjectId: prepared.project.projectId,
-        sectionId,
-        moduleType: prepared.section.moduleType,
-      },
+      sectionId,
+      userId: user.id,
     });
+
+    logDetailPageGenerationTrigger({
+      event: consumed.alreadyConsumed ? "intent-rejected" : "intent-consumed",
+      eventType: consumed.intent.eventType,
+      intentId,
+      moduleType: consumed.section.moduleType,
+      navigationType: consumed.intent.navigationType,
+      pagePhase: consumed.intent.pagePhase,
+      projectRevision: consumed.project.revision,
+      requestId,
+      sectionId,
+    });
+
+    if (consumed.alreadyConsumed) {
+      const recovered = await getRecoveredResponse(user.id, analysisHistoryId, sectionId, requestId);
+      if (recovered) return NextResponse.json(recovered, { headers: { "Cache-Control": "no-store" } });
+      throw new ApiError("本次视觉生成仍在处理或已经结束，请刷新后查看。", 409);
+    }
+
+    const prepared = consumed;
+    let prompt: string;
+    let imageEditRoute: ReturnType<typeof resolveImageEditRoute>;
+    let usageReservation: Awaited<ReturnType<typeof reserveUsage>>;
+
+    try {
+      prompt = buildProductDetailPageSectionPrompt({
+        pageStyle: prepared.project.pageStyle,
+        productTitle: analysisRecord.title,
+        section: prepared.section,
+      });
+      imageEditRoute = resolveImageEditRoute({ task: "product-detail-page", outputSettings }, { log: false });
+      usageReservation = await reserveUsage({
+        userId: user.id,
+        type: "image",
+        model: imageEditRoute.modelId,
+        requestId,
+        metadata: {
+          route: "/api/products/detail-page/sections/generate",
+          analysisHistoryId,
+          detailPageProjectId: prepared.project.projectId,
+          sectionId,
+          moduleType: prepared.section.moduleType,
+        },
+      });
+    } catch (error) {
+      await failDetailPageSectionGeneration({ analysisHistoryId, generationOperationId, sectionId, userId: user.id }).catch(() => null);
+      throw error;
+    }
 
     if (!usageReservation.created) {
       const recovered = await getRecoveredResponse(user.id, analysisHistoryId, sectionId, requestId);
@@ -145,26 +184,18 @@ export async function POST(request: Request) {
         return NextResponse.json(recovered, { headers: { "Cache-Control": "no-store" } });
       }
 
+      await failDetailPageSectionGeneration({ analysisHistoryId, generationOperationId, sectionId, userId: user.id }).catch(() => null);
       throw new ApiError("本次视觉生成仍在处理或已经结束，请刷新后查看。", 409);
     }
 
-    const generationOperationId = randomUUID();
+    const generationTotalStartedAt = performance.now();
+    const diagnosticContext = { intentId, moduleType: prepared.section.moduleType, requestId, sectionId };
     const persistedResult = await runReservedUsageTask({
       usageRecordId: usageReservation.record.id,
       userId: user.id,
       logLabel: "detail page V2 section visual",
       task: async ({ addRefundMetadata, setFailureCode }) => {
         let generatedStoragePath: string | undefined;
-
-        setFailureCode("HISTORY_PERSIST_ERROR");
-        await beginDetailPageSectionGeneration({
-          analysisHistoryId,
-          expectedRevision,
-          generationOperationId,
-          requestId,
-          sectionId,
-          userId: user.id,
-        });
 
         try {
           setFailureCode("STORAGE_ERROR");
@@ -177,18 +208,54 @@ export async function POST(request: Request) {
             task: "product-detail-page",
             model: imageEditRoute.model,
             outputSettings,
+            diagnosticContext,
           });
           setFailureCode("INVALID_PROVIDER_OUTPUT");
           const imageBuffer = await decodeBase64Image(editedImage.b64Json);
           const fileName = `${sanitizeAssetName(sourceAsset.name)}-detail-v2-${prepared.section.moduleType.toLowerCase()}-${Date.now()}.png`;
           setFailureCode("STORAGE_ERROR");
-          const uploadedFile = await uploadFile({
-            userId: user.id,
-            type: "image",
-            name: fileName,
-            content: imageBuffer,
-            contentType: "image/png",
-          });
+          const storageStartedAt = performance.now();
+          logProviderDiagnostic(createProviderDiagnostic({
+            context: diagnosticContext,
+            elapsedMs: 0,
+            host: "storage",
+            provider: imageEditRoute.provider,
+            stage: "STORAGE_UPLOAD_START",
+            task: "product-detail-page",
+            totalElapsedMs: storageStartedAt - generationTotalStartedAt,
+          }));
+          let uploadedFile: Awaited<ReturnType<typeof uploadFile>>;
+          try {
+            uploadedFile = await uploadFile({
+              userId: user.id,
+              type: "image",
+              name: fileName,
+              content: imageBuffer,
+              contentType: "image/png",
+            });
+          } catch (error) {
+            logProviderDiagnostic(createProviderDiagnostic({
+              context: diagnosticContext,
+              elapsedMs: performance.now() - storageStartedAt,
+              error,
+              event: "provider-failure",
+              host: "storage",
+              provider: imageEditRoute.provider,
+              stage: "STORAGE_UPLOAD_END",
+              task: "product-detail-page",
+              totalElapsedMs: performance.now() - generationTotalStartedAt,
+            }));
+            throw error;
+          }
+          logProviderDiagnostic(createProviderDiagnostic({
+            context: diagnosticContext,
+            elapsedMs: performance.now() - storageStartedAt,
+            host: "storage",
+            provider: imageEditRoute.provider,
+            stage: "STORAGE_UPLOAD_END",
+            task: "product-detail-page",
+            totalElapsedMs: performance.now() - generationTotalStartedAt,
+          }));
           generatedStoragePath = uploadedFile.path;
           addRefundMetadata({ storagePath: uploadedFile.path });
           setFailureCode("ASSET_PERSIST_ERROR");

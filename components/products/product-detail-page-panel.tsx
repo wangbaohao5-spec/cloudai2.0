@@ -10,6 +10,8 @@ import {
   DETAIL_PAGE_MODULE_TYPES,
   getDetailPageSectionEffectiveState,
   type DetailPageAssetCandidate,
+  type DetailPageGenerationEventType,
+  type DetailPageNavigationType,
   type DetailPageModuleType,
   type DetailPageProjectOperation,
   type DetailPageProjectV2,
@@ -42,6 +44,18 @@ type SectionGenerationResponse = {
   project: DetailPageProjectV2;
   recovered: boolean;
   warning?: string | null;
+};
+
+type GenerationIntentResponse = {
+  error?: string;
+  intentId: string;
+  project: DetailPageProjectV2;
+};
+
+type PendingSectionGeneration = {
+  attempt: ReturnType<typeof createGenerationAttempt>;
+  expectedRevision: number;
+  intentId: string;
 };
 
 type ExportErrorResponse = {
@@ -85,6 +99,21 @@ async function readSectionGenerationResponse(response: Response) {
   return data;
 }
 
+async function readGenerationIntentResponse(response: Response) {
+  const data = (await response.json().catch(() => null)) as GenerationIntentResponse | null;
+  if (!response.ok || !data?.intentId || !data.project) {
+    throw new Error(data?.error || "制作请求创建失败，请重新点击生成。");
+  }
+  return data;
+}
+
+function getNavigationType(): DetailPageNavigationType {
+  const entry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  return entry?.type === "navigate" || entry?.type === "reload" || entry?.type === "back_forward" || entry?.type === "prerender"
+    ? entry.type
+    : "unknown";
+}
+
 function getDownloadFilename(response: Response, fallback: string) {
   const disposition = response.headers.get("Content-Disposition") || "";
   const match = disposition.match(/filename="([a-zA-Z0-9._-]+)"/);
@@ -108,7 +137,7 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   const [source, setSource] = useState<ProjectResponse["source"]>();
   const [style, setStyle] = useState<DetailPageStylePreset>("ecommerce");
   const [viewMode, setViewMode] = useState<"build" | "preview">("build");
-  const generationAttemptsRef = useRef(new Map<string, ReturnType<typeof createGenerationAttempt>>());
+  const generationAttemptsRef = useRef(new Map<string, PendingSectionGeneration>());
 
   async function loadWorkspaceState() {
     if (!analysisHistoryId) {
@@ -245,19 +274,58 @@ export function ProductDetailPagePanel({ analysisResult, generationBrief, output
   async function handleGenerateSection(sectionId: string) {
     if (!project || generatingSectionId) return;
 
-    const attempt = generationAttemptsRef.current.get(sectionId) || createGenerationAttempt();
-    generationAttemptsRef.current.set(sectionId, attempt);
+    const section = project.sections.find((item) => item.id === sectionId);
+    if (!section) return;
+
     setError("");
     setGeneratingSectionId(sectionId);
     let receivedResponse = false;
 
     try {
-      const response = await attempt.fetch("/api/products/detail-page/sections/generate", {
+      let pending = generationAttemptsRef.current.get(sectionId);
+
+      if (!pending) {
+        const attempt = createGenerationAttempt();
+        const reusableIntent = section.generationIntent &&
+          !section.generationIntent.consumedAt &&
+          Date.parse(section.generationIntent.expiresAt) > Date.now()
+          ? section.generationIntent
+          : null;
+
+        if (reusableIntent) {
+          pending = { attempt, expectedRevision: project.revision, intentId: reusableIntent.id };
+        } else {
+          const eventType: DetailPageGenerationEventType = section.selectedAssetId
+            ? "regenerate-click"
+            : section.lifecycle === "FAILED"
+              ? "retry-click"
+              : "generate-click";
+          const intentResponse = await fetchWithAuthHandling("/api/products/detail-page/sections/intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              analysisHistoryId,
+              eventType,
+              expectedRevision: project.revision,
+              navigationType: getNavigationType(),
+              pagePhase: viewMode,
+              sectionId,
+            }),
+          }).then(readGenerationIntentResponse);
+          pending = { attempt, expectedRevision: intentResponse.project.revision, intentId: intentResponse.intentId };
+          setProject(intentResponse.project);
+        }
+
+        generationAttemptsRef.current.set(sectionId, pending);
+      }
+
+      const response = await pending.attempt.fetch("/api/products/detail-page/sections/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           analysisHistoryId,
-          expectedRevision: project.revision,
+          expectedRevision: pending.expectedRevision,
+          intentId: pending.intentId,
           outputSettings: outputSettings || undefined,
           sectionId,
         }),

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  begin: vi.fn(),
   buildPrompt: vi.fn(),
   cleanup: vi.fn(),
+  consume: vi.fn(),
   editImage: vi.fn(),
   fail: vi.fn(),
   finalizeUsage: vi.fn(),
@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => ({
   getFileUrl: vi.fn(),
   getHistory: vi.fn(),
   persist: vi.fn(),
-  prepare: vi.fn(),
   recover: vi.fn(),
   refundUsage: vi.fn(),
   reserveUsage: vi.fn(),
@@ -28,10 +27,9 @@ vi.mock("@/lib/assets", () => ({ getAssetForUser: mocks.getAssetForUser }));
 vi.mock("@/lib/current-user", () => ({ getCurrentUser: mocks.getCurrentUser }));
 vi.mock("@/lib/detail-page-assets", () => ({ getDetailPageAssetCandidates: mocks.getCandidates }));
 vi.mock("@/lib/detail-page-section-generation", () => ({
-  beginDetailPageSectionGeneration: mocks.begin,
+  consumeDetailPageSectionGenerationIntent: mocks.consume,
   failDetailPageSectionGeneration: mocks.fail,
   persistGeneratedDetailPageSection: mocks.persist,
-  prepareDetailPageSectionGeneration: mocks.prepare,
   recoverGeneratedDetailPageSection: mocks.recover,
 }));
 vi.mock("@/lib/generated-asset-cleanup", () => ({ cleanupGeneratedAssetAfterFailure: mocks.cleanup }));
@@ -70,7 +68,7 @@ function makeRequest(body: Record<string, unknown> = {}, requestId = "request-12
   return new Request("http://localhost/api/products/detail-page/sections/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-request-id": requestId },
-    body: JSON.stringify({ analysisHistoryId: "analysis-1", expectedRevision: 1, sectionId: "section-1", ...body }),
+    body: JSON.stringify({ analysisHistoryId: "analysis-1", expectedRevision: 1, intentId: "intent-1234", sectionId: "section-1", ...body }),
   });
 }
 
@@ -91,11 +89,20 @@ describe("detail page V2 section generation route", () => {
     mocks.getHistory.mockResolvedValue({ id: "analysis-1", assetId: "asset-source", type: "product-analysis", title: "测试商品", input: {}, output: {} });
     mocks.getAssetForUser.mockResolvedValue({ id: "asset-source", name: "source.jpg", type: "upload", url: "user/upload/source.jpg" });
     mocks.recover.mockResolvedValue(null);
-    mocks.prepare.mockResolvedValue({ project, section: project.sections[0] });
+    mocks.consume.mockResolvedValue({
+      alreadyConsumed: false,
+      intent: {
+        id: "intent-1234",
+        eventType: "generate-click",
+        pagePhase: "build",
+        navigationType: "navigate",
+      },
+      project: { ...project, revision: 2 },
+      section: project.sections[0],
+    });
     mocks.resolveRoute.mockReturnValue({ provider: "run-api", model: "gpt-image-2", modelId: "run-api-gpt-image-2-product-detail-page" });
     mocks.buildPrompt.mockReturnValue("safe visual-only prompt");
     mocks.reserveUsage.mockResolvedValue({ created: true, record: { id: "usage-1", status: "pending" } });
-    mocks.begin.mockResolvedValue({ ...project, revision: 2 });
     mocks.getFileUrl.mockResolvedValue("https://signed.example/source");
     mocks.editImage.mockResolvedValue({ b64Json: Buffer.from("image").toString("base64"), provider: "run-api", model: "gpt-image-2", modelId: "model-id" });
     mocks.uploadFile.mockResolvedValue({ path: "user/image/generated.png", signedUrl: "https://signed.example/generated" });
@@ -137,7 +144,7 @@ describe("detail page V2 section generation route", () => {
   });
 
   it("rejects ineligible module before Usage", async () => {
-    mocks.prepare.mockRejectedValue(new ApiError("请先补充资料。", 422));
+    mocks.consume.mockRejectedValue(new ApiError("请先补充资料。", 422));
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(422);
@@ -190,7 +197,7 @@ describe("detail page V2 section generation route", () => {
 
     expect(response.status).toBe(200);
     expect(data.recovered).toBe(true);
-    expect(mocks.prepare).not.toHaveBeenCalled();
+    expect(mocks.consume).not.toHaveBeenCalled();
     expect(mocks.reserveUsage).not.toHaveBeenCalled();
     expect(mocks.editImage).not.toHaveBeenCalled();
   });
@@ -200,6 +207,32 @@ describe("detail page V2 section generation route", () => {
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(409);
+    expect(mocks.editImage).not.toHaveBeenCalled();
+  });
+
+  it("rejects a consumed intent before Usage reservation and Provider", async () => {
+    mocks.consume.mockRejectedValue(new ApiError("本次制作请求已被使用。", 409));
+    const response = await POST(makeRequest({}, "request-new"));
+
+    expect(response.status).toBe(409);
+    expect(mocks.reserveUsage).not.toHaveBeenCalled();
+    expect(mocks.editImage).not.toHaveBeenCalled();
+    expect(mocks.persist).not.toHaveBeenCalled();
+  });
+
+  it("returns conflict for an in-flight same-intent replay without reserving again", async () => {
+    const project = makeProject();
+    mocks.consume.mockResolvedValue({
+      alreadyConsumed: true,
+      intent: { id: "intent-1234", eventType: "generate-click", pagePhase: "build", navigationType: "navigate" },
+      project,
+      section: project.sections[0],
+    });
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(409);
+    expect(mocks.recover).toHaveBeenCalledTimes(2);
+    expect(mocks.reserveUsage).not.toHaveBeenCalled();
     expect(mocks.editImage).not.toHaveBeenCalled();
   });
 

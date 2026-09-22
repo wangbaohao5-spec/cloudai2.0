@@ -1,4 +1,5 @@
 import type { ProductOutputSettings } from "@/lib/product-types";
+import type { ProviderDiagnosticContext } from "@/lib/ai/provider-observability";
 
 export type ImageEditTask =
   | "image-edit"
@@ -14,6 +15,7 @@ export type ImageEditInput = {
   prompt: string;
   model?: string;
   outputSettings?: ProductOutputSettings | null;
+  diagnosticContext?: ProviderDiagnosticContext;
 };
 
 export type ImageEditResult = {
