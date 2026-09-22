@@ -5183,6 +5183,15 @@
   min-height: clamp(220px, 34vw, 620px);
 }
 
+.product-detail-preview-module.is-usage-scene > section,
+.product-detail-preview-module.is-brand-content > section {
+  min-height: clamp(220px, 30vw, 540px);
+}
+
+.product-detail-preview-module.is-product-detail > section {
+  min-height: clamp(360px, 45vw, 560px);
+}
+
 .product-detail-preview-module.is-specs > section,
 .product-detail-preview-module.is-usage-guide > section,
 .product-detail-preview-module.is-benefits > section {
@@ -5297,6 +5306,45 @@
   min-height: inherit;
   max-height: 760px;
   background: var(--preview-section-alt);
+  object-fit: contain;
+}
+
+.product-detail-preview-media.media-role-scene,
+.product-detail-preview-media.media-role-editorial {
+  max-height: 580px;
+}
+
+.product-detail-preview-module.layout-single-detail .product-detail-preview-detail-layout {
+  align-content: center;
+  gap: clamp(24px, 4vw, 44px);
+  min-height: 0;
+  padding: clamp(36px, 6vw, 72px);
+}
+
+.product-detail-preview-module.layout-single-detail .product-detail-preview-media.media-role-detail {
+  justify-self: center;
+  width: min(70%, 720px);
+  height: min(38vw, 460px);
+  min-height: 0;
+  max-height: 460px;
+  background: transparent;
+  object-fit: contain;
+}
+
+.product-detail-preview-module.layout-single-detail .product-detail-preview-copy {
+  justify-self: center;
+  width: min(100%, 820px);
+  padding: 0;
+}
+
+.product-detail-preview-module.layout-split-detail .product-detail-preview-media.media-role-detail {
+  align-self: center;
+  justify-self: center;
+  width: calc(100% - clamp(48px, 8vw, 96px));
+  height: min(42vw, 520px);
+  min-height: 0;
+  max-height: 520px;
+  background: transparent;
   object-fit: contain;
 }
 
@@ -5467,5 +5515,25 @@
 
   .product-detail-preview-copy {
     padding: clamp(24px, 8vw, 44px);
+  }
+
+  .product-detail-preview-module.is-product-detail > section {
+    min-height: 0;
+  }
+
+  .product-detail-preview-module.layout-single-detail .product-detail-preview-detail-layout {
+    gap: var(--space-4);
+    padding: clamp(24px, 8vw, 36px);
+  }
+
+  .product-detail-preview-module.layout-single-detail .product-detail-preview-media.media-role-detail,
+  .product-detail-preview-module.layout-split-detail .product-detail-preview-media.media-role-detail {
+    width: min(86%, 420px);
+    height: min(78vw, 340px);
+    max-height: 340px;
+  }
+
+  .product-detail-preview-module.layout-single-detail .product-detail-preview-copy {
+    width: 100%;
   }
 }

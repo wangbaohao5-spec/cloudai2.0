@@ -5,7 +5,7 @@ import {
   DETAIL_PAGE_EXPORT_LIMITS,
   DETAIL_PAGE_EXPORT_QUALITY,
 } from "@/lib/detail-page-export";
-import { getDetailPageStyleRole } from "@/lib/detail-page-preview";
+import { getDetailPageMediaRole, getDetailPageStyleRole } from "@/lib/detail-page-preview";
 import sharp from "sharp";
 
 type RenderBox = { height: number; width: number; x: number; y: number };
@@ -14,6 +14,7 @@ export type DetailPageSectionRenderPlan = {
   copy: RenderBox;
   height: number;
   media: RenderBox | null;
+  mediaRole: ReturnType<typeof getDetailPageMediaRole>;
 };
 
 export type RenderedDetailPageSection = {
@@ -82,9 +83,30 @@ export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): De
     throw new ApiError("详情页模块版式不受支持。", 422);
   }
 
+  const mediaRole = getDetailPageMediaRole(section.moduleType);
+
+  if (section.moduleType === "PRODUCT_DETAIL" && section.layout === "SINGLE_DETAIL") {
+    return {
+      height: 760,
+      mediaRole,
+      media: { x: 180, y: 48, width: 840, height: 430 },
+      copy: { x: 0, y: 510, width: WIDTH, height: 250 },
+    };
+  }
+
+  if (section.moduleType === "PRODUCT_DETAIL" && section.layout === "SPLIT_DETAIL") {
+    return {
+      height,
+      mediaRole,
+      media: { x: 60, y: 60, width: 520, height: height - 120 },
+      copy: { x: 620, y: 0, width: 580, height },
+    };
+  }
+
   if (["SPLIT", "SPLIT_DETAIL", "EDITORIAL_SPLIT"].includes(section.layout)) {
     return {
       height,
+      mediaRole,
       media: { x: 0, y: 0, width: 660, height },
       copy: { x: 660, y: 0, width: 540, height },
     };
@@ -94,6 +116,7 @@ export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): De
     const mediaHeight = Math.round(height * 0.68);
     return {
       height,
+      mediaRole,
       media: { x: 0, y: 0, width: WIDTH, height: mediaHeight },
       copy: { x: 0, y: mediaHeight, width: WIDTH, height: height - mediaHeight },
     };
@@ -101,6 +124,7 @@ export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): De
 
   return {
     height,
+    mediaRole,
     media: null,
     copy: { x: 0, y: 0, width: WIDTH, height },
   };

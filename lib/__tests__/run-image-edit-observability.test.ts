@@ -13,15 +13,16 @@ vi.mock("@/lib/ai/provider-observability", async (importOriginal) => {
 vi.mock("@/lib/server-env", () => ({
   getRequiredEnv: vi.fn((name: string) => name === "RUN_API_KEY" ? "secret-api-key" : "https://runapi.example"),
 }));
-vi.mock("sharp", () => ({
-  default: vi.fn(() => ({
-    rotate: () => ({
-      flatten: () => ({
-        toColorspace: () => ({
-          png: () => ({ toBuffer: async () => Buffer.from("normalized-image-bytes") }),
-        }),
-      }),
-    }),
+vi.mock("@/lib/ai/providers/run-image-source", () => ({
+  normalizeRunApiSourceImage: vi.fn(async () => ({
+    blob: new Blob([Buffer.from("normalized-image-bytes")], { type: "image/jpeg" }),
+    buffer: Buffer.from("normalized-image-bytes"),
+    byteSize: Buffer.from("normalized-image-bytes").byteLength,
+    contentType: "image/jpeg",
+    fileName: "source.jpg",
+    format: "jpeg",
+    height: 100,
+    width: 100,
   })),
 }));
 

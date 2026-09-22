@@ -12,6 +12,7 @@ import {
 import {
   DETAIL_PAGE_LOGICAL_WIDTH,
   buildDetailPagePreview,
+  getDetailPageMediaRole,
   getDetailPagePreviewState,
   getDetailPageStyleClass,
   getNextDetailPageLayout,
@@ -36,6 +37,7 @@ function candidate(assetId: string, previewUrl: string | null = "https://example
     assetId,
     assetType: "image",
     createdAt: "2026-09-20T08:00:00.000Z",
+    displayUrl: previewUrl ? `${previewUrl}/display` : null,
     historyId: "history-1",
     imageType: "hero",
     name: "商品视觉",
@@ -206,5 +208,17 @@ describe("Detail Page V2 continuous preview", () => {
       getDetailPageStyleClass("xiaohongshu"),
     ]);
     expect(DETAIL_PAGE_LOGICAL_WIDTH).toBe(1200);
+  });
+
+  it("assigns PRODUCT_DETAIL a distinct media role from HERO", () => {
+    expect(getDetailPageMediaRole("PRODUCT_DETAIL")).toBe("detail");
+    expect(getDetailPageMediaRole("HERO")).toBe("hero");
+    expect(getDetailPageMediaRole("PRODUCT_DETAIL")).not.toBe(getDetailPageMediaRole("HERO"));
+  });
+
+  it("prefers a full preview URL while retaining a lightweight picker URL", () => {
+    const asset = candidate("asset-a");
+    expect(asset.previewUrl).toBe("https://example.test/preview");
+    expect(asset.displayUrl).toBe("https://example.test/preview/display");
   });
 });

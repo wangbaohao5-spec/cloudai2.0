@@ -21,6 +21,7 @@ vi.mock("@/lib/history", () => ({
 }));
 
 vi.mock("@/lib/storage", () => ({
+  DETAIL_PAGE_CANVAS_PREVIEW_TRANSFORM: { width: 2048, resize: "contain", quality: 86 },
   getImagePreviewUrl: mocks.getImagePreviewUrl,
 }));
 
@@ -29,6 +30,7 @@ import {
   getDetailPageAssetCandidates,
   getSuggestedDetailPageModuleTypes,
 } from "@/lib/detail-page-assets";
+import { DETAIL_PAGE_CANVAS_PREVIEW_TRANSFORM } from "@/lib/storage";
 
 function historyRecord({
   analysisHistoryId = "analysis-a",
@@ -97,6 +99,15 @@ describe("detail page existing asset discovery", () => {
       }),
     );
     expect(candidates[1]).not.toHaveProperty("url");
+    expect(candidates[1]).toMatchObject({
+      previewUrl: "https://storage.test/user-a/image/scene.png",
+      displayUrl: "https://storage.test/user-a/image/scene.png",
+    });
+    expect(mocks.getImagePreviewUrl).toHaveBeenCalledWith(
+      "user-a/image/scene.png",
+      undefined,
+      DETAIL_PAGE_CANVAS_PREVIEW_TRANSFORM,
+    );
   });
 
   it("excludes a malicious cross-product History record before the Asset query", async () => {
@@ -114,6 +125,7 @@ describe("detail page existing asset discovery", () => {
 
     expect(candidates).toHaveLength(2);
     expect(candidates.every((candidate) => candidate.previewUrl === null)).toBe(true);
+    expect(candidates.every((candidate) => candidate.displayUrl === null)).toBe(true);
     expect(warning).toHaveBeenCalledTimes(2);
     warning.mockRestore();
   });
@@ -127,6 +139,7 @@ describe("detail page existing asset discovery", () => {
 
     expect(candidate?.assetId).toBe("asset-scene");
     expect(candidate?.previewUrl).toBeNull();
+    expect(candidate?.displayUrl).toBeNull();
     expect(mocks.getImagePreviewUrl).not.toHaveBeenCalled();
     expect(mocks.assetFindMany.mock.calls[0][0].where.id.in).toEqual(["asset-scene"]);
   });

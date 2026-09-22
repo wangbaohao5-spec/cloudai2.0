@@ -12,6 +12,18 @@ import {
 
 export const DETAIL_PAGE_LOGICAL_WIDTH = 1200;
 
+export type DetailPageMediaRole = "detail" | "editorial" | "hero" | "scene" | "supporting";
+
+export const DETAIL_PAGE_MEDIA_ROLES: Record<DetailPageModuleType, DetailPageMediaRole> = {
+  HERO: "hero",
+  BENEFITS: "supporting",
+  USAGE_SCENE: "scene",
+  PRODUCT_DETAIL: "detail",
+  USAGE_GUIDE: "supporting",
+  BRAND_CONTENT: "editorial",
+  SPECS: "supporting",
+};
+
 export type DetailPagePreviewState = "complete" | "failed" | "generating" | "needs-input" | "planned";
 
 export type DetailPagePreviewSection = {
@@ -86,6 +98,10 @@ export function getDetailPageStyleClass(preset: DetailPageStylePreset) {
 
 export function getDetailPageStyleRole(preset: DetailPageStylePreset) {
   return DETAIL_PAGE_STYLE_ROLES[preset];
+}
+
+export function getDetailPageMediaRole(moduleType: DetailPageModuleType) {
+  return DETAIL_PAGE_MEDIA_ROLES[moduleType];
 }
 
 export function getDetailPageLayoutVariants(moduleType: DetailPageModuleType): readonly DetailPageLayout[] {

@@ -6,8 +6,8 @@ import {
   type ProviderDiagnosticStage,
 } from "@/lib/ai/provider-observability";
 import { fetchProvider, PROVIDER_TIMEOUTS, ProviderRequestError } from "@/lib/ai/provider-http";
+import { normalizeRunApiSourceImage } from "@/lib/ai/providers/run-image-source";
 import { getRequiredEnv } from "@/lib/server-env";
-import sharp from "sharp";
 
 type RunImageEditResponse = {
   data?: Array<Record<string, unknown>>;
@@ -57,16 +57,6 @@ function getRunApiImageCandidate(data: RunImageEditResponse) {
   return "";
 }
 
-function getNormalizedFileName(fileName?: string) {
-  const baseName = (fileName || "image")
-    .replace(/\.[^/.]+$/, "")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
-  return `${baseName || "image"}.png`;
-}
-
 type DiagnosticEmitter = (
   stage: ProviderDiagnosticStage,
   options?: {
@@ -80,7 +70,7 @@ type DiagnosticEmitter = (
   },
 ) => void;
 
-async function loadNormalizedImageBlob(imageUrl: string, emit: DiagnosticEmitter) {
+async function loadNormalizedImageBlob(imageUrl: string, fileName: string | undefined, emit: DiagnosticEmitter) {
   const sourceStartedAt = performance.now();
   const sourceHost = new URL(imageUrl).host;
   emit("SOURCE_FETCH_START", { host: sourceHost });
@@ -107,9 +97,9 @@ async function loadNormalizedImageBlob(imageUrl: string, emit: DiagnosticEmitter
   }
   emit("SOURCE_FETCH_END", { elapsedMs: performance.now() - sourceStartedAt, host: sourceHost, status: response.status });
   const normalizeStartedAt = performance.now();
-  let normalizedImage: Buffer;
+  let normalizedImage: Awaited<ReturnType<typeof normalizeRunApiSourceImage>>;
   try {
-    normalizedImage = await sharp(imageBuffer).rotate().flatten({ background: "#ffffff" }).toColorspace("srgb").png().toBuffer();
+    normalizedImage = await normalizeRunApiSourceImage(imageBuffer, fileName);
   } catch (error) {
     emit("SOURCE_NORMALIZE_END", { elapsedMs: performance.now() - normalizeStartedAt, error, event: "provider-failure", host: sourceHost });
     throw error;
@@ -117,8 +107,9 @@ async function loadNormalizedImageBlob(imageUrl: string, emit: DiagnosticEmitter
   emit("SOURCE_NORMALIZE_END", { elapsedMs: performance.now() - normalizeStartedAt, host: sourceHost });
 
   return {
-    blob: new Blob([new Uint8Array(normalizedImage)], { type: "image/png" }),
-    byteSize: normalizedImage.byteLength,
+    blob: normalizedImage.blob,
+    byteSize: normalizedImage.byteSize,
+    fileName: normalizedImage.fileName,
   };
 }
 
@@ -160,13 +151,13 @@ export async function editImageWithRunApi(input: ImageEditInput): Promise<ImageE
     }));
   };
 
-  const normalized = await loadNormalizedImageBlob(input.imageUrl, emit);
+  const normalized = await loadNormalizedImageBlob(input.imageUrl, input.fileName, emit);
   diagnosticState.normalizedSourceBytes = normalized.byteSize;
   const formData = new FormData();
   formData.append("model", model);
   formData.append("prompt", input.prompt);
   formData.append("response_format", "b64_json");
-  formData.append("image", normalized.blob, getNormalizedFileName(input.fileName));
+  formData.append("image", normalized.blob, normalized.fileName);
   emit("MULTIPART_BUILD_END");
 
   const fetchStartedAt = performance.now();

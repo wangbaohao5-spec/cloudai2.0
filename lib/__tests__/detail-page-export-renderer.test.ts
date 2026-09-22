@@ -106,6 +106,18 @@ describe("Detail Page V2 export renderer", () => {
     expect(Math.abs(edge[0] - center[0]) + Math.abs(edge[1] - center[1]) + Math.abs(edge[2] - center[2])).toBeGreaterThan(12);
   });
 
+  it("caps PRODUCT_DETAIL media below the HERO canvas and preserves contain geometry", () => {
+    const [hero, , , productDetail] = sections();
+    const heroPlan = getDetailPageSectionRenderPlan(hero);
+    const detailPlan = getDetailPageSectionRenderPlan(productDetail);
+
+    expect(heroPlan.mediaRole).toBe("hero");
+    expect(detailPlan.mediaRole).toBe("detail");
+    expect(detailPlan.media?.width).toBeLessThan(DETAIL_PAGE_EXPORT_LIMITS.width);
+    expect(detailPlan.media?.x).toBeGreaterThan(0);
+    expect(detailPlan.media?.height).toBeLessThan(heroPlan.media?.height || Infinity);
+  });
+
   it("rejects oversized source dimensions safely", async () => {
     const section = exportable(sections()[0]);
     const oversized = await source(DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension + 1, 1);

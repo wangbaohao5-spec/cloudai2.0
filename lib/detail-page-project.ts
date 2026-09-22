@@ -42,6 +42,7 @@ export type DetailPageAssetCandidate = {
   assetId: string;
   assetType: string;
   createdAt: string;
+  displayUrl: string | null;
   historyId: string | null;
   imageType: string | null;
   name: string;

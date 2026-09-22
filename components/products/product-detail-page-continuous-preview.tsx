@@ -18,6 +18,7 @@ import { getDetailPageSectionExportBlockers } from "@/lib/detail-page-export";
 import {
   DETAIL_PAGE_LOGICAL_WIDTH,
   buildDetailPagePreview,
+  getDetailPageMediaRole,
   getDetailPageLayoutVariants,
   getDetailPageStyleClass,
   getNextDetailPageLayout,
@@ -66,16 +67,22 @@ function PreviewImage({ item }: { item: DetailPagePreviewSection }) {
     );
   }
 
-  if (!item.asset?.previewUrl) return null;
+  const asset = item.asset;
+  const displayUrl = asset?.displayUrl || asset?.previewUrl;
+  if (!asset || !displayUrl) return null;
+
+  const mediaRole = getDetailPageMediaRole(item.section.moduleType);
 
   return (
     // Existing asset candidates already provide short-lived, product-scoped preview URLs.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      alt={`${DETAIL_PAGE_MODULE_DEFINITIONS[item.section.moduleType].label}：${item.asset.name}`}
+      alt={`${DETAIL_PAGE_MODULE_DEFINITIONS[item.section.moduleType].label}：${asset.name}`}
+      className={`product-detail-preview-media media-role-${mediaRole}`}
+      data-media-role={mediaRole}
       decoding="async"
       loading={item.section.order === 1 ? "eager" : "lazy"}
-      src={item.asset.previewUrl}
+      src={displayUrl}
     />
   );
 }

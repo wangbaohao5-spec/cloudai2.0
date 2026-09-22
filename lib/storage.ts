@@ -29,6 +29,12 @@ const DEFAULT_IMAGE_PREVIEW_TRANSFORM: ImagePreviewTransform = {
   quality: 72,
 };
 
+export const DETAIL_PAGE_CANVAS_PREVIEW_TRANSFORM: ImagePreviewTransform = {
+  width: 2048,
+  resize: "contain",
+  quality: 86,
+};
+
 export const ASSET_UPLOAD_LIMITS = {
   image: 10 * MB,
   video: 100 * MB,

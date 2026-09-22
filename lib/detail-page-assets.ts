@@ -7,7 +7,7 @@ import {
   type DetailPageModuleType,
 } from "@/lib/detail-page-project";
 import { getHistoryRecordForUser, getProductRelatedHistory } from "@/lib/history";
-import { getImagePreviewUrl } from "@/lib/storage";
+import { DETAIL_PAGE_CANVAS_PREVIEW_TRANSFORM, getImagePreviewUrl } from "@/lib/storage";
 import type { HistoryRecord } from "@/lib/types";
 
 const DETAIL_PAGE_ASSET_CANDIDATE_LIMIT = 48;
@@ -162,15 +162,23 @@ async function discoverDetailPageAssetCandidates({
   const candidates = await Promise.all(
     assets.map(async (asset): Promise<DetailPageAssetCandidate> => {
       const reference = referenceMap.get(asset.id)!;
+      let displayUrl: string | null = null;
       let previewUrl: string | null = null;
 
       if (includePreview) {
-        try {
-          previewUrl = await getImagePreviewUrl(asset.url);
-        } catch (error) {
+        const [thumbnailResult, displayResult] = await Promise.allSettled([
+          getImagePreviewUrl(asset.url),
+          getImagePreviewUrl(asset.url, undefined, DETAIL_PAGE_CANVAS_PREVIEW_TRANSFORM),
+        ]);
+
+        if (thumbnailResult.status === "fulfilled") previewUrl = thumbnailResult.value;
+        if (displayResult.status === "fulfilled") displayUrl = displayResult.value;
+
+        if (thumbnailResult.status === "rejected" || displayResult.status === "rejected") {
           console.warn("[detail-page-assets] preview signing failed", {
             assetId: asset.id,
-            errorName: error instanceof Error ? error.name : typeof error,
+            displayPreviewFailed: displayResult.status === "rejected",
+            thumbnailFailed: thumbnailResult.status === "rejected",
           });
         }
       }
@@ -179,6 +187,7 @@ async function discoverDetailPageAssetCandidates({
         assetId: asset.id,
         assetType: asset.type,
         createdAt: asset.createdAt.toISOString(),
+        displayUrl,
         historyId: reference.historyId,
         imageType: reference.imageType,
         name: asset.name,
