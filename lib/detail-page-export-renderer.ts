@@ -64,22 +64,146 @@ function charUnits(character: string) {
   return /[\u2e80-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(character) ? 1 : 0.56;
 }
 
+const CJK_CHARACTER = /[\u2e80-\u9fff\uf900-\ufaff\uff00-\uffef]/;
+const CLOSING_PUNCTUATION = /[,.!?:;)\]}>，。！？：；、）》】」』…]/;
+const LATIN_CHARACTER = /[A-Za-z]/;
+const NUMBER_CHARACTER = /[0-9]/;
+const UNIT_CHARACTER = /[A-Za-z%°]/;
+
+function tokenUnits(token: string) {
+  return Array.from(token).reduce((total, character) => total + charUnits(character), 0);
+}
+
+function readWhile(characters: string[], start: number, predicate: (character: string) => boolean) {
+  let end = start;
+  while (end < characters.length && predicate(characters[end])) end += 1;
+  return end;
+}
+
+export function tokenizeDetailPageText(value: string) {
+  const characters = Array.from(value);
+  const tokens: string[] = [];
+  let index = 0;
+
+  while (index < characters.length) {
+    const character = characters[index];
+
+    if (/\s/.test(character)) {
+      const end = readWhile(characters, index, (item) => /\s/.test(item));
+      tokens.push(characters.slice(index, end).join(""));
+      index = end;
+      continue;
+    }
+
+    if (NUMBER_CHARACTER.test(character)) {
+      let end = readWhile(characters, index, (item) => NUMBER_CHARACTER.test(item) || item === ".");
+
+      while (characters[end] === "-" && characters[end + 1] && (LATIN_CHARACTER.test(characters[end + 1]) || NUMBER_CHARACTER.test(characters[end + 1]))) {
+        end = readWhile(characters, end + 1, (item) => LATIN_CHARACTER.test(item) || NUMBER_CHARACTER.test(item));
+      }
+
+      const unitStart = characters[end] === " " && characters[end + 1] && UNIT_CHARACTER.test(characters[end + 1]) ? end + 1 : end;
+      const unitEnd = readWhile(characters, unitStart, (item) => UNIT_CHARACTER.test(item));
+      if (unitEnd > unitStart) end = unitEnd;
+
+      tokens.push(characters.slice(index, end).join(""));
+      index = end;
+      continue;
+    }
+
+    if (LATIN_CHARACTER.test(character)) {
+      let end = readWhile(characters, index, (item) => LATIN_CHARACTER.test(item));
+      while (["-", "'", "’"].includes(characters[end]) && characters[end + 1] && (LATIN_CHARACTER.test(characters[end + 1]) || NUMBER_CHARACTER.test(characters[end + 1]))) {
+        end = readWhile(characters, end + 1, (item) => LATIN_CHARACTER.test(item) || NUMBER_CHARACTER.test(item));
+      }
+      tokens.push(characters.slice(index, end).join(""));
+      index = end;
+      continue;
+    }
+
+    if (CLOSING_PUNCTUATION.test(character) && tokens.length > 0) {
+      const end = readWhile(characters, index, (item) => CLOSING_PUNCTUATION.test(item));
+      tokens[tokens.length - 1] += characters.slice(index, end).join("");
+      index = end;
+      continue;
+    }
+
+    if (CJK_CHARACTER.test(character)) {
+      tokens.push(character);
+      index += 1;
+      continue;
+    }
+
+    tokens.push(character);
+    index += 1;
+  }
+
+  return tokens;
+}
+
+function splitOversizedToken(token: string, maxUnits: number) {
+  const chunks: string[] = [];
+  let chunk = "";
+  let units = 0;
+
+  for (const character of token) {
+    const nextUnits = charUnits(character);
+    if (chunk && units + nextUnits > maxUnits) {
+      chunks.push(chunk);
+      chunk = "";
+      units = 0;
+    }
+
+    if (!chunk && CLOSING_PUNCTUATION.test(character) && chunks.length > 0) {
+      chunks[chunks.length - 1] += character;
+      continue;
+    }
+
+    chunk += character;
+    units += nextUnits;
+  }
+
+  if (chunk) chunks.push(chunk);
+  return chunks;
+}
+
 export function wrapDetailPageText(value: string, maxUnits: number, maxLines: number) {
   const lines: string[] = [];
 
   for (const paragraph of value.replace(/\r/g, "").split("\n")) {
     let line = "";
     let units = 0;
+    let pendingSpace = "";
 
-    for (const character of paragraph.trim()) {
-      const nextUnits = charUnits(character);
-      if (line && units + nextUnits > maxUnits) {
+    for (const token of tokenizeDetailPageText(paragraph.trim())) {
+      if (/^\s+$/.test(token)) {
+        if (line) pendingSpace = " ";
+        continue;
+      }
+
+      const tokenWidth = tokenUnits(token);
+      const spaceWidth = pendingSpace ? tokenUnits(pendingSpace) : 0;
+
+      if (line && units + spaceWidth + tokenWidth > maxUnits) {
         lines.push(line.trimEnd());
         line = "";
         units = 0;
+        pendingSpace = "";
       }
-      line += character;
-      units += nextUnits;
+
+      if (tokenWidth > maxUnits) {
+        const chunks = splitOversizedToken(token, maxUnits);
+        for (const chunk of chunks) {
+          if (line) lines.push(line.trimEnd());
+          line = chunk;
+          units = tokenUnits(chunk);
+        }
+        continue;
+      }
+
+      line += `${pendingSpace}${token}`;
+      units += spaceWidth + tokenWidth;
+      pendingSpace = "";
     }
 
     if (line || !paragraph) lines.push(line.trimEnd());

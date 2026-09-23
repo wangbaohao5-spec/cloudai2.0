@@ -9,6 +9,7 @@ import {
   getDetailPageExportContentType,
   getDetailPageSectionRenderPlan,
   renderDetailPageSection,
+  tokenizeDetailPageText,
   validateDetailPageCompositeBudget,
   wrapDetailPageText,
 } from "@/lib/detail-page-export-renderer";
@@ -54,6 +55,31 @@ describe("Detail Page V2 export renderer", () => {
     expect(wrapDetailPageText("温和洁面真实商品", 4, 4)).toEqual(["温和洁面", "真实商品"]);
   });
 
+  it("keeps normal English words intact and wraps at spaces", () => {
+    expect(wrapDetailPageText("mild soap cleanser", 6, 3)).toEqual(["mild soap", "cleanser"]);
+    expect(wrapDetailPageText("freeplus", 4.5, 2)).toEqual(["freeplus"]);
+  });
+
+  it("wraps mixed Chinese and English text without splitting words", () => {
+    expect(wrapDetailPageText("freeplus mild soap 洁面软管", 8, 3)).toEqual(["freeplus mild", "soap 洁面软管"]);
+  });
+
+  it("keeps closing punctuation with the preceding token when possible", () => {
+    expect(tokenizeDetailPageText("freeplus, 温和洁面。")).toEqual(["freeplus,", " ", "温", "和", "洁", "面。"]);
+    const lines = wrapDetailPageText("温和洁面，真实商品。", 4, 3);
+    expect(lines).toEqual(["温和洁", "面，真实", "商品。"]);
+    expect(lines.every((line) => !/^[，。！？：；、）》】」』…]/.test(line))).toBe(true);
+  });
+
+  it("keeps common number and unit forms together", () => {
+    expect(tokenizeDetailPageText("100 ml 1200px 2-in-1 24H")).toEqual(["100 ml", " ", "1200px", " ", "2-in-1", " ", "24H"]);
+    expect(wrapDetailPageText("规格 100 ml 24H", 5, 3)).toEqual(["规格", "100 ml", "24H"]);
+  });
+
+  it("falls back to character wrapping only for an oversized unbroken token", () => {
+    expect(wrapDetailPageText("supercalifragilistic", 3, 5)).toEqual(["super", "calif", "ragil", "istic"]);
+  });
+
   it("rejects text that cannot fit without silent truncation", () => {
     expect(() => wrapDetailPageText("很长的商品正文".repeat(80), 10, 3)).toThrow(ApiError);
   });
@@ -81,6 +107,22 @@ describe("Detail Page V2 export renderer", () => {
     expect(encoded.byteLength).toBeGreaterThan(0);
     expect(metadata.format).toBe("jpeg");
     expect(metadata.width).toBe(1_200);
+    expect(metadata.height).toBe(getDetailPageSectionRenderPlan(section).height);
+  });
+
+  it("renders mixed-language Hero copy through the token-aware wrapper", async () => {
+    const section = exportable(sections()[0], {
+      copy: {
+        headline: "freeplus mild soap 洁面软管",
+        body: "白色软管主体，正面 freeplus 与 mild soap 排版完整。",
+      },
+    });
+    const rendered = await renderDetailPageSection({ assetBuffer: await source(), pageStyle: "ecommerce", section });
+    const encoded = await encodeDetailPageSection(rendered);
+    const metadata = await sharp(encoded).metadata();
+
+    expect(wrapDetailPageText(section.copy.headline, 8, 3)).toEqual(["freeplus mild", "soap 洁面软管"]);
+    expect(encoded.byteLength).toBeGreaterThan(0);
     expect(metadata.height).toBe(getDetailPageSectionRenderPlan(section).height);
   });
 
