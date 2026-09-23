@@ -145,6 +145,20 @@ describe("Detail Page V2 continuous preview", () => {
     expect(JSON.stringify(bound)).not.toContain("example.test");
   });
 
+  it("marks only the selected canonical product source for framed preview treatment", () => {
+    const project = createProject();
+    project.sections[0] = {
+      ...project.sections[0],
+      selectedAssetId: "source-asset",
+      assetSource: "existing-asset",
+    };
+    const source = { ...candidate("source-asset"), sourceType: "original" as const };
+    const preview = buildDetailPagePreview(project, [source]);
+
+    expect(preview.visible[0].canonicalSource).toBe(true);
+    expect(preview.visible[0].asset?.displayUrl).toContain("/display");
+  });
+
   it("soft-fails a missing preview URL without dropping the binding", () => {
     const project = createProject();
     const bound = applyDetailPageProjectOperation(project, { type: "bind-asset", sectionId: project.sections[0].id, assetId: "asset-a" });

@@ -1,4 +1,5 @@
 import { ApiError } from "@/lib/api-errors";
+import { DETAIL_PAGE_COMPOSITION_TOKENS, getDetailPageComposition, type DetailPageCompositionSurface } from "@/lib/detail-page-composition";
 import { DETAIL_PAGE_MODULE_DEFINITIONS, type DetailPageSectionV2, type DetailPageStylePreset } from "@/lib/detail-page-project";
 import {
   DETAIL_PAGE_EXPORT_FORMAT,
@@ -40,16 +41,6 @@ export type DetailPageCompositeTiming = {
 
 const WIDTH = DETAIL_PAGE_EXPORT_LIMITS.width;
 const FONT_FAMILY = "Arial, Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif";
-
-const SECTION_HEIGHTS: Record<DetailPageSectionV2["moduleType"], Record<string, number>> = {
-  HERO: { FULL_VISUAL: 1_000, SPLIT: 760 },
-  BENEFITS: { TEXT_LED: 520, SPLIT: 680 },
-  USAGE_SCENE: { FULL_VISUAL: 860, SPLIT: 720 },
-  PRODUCT_DETAIL: { SINGLE_DETAIL: 820, SPLIT_DETAIL: 720 },
-  USAGE_GUIDE: { TEXT_LED: 500, STEP_TEXT: 560 },
-  BRAND_CONTENT: { FULL_VISUAL: 860, EDITORIAL_SPLIT: 720 },
-  SPECS: { SIMPLE_FACTS: 460, TWO_COLUMN_FACTS: 520 },
-};
 
 export function escapeDetailPageSvgText(value: string) {
   return value
@@ -217,7 +208,8 @@ export function wrapDetailPageText(value: string, maxUnits: number, maxLines: nu
 }
 
 export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): DetailPageSectionRenderPlan {
-  const height = SECTION_HEIGHTS[section.moduleType][section.layout];
+  const composition = getDetailPageComposition(section);
+  const height = composition.height;
   if (!height || height > DETAIL_PAGE_EXPORT_LIMITS.maxSectionHeight) {
     throw new ApiError("详情页模块版式不受支持。", 422);
   }
@@ -226,10 +218,10 @@ export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): De
 
   if (section.moduleType === "PRODUCT_DETAIL" && section.layout === "SINGLE_DETAIL") {
     return {
-      height: 760,
+      height,
       mediaRole,
-      media: { x: 180, y: 48, width: 840, height: 430 },
-      copy: { x: 0, y: 510, width: WIDTH, height: 250 },
+      media: { x: 210, y: 40, width: 780, height: 320 },
+      copy: { x: 120, y: 375, width: 960, height: height - 375 },
     };
   }
 
@@ -237,22 +229,38 @@ export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): De
     return {
       height,
       mediaRole,
-      media: { x: 60, y: 60, width: 520, height: height - 120 },
+      media: { x: 72, y: 60, width: 510, height: height - 120 },
       copy: { x: 620, y: 0, width: 580, height },
     };
+  }
+
+  if (section.moduleType === "HERO" && section.layout === "SPLIT") {
+    return composition.canonicalSource
+      ? {
+          height,
+          mediaRole,
+          media: { x: 72, y: 58, width: 540, height: height - 116 },
+          copy: { x: 660, y: 0, width: 540, height },
+        }
+      : {
+          height,
+          mediaRole,
+          media: { x: 0, y: 0, width: 696, height },
+          copy: { x: 696, y: 0, width: 504, height },
+        };
   }
 
   if (["SPLIT", "SPLIT_DETAIL", "EDITORIAL_SPLIT"].includes(section.layout)) {
     return {
       height,
       mediaRole,
-      media: { x: 0, y: 0, width: 660, height },
-      copy: { x: 660, y: 0, width: 540, height },
+      media: { x: 0, y: 0, width: section.moduleType === "USAGE_SCENE" ? 708 : 636, height },
+      copy: { x: section.moduleType === "USAGE_SCENE" ? 708 : 636, y: 0, width: section.moduleType === "USAGE_SCENE" ? 492 : 564, height },
     };
   }
 
   if (["FULL_VISUAL", "SINGLE_DETAIL"].includes(section.layout)) {
-    const mediaHeight = Math.round(height * 0.68);
+    const mediaHeight = Math.round(height * (section.moduleType === "USAGE_SCENE" || section.moduleType === "BRAND_CONTENT" ? 0.64 : 0.66));
     return {
       height,
       mediaRole,
@@ -269,35 +277,48 @@ export function getDetailPageSectionRenderPlan(section: DetailPageSectionV2): De
   };
 }
 
+function getSurfaceColor(preset: DetailPageStylePreset, surface: DetailPageCompositionSurface) {
+  const style = getDetailPageStyleRole(preset);
+  if (surface === "base") return style.surface;
+  if (surface === "alternate" || surface === "muted") return style.surfaceAlt;
+  return style.background;
+}
+
 function renderTextSvg(section: DetailPageSectionV2, box: RenderBox, preset: DetailPageStylePreset) {
   const style = getDetailPageStyleRole(preset);
-  const padding = box.width < 600 ? 64 : 84;
-  const contentWidth = box.width - padding * 2;
+  const composition = getDetailPageComposition(section);
+  const padding = Math.min(DETAIL_PAGE_COMPOSITION_TOKENS.sectionPadding[composition.density], Math.max(48, Math.round(box.width * 0.12)));
+  const contentWidth = Math.min(box.width - padding * 2, composition.textMaxWidth);
   const headline = section.copy.headline.trim() || DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].label;
   const body = section.copy.body.trim() || section.purpose;
-  const headlineSize = box.width < 600 ? 48 : 58;
-  const bodySize = box.width < 600 ? 26 : 29;
+  const headlineSize = DETAIL_PAGE_COMPOSITION_TOKENS.typography.heading[composition.density];
+  const bodySize = DETAIL_PAGE_COMPOSITION_TOKENS.typography.body[composition.density];
   const headlineLines = wrapDetailPageText(headline, contentWidth / headlineSize, 3);
-  const availableBodyHeight = box.height - padding * 2 - 36 - headlineLines.length * Math.round(headlineSize * 1.16) - 34;
-  const bodyLineHeight = Math.round(bodySize * 1.62);
+  const eyebrowSize = DETAIL_PAGE_COMPOSITION_TOKENS.typography.eyebrow;
+  const headlineLineHeight = Math.round(headlineSize * 1.12);
+  const bodyLineHeight = Math.round(bodySize * 1.5);
+  const groupGap = composition.density === "compact" ? 22 : 28;
+  const availableBodyHeight = box.height - padding * 2 - eyebrowSize - groupGap - headlineLines.length * headlineLineHeight - groupGap;
   const bodyLines = wrapDetailPageText(body, contentWidth / bodySize, Math.max(2, Math.floor(availableBodyHeight / bodyLineHeight)));
-  const headlineY = padding + 58;
-  const bodyY = headlineY + headlineLines.length * Math.round(headlineSize * 1.16) + 28;
+  const blockHeight = eyebrowSize + groupGap + headlineLines.length * headlineLineHeight + groupGap + bodyLines.length * bodyLineHeight;
+  const blockTop = Math.max(padding, Math.round((box.height - blockHeight) / 2));
+  const headlineY = blockTop + eyebrowSize + groupGap + headlineSize;
+  const bodyY = headlineY + (headlineLines.length - 1) * headlineLineHeight + groupGap + bodySize;
   const textLines = (lines: string[], x: number, y: number, lineHeight: number) => lines
     .map((line, index) => `<tspan x="${x}" y="${y + index * lineHeight}">${escapeDetailPageSvgText(line)}</tspan>`)
     .join("");
 
   return Buffer.from(`
     <svg xmlns="http://www.w3.org/2000/svg" width="${box.width}" height="${box.height}" viewBox="0 0 ${box.width} ${box.height}">
-      <rect width="100%" height="100%" fill="${style.surface}"/>
-      <text x="${padding}" y="${padding}" fill="${style.accent}" font-family="${FONT_FAMILY}" font-size="18" font-weight="700">${escapeDetailPageSvgText(DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].label)}</text>
-      <text fill="${style.text}" font-family="${FONT_FAMILY}" font-size="${headlineSize}" font-weight="650">${textLines(headlineLines, padding, headlineY, Math.round(headlineSize * 1.16))}</text>
+      <rect width="100%" height="100%" fill="${getSurfaceColor(preset, composition.surface)}"/>
+      <text x="${padding}" y="${blockTop + eyebrowSize}" fill="${style.accent}" font-family="${FONT_FAMILY}" font-size="${eyebrowSize}" font-weight="700">${escapeDetailPageSvgText(DETAIL_PAGE_MODULE_DEFINITIONS[section.moduleType].label)}</text>
+      <text fill="${style.text}" font-family="${FONT_FAMILY}" font-size="${headlineSize}" font-weight="650">${textLines(headlineLines, padding, headlineY, headlineLineHeight)}</text>
       <text fill="${style.muted}" font-family="${FONT_FAMILY}" font-size="${bodySize}" font-weight="400">${textLines(bodyLines, padding, bodyY, bodyLineHeight)}</text>
     </svg>
   `);
 }
 
-async function renderMedia(source: Buffer, box: RenderBox, preset: DetailPageStylePreset) {
+async function renderMedia(source: Buffer, box: RenderBox, preset: DetailPageStylePreset, section: DetailPageSectionV2) {
   if (source.byteLength > DETAIL_PAGE_EXPORT_LIMITS.maxSourceBytes) {
     throw new ApiError("素材文件过大，暂时无法安全导出。", 413);
   }
@@ -311,11 +332,13 @@ async function renderMedia(source: Buffer, box: RenderBox, preset: DetailPageSty
   }
 
   const style = getDetailPageStyleRole(preset);
+  const composition = getDetailPageComposition(section);
+  const mediaBackground = composition.mediaTreatment === "source-framed" ? style.surfaceAlt : getSurfaceColor(preset, composition.surface);
   const decodeStartedAt = performance.now();
   const rendered = await image
     .rotate()
-    .resize({ width: box.width, height: box.height, fit: "contain", background: style.surfaceAlt, withoutEnlargement: true })
-    .flatten({ background: style.surfaceAlt })
+    .resize({ width: box.width, height: box.height, fit: "contain", background: mediaBackground, withoutEnlargement: true })
+    .flatten({ background: mediaBackground })
     .ensureAlpha(1)
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -340,7 +363,7 @@ export async function renderDetailPageSection({
 }): Promise<RenderedDetailPageSection> {
   const layoutStartedAt = performance.now();
   const plan = getDetailPageSectionRenderPlan(section);
-  const style = getDetailPageStyleRole(pageStyle);
+  const composition = getDetailPageComposition(section);
   const sectionLayoutMs = performance.now() - layoutStartedAt;
   const composites: sharp.OverlayOptions[] = [];
   let assetMetadataMs = 0;
@@ -348,7 +371,7 @@ export async function renderDetailPageSection({
 
   if (plan.media) {
     if (!assetBuffer) throw new ApiError("模块素材不可用，请重新选择后再导出。", 409);
-    const media = await renderMedia(assetBuffer, plan.media, pageStyle);
+    const media = await renderMedia(assetBuffer, plan.media, pageStyle, section);
     assetMetadataMs = media.assetMetadataMs;
     imageDecodeMs = media.imageDecodeMs;
     composites.push({
@@ -370,7 +393,7 @@ export async function renderDetailPageSection({
 
   const renderStartedAt = performance.now();
   const rendered = await sharp({
-    create: { width: WIDTH, height: plan.height, channels: 3, background: style.background },
+    create: { width: WIDTH, height: plan.height, channels: 3, background: getSurfaceColor(pageStyle, composition.surface) },
   })
     .composite(composites)
     .raw()

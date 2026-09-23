@@ -207,6 +207,19 @@ describe("Detail Page V2 export renderer", () => {
     expect(detailPlan.media?.height).toBeLessThan(heroPlan.media?.height || Infinity);
   });
 
+  it("uses shared composition intent for canonical and generated Hero assets", () => {
+    const hero = sections()[0];
+    const canonical = exportable(hero, { layout: "SPLIT", selectedAssetId: "source-asset" });
+    const generated = exportable(hero, { layout: "SPLIT", selectedAssetId: "asset-generated", assetSource: "generated" });
+    const canonicalPlan = getDetailPageSectionRenderPlan(canonical);
+    const generatedPlan = getDetailPageSectionRenderPlan(generated);
+
+    expect(canonicalPlan.height).toBe(generatedPlan.height);
+    expect(canonicalPlan.media?.x).toBeGreaterThan(0);
+    expect(canonicalPlan.media?.width).toBeLessThan(generatedPlan.media?.width || 0);
+    expect(generatedPlan.media?.x).toBe(0);
+  });
+
   it("rejects oversized source dimensions safely", async () => {
     const section = exportable(sections()[0]);
     const oversized = await source(DETAIL_PAGE_EXPORT_LIMITS.maxSourceDimension + 1, 1);

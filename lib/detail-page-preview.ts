@@ -9,6 +9,7 @@ import {
   type DetailPageSectionV2,
   type DetailPageStylePreset,
 } from "@/lib/detail-page-project";
+import { isDetailPageCanonicalSourceSelected } from "@/lib/detail-page-composition";
 
 export const DETAIL_PAGE_LOGICAL_WIDTH = 1200;
 
@@ -28,6 +29,7 @@ export type DetailPagePreviewState = "complete" | "failed" | "generating" | "nee
 
 export type DetailPagePreviewSection = {
   asset: DetailPageAssetCandidate | null;
+  canonicalSource: boolean;
   layout: DetailPageLayout;
   missingPreview: boolean;
   section: DetailPageSectionV2;
@@ -123,6 +125,7 @@ export function buildDetailPagePreview(project: DetailPageProjectV2, candidates:
     const asset = section.selectedAssetId ? candidateMap.get(section.selectedAssetId) || null : null;
     const item: DetailPagePreviewSection = {
       asset,
+      canonicalSource: isDetailPageCanonicalSourceSelected(section),
       layout: section.layout || getDetailPageDefaultLayout(section.moduleType),
       missingPreview: Boolean(section.selectedAssetId && !asset?.previewUrl),
       section,

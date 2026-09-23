@@ -15,6 +15,7 @@ import {
   type DetailPageProjectV2,
 } from "@/lib/detail-page-project";
 import { getDetailPageSectionExportBlockers } from "@/lib/detail-page-export";
+import { getDetailPageComposition } from "@/lib/detail-page-composition";
 import {
   DETAIL_PAGE_LOGICAL_WIDTH,
   buildDetailPagePreview,
@@ -109,10 +110,12 @@ function VisualSection({ item }: { item: DetailPagePreviewSection }) {
 }
 
 function TextSection({ item }: { item: DetailPagePreviewSection }) {
+  const hasSupportingVisual = item.layout === "SPLIT";
+
   return (
     <div className="product-detail-preview-text-layout">
       <PreviewCopy item={item} />
-      <PreviewImage item={item} />
+      {hasSupportingVisual ? <PreviewImage item={item} /> : null}
     </div>
   );
 }
@@ -277,8 +280,13 @@ export function ProductDetailPageContinuousPreview({
       <div className={`product-detail-preview-canvas ${getDetailPageStyleClass(project.pageStyle.preset)}`} style={{ "--detail-page-logical-width": `${DETAIL_PAGE_LOGICAL_WIDTH}px` } as React.CSSProperties}>
         {preview.visible.map((item, index) => {
           const Renderer = SECTION_RENDERERS[item.section.moduleType];
+          const composition = getDetailPageComposition(item.section);
           return (
-            <article className={`product-detail-preview-module is-${item.section.moduleType.toLowerCase().replace("_", "-")} layout-${item.layout.toLowerCase().replaceAll("_", "-")}`} key={item.section.id}>
+            <article
+              className={`product-detail-preview-module is-${item.section.moduleType.toLowerCase().replace("_", "-")} layout-${item.layout.toLowerCase().replaceAll("_", "-")} density-${composition.density} surface-${composition.surface} media-treatment-${composition.mediaTreatment}`}
+              data-media-treatment={composition.mediaTreatment}
+              key={item.section.id}
+            >
               <SectionControls
                 candidates={candidates}
                 disabled={disabled}
